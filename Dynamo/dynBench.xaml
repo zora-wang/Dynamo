@@ -21,6 +21,13 @@
                 <MenuItem Header="_Open..." Click="Open_Click"/>
             </MenuItem>
             <MenuItem Header="_Add" Name="AddMenu"/>
+            <MenuItem Header="_Settings" Name="Settings">
+                <MenuItem Header="Dynamic Model Update On" 
+                          IsCheckable="True" 
+                          IsChecked="False" 
+                          Checked="DMU_Checked"
+                          Unchecked="DMU_Unchecked"/>
+            </MenuItem>
         </Menu>
             <Border Margin="0,0,0,0" BorderBrush="Black" BorderThickness="1" Name="border">
             <!--outer canvas clips the inner canvas-->

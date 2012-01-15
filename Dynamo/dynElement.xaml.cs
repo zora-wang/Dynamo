@@ -644,14 +644,22 @@ namespace Dynamo.Elements
             #region using transaction
             if (useTransaction)
             {
-                Transaction t = new Transaction(dynElementSettings.SharedInstance.Doc.Document, el.GetType().ToString() + " update.");
-                TransactionStatus ts = t.Start();
+                TransactionStatus ts;
+                if (dynElementSettings.SharedInstance.SubTransaction == null)
+                {
+                    dynElementSettings.SharedInstance.SubTransaction = new Transaction(dynElementSettings.SharedInstance.Doc.Document, el.GetType().ToString() + " update.");
+                    ts = dynElementSettings.SharedInstance.SubTransaction.Start();
+                }
+                else
+                {
+                    ts = dynElementSettings.SharedInstance.SubTransaction.GetStatus();
+                }
 
                 try
                 {
                     FailureHandlingOptions failOpt = t.GetFailureHandlingOptions();
                     failOpt.SetFailuresPreprocessor(dynElementSettings.SharedInstance.WarningSwallower);
-                    t.SetFailureHandlingOptions(failOpt);
+                    dynElementSettings.SharedInstance.SubTransaction.SetFailureHandlingOptions(failOpt);
 
                     el.Destroy();
                     el.Draw();
@@ -661,7 +669,7 @@ namespace Dynamo.Elements
 
                     elementsHaveBeenDeleted = false;
 
-                    ts = t.Commit();
+                    ts = dynElementSettings.SharedInstance.SubTransaction.Commit();
 
                 }
                 catch (Exception ex)
@@ -679,10 +687,10 @@ namespace Dynamo.Elements
 
                     if (ts == TransactionStatus.Committed)
                     {
-                        t.RollBack();
+                        dynElementSettings.SharedInstance.SubTransaction.RollBack();
                     }
 
-                    t.Dispose();
+                    dynElementSettings.SharedInstance.SubTransaction.Dispose();
 
                     dynElementSettings.SharedInstance.Writer.WriteLine(ex.Message);
                     dynElementSettings.SharedInstance.Writer.WriteLine(ex.StackTrace);

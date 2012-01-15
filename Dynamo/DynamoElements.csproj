@@ -124,6 +124,7 @@
     <Compile Include="DynamoSplash.xaml.cs">
       <DependentUpon>DynamoSplash.xaml</DependentUpon>
     </Compile>
+    <Compile Include="dynAnalysis.cs" />
     <Compile Include="dynCollection.cs" />
     <Compile Include="dynBench.xaml.cs">
       <DependentUpon>dynBench.xaml</DependentUpon>

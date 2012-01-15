@@ -2109,9 +2109,6 @@ namespace Dynamo.Elements
         }
     }
 
-
-    //MDJ
-
     #endregion
 
     #region class attributes

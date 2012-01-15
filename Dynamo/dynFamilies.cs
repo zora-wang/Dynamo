@@ -287,7 +287,7 @@ namespace Dynamo.Elements
             DataTree familyInstTree = InPortData[0].Object as DataTree;
 
             //skip the first port data because it's the family instances
-            for(int i=1; i<InPortData.Count; i++)
+            for (int i = 1; i < InPortData.Count; i++)
             {
                 PortData pd = InPortData[i];
                 //parameter value keys are the tooltip - the name 
@@ -297,7 +297,7 @@ namespace Dynamo.Elements
 
                 //start by assuming that you've got matching data trees
                 DataTree doubleTree = pd.Object as DataTree;
-                
+
                 if (familyInstTree != null)
                 {
                     if (doubleTree != null)
@@ -316,7 +316,6 @@ namespace Dynamo.Elements
                         }
                     }
                 }
-
             }
 
         }

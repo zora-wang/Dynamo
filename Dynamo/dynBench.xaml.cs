@@ -40,11 +40,19 @@ using System.Collections.ObjectModel;
 
 namespace Dynamo.Controls
 {
+    public delegate void SunAndShadowChangedHandler(object sender, EventArgs e);
+
     /// <summary>
     /// Interaction logic for DynamoForm.xaml
     /// </summary>
     public partial class dynBench : Window, INotifyPropertyChanged
     {
+        public event SunAndShadowChangedHandler SunAndShadowChanged;
+        public void OnSunAndShadowChanged(EventArgs e)
+        {
+            if (SunAndShadowChanged != null)
+                SunAndShadowChanged(this, e);
+        }
 
         double zoom = 1.0;
         double currentX;
@@ -1174,6 +1182,18 @@ namespace Dynamo.Controls
         private void New_Click(object sender, RoutedEventArgs e)
         {
             CleanWorkbench();
+        }
+
+        private void DMU_Checked(object sender, RoutedEventArgs e)
+        {
+            SunAndShadowUpdater._updateActive = true;
+            DynamoUpdater._updateActive = true;
+        }
+
+        private void DMU_Unchecked(object sender, RoutedEventArgs e)
+        {
+            SunAndShadowUpdater._updateActive = false;
+            DynamoUpdater._updateActive = false;
         }
 
     }

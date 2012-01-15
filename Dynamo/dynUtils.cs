@@ -92,6 +92,7 @@ namespace Dynamo.Utilities
 	    Transaction trans;
         TextWriter tw;
         Element spatialFieldManagerUpdated;
+        Transaction subTrans;
 
         private static dynElementSettings sharedInstance;
 
@@ -111,14 +112,10 @@ namespace Dynamo.Utilities
         System.Windows.Media.Color colorGray1 = System.Windows.Media.Color.FromRgb(220, 220, 220);
         System.Windows.Media.Color colorGray2 = System.Windows.Media.Color.FromRgb(192, 192, 192);
 
-        
         public Element SpatialFieldManagerUpdated
         {
             get { return spatialFieldManagerUpdated; }
-            set
-            {
-                spatialFieldManagerUpdated = value;
-            }
+            set{ spatialFieldManagerUpdated = value;}
         }
 
 	    public Autodesk.Revit.UI.UIApplication Revit
@@ -156,6 +153,11 @@ namespace Dynamo.Utilities
 	        get { return trans; }
             set { trans = value; }
 	    }
+        public Transaction SubTransaction
+        {
+            get { return subTrans; }
+            set { subTrans = value; }
+        }
         public LinearGradientBrush ErrorBrush
         {
             get { return errorBrush; }
@@ -198,21 +200,6 @@ namespace Dynamo.Utilities
                 return sharedInstance;
             }
         }
-        
-        /*
-        public dynElementSettings(Autodesk.Revit.UI.UIApplication app, Autodesk.Revit.UI.UIDocument doc, Level defaultLevel, DynamoWarningSwallower warningSwallower, Transaction t)
-	    {
-
-	        this.revit = app;
-	        this.doc = doc;
-	        this.defaultLevel = defaultLevel;
-	        this.warningSwallower = warningSwallower;
-	        this.trans = t;
-
-            SetupBrushes();
-
-	    }
-        */
 
         void SetupBrushes()
         {
@@ -522,5 +509,148 @@ namespace Dynamo.Utilities
         }
         
 	}
-	
+
+    public class DynamoUpdater : IUpdater
+    {
+        public static bool _updateActive = false;
+        static AddInId m_appId;
+        static UpdaterId m_updaterId;
+        SpatialFieldManager m_sfm = null;
+
+        // constructor takes the AddInId for the add-in associated with this updater
+        public DynamoUpdater(AddInId id)
+        {
+            m_appId = id;
+            m_updaterId = new UpdaterId(m_appId, new Guid("1F1F44B4-8002-4CC1-8FDB-17ACD24A2ECE")); //[Guid("1F1F44B4-8002-4CC1-8FDB-17ACD24A2ECE")]
+        }
+        public void Execute(UpdaterData data)
+        {
+            try
+            {
+                if (_updateActive == false) { return; }
+
+                Document doc = data.GetDocument();
+                Autodesk.Revit.DB.View view = doc.ActiveView;
+                SpatialFieldManager sfm = SpatialFieldManager.GetSpatialFieldManager(view);
+
+                UpdaterData tempData = data;
+
+                if (sfm != null)
+                {
+                    // Cache the spatial field manager if ther is one
+                    if (m_sfm == null)
+                    {
+                        //FilteredElementCollector collector = new FilteredElementCollector(doc);
+                        //collector.OfClass(typeof(SpatialFieldManager));
+                        //var sfm = from element in collector
+                        //          select element;
+                        //if (sfm.Count<Element>() > 0) // if we actually found an SFM
+                        //{
+                        //m_sfm = sfm.Cast<SpatialFieldManager>().ElementAt<SpatialFieldManager>(0);
+                        m_sfm = sfm;
+                        //TaskDialog.Show("ah hah", "found spatial field manager adding to cache");
+                        //}
+
+                    }
+                    if (m_sfm != null)
+                    {
+                        // if we find an sfm has been updated and it matches what  already have one cached, send it to dyanmo
+                        //foreach (ElementId addedElemId in data.GetAddedElementIds())
+                        //{
+                        //SpatialFieldManager sfm = doc.get_Element(addedElemId) as SpatialFieldManager;
+                        //if (sfm != null)
+                        //{
+                        // TaskDialog.Show("ah hah", "found spatial field manager yet, passing to dynamo");
+                        dynElementSettings.SharedInstance.SpatialFieldManagerUpdated = sfm;
+                        //Dynamo.Elements.OnDynElementReadyToBuild(EventArgs.Empty);//kick it
+                        //}
+                        //}
+                    }
+                }
+                else
+                {
+                    //TaskDialog.Show("ah hah", "no spatial field manager yet, please run sr tool");
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+        public string GetAdditionalInformation()
+        {
+            return "Watch for changes to Analysis Results object (Spatial Field Manager) and pass this to Dynamo";
+        }
+        public ChangePriority GetChangePriority()
+        {
+            return ChangePriority.FloorsRoofsStructuralWalls;
+        }
+        public UpdaterId GetUpdaterId()
+        {
+            return m_updaterId;
+        }
+        public string GetUpdaterName()
+        {
+            return "Dyanmo Analysis Results Watcher";
+        }
+    }
+
+    public class SunAndShadowUpdater : IUpdater
+    {
+        public static bool _updateActive = false;
+        static AddInId _appId;
+        static UpdaterId _updaterId;
+
+        // constructor takes the AddInId for the add-in associated with this updater
+        public SunAndShadowUpdater(AddInId id)
+        {
+            _appId = id;
+            _updaterId = new UpdaterId(_appId, new Guid("16f5cd24-f0e5-4ef3-8731-a171ec45e6a4"));
+        }
+
+        public void Execute(UpdaterData data)
+        {
+            try
+            {
+                if (_updateActive == false) { return; }
+
+                //see if there is an active transaction
+                //if there is, commit it
+                if (dynElementSettings.SharedInstance.SubTransaction != null)
+                {
+                    if (!dynElementSettings.SharedInstance.SubTransaction.HasEnded())
+                    {
+                        TransactionStatus ts = dynElementSettings.SharedInstance.SubTransaction.Commit();
+                    }
+                    dynElementSettings.SharedInstance.SubTransaction.Dispose();
+                }
+                
+                //trigger and event on the workbench that says sun and shadow settings have been updated
+                dynElementSettings.SharedInstance.Bench.OnSunAndShadowChanged(EventArgs.Empty);
+
+            }
+            catch (Exception ex)
+            {
+                TaskDialog.Show("Exception", ex.Message);
+            }
+        }
+
+        public string GetAdditionalInformation()
+        {
+            return "Watch for changes to Sun and Shadow Settings and passes this to Dynamo";
+        }
+        public ChangePriority GetChangePriority()
+        {
+            return ChangePriority.Views;
+        }
+        public UpdaterId GetUpdaterId()
+        {
+            return _updaterId;
+        }
+        public string GetUpdaterName()
+        {
+            return "Dyanmo Sun and Shadow Watcher";
+        }
+    }
+
 }
