@@ -162,7 +162,9 @@ namespace Dynamo.Elements
         void paramMapButt_Click(object sender, System.Windows.RoutedEventArgs e)
         {
             //read from the state objects
-            if (CheckInputs())
+            //check the first port to make sure
+            //it has a family tree to read from
+            if (InPortData[0].Object != null)
             {
                 CleanupOldPorts();
 
@@ -271,14 +273,19 @@ namespace Dynamo.Elements
                 InPortData.RemoveAt(InPortData.Count - 1);
             }
 
+            while (gridLeft.Children.Count > 2)
+            {
+                gridLeft.Children.RemoveAt(gridLeft.Children.Count - 1);
+            }
+
             while (gridLeft.RowDefinitions.Count > 1)
             {
                 //remove the port from the children list
-                gridLeft.Children.RemoveAt(gridLeft.RowDefinitions.Count - 1);
+                //gridLeft.Children.RemoveAt(gridLeft.RowDefinitions.Count - 1);
                 gridLeft.RowDefinitions.RemoveAt(gridLeft.RowDefinitions.Count - 1);
-
             }
 
+            this.UpdateLayout();
         }
 
         //sets the values on the family instances

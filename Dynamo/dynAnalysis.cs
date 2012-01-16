@@ -50,7 +50,7 @@ namespace Dynamo.Elements
                 this.OutPortData[4].Object = v.SunAndShadowSettings.GetFrameTime(f).Year;
 
                 //this.UpdateOutputs();
-                OnDynElementReadyToBuild(EventArgs.Empty);
+                //OnDynElementReadyToBuild(EventArgs.Empty);
             }
         }
 

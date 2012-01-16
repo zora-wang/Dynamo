@@ -644,20 +644,27 @@ namespace Dynamo.Elements
             #region using transaction
             if (useTransaction)
             {
-                TransactionStatus ts;
-                if (dynElementSettings.SharedInstance.SubTransaction == null)
-                {
-                    dynElementSettings.SharedInstance.SubTransaction = new Transaction(dynElementSettings.SharedInstance.Doc.Document, el.GetType().ToString() + " update.");
-                    ts = dynElementSettings.SharedInstance.SubTransaction.Start();
-                }
-                else
-                {
-                    ts = dynElementSettings.SharedInstance.SubTransaction.GetStatus();
-                }
+                //TransactionStatus ts = TransactionStatus.Uninitialized;
+
+                //if(dynElementSettings.SharedInstance.SubTransaction != null)
+                //{
+                //    //if the shared transaction item is not null
+                //    //we're in a transaction. try to find its status
+                //    //if it has started, then commit it and dispose
+                //    ts = dynElementSettings.SharedInstance.SubTransaction.GetStatus();
+                //    if (ts!=null && ts==TransactionStatus.Started)
+                //    {
+                //        dynElementSettings.SharedInstance.SubTransaction.Commit();
+                //    }
+                //    dynElementSettings.SharedInstance.SubTransaction = null;
+                //}
+
+                dynElementSettings.SharedInstance.SubTransaction = new Transaction(dynElementSettings.SharedInstance.Doc.Document, el.GetType().ToString() + " update.");
+                TransactionStatus ts = dynElementSettings.SharedInstance.SubTransaction.Start();
 
                 try
                 {
-                    FailureHandlingOptions failOpt = t.GetFailureHandlingOptions();
+                    FailureHandlingOptions failOpt = dynElementSettings.SharedInstance.SubTransaction.GetFailureHandlingOptions();
                     failOpt.SetFailuresPreprocessor(dynElementSettings.SharedInstance.WarningSwallower);
                     dynElementSettings.SharedInstance.SubTransaction.SetFailureHandlingOptions(failOpt);
 
@@ -670,7 +677,8 @@ namespace Dynamo.Elements
                     elementsHaveBeenDeleted = false;
 
                     ts = dynElementSettings.SharedInstance.SubTransaction.Commit();
-
+                    dynElementSettings.SharedInstance.SubTransaction = null;
+                    //dynElementSettings.SharedInstance.SubTransaction.Dispose();
                 }
                 catch (Exception ex)
                 {
@@ -690,6 +698,7 @@ namespace Dynamo.Elements
                         dynElementSettings.SharedInstance.SubTransaction.RollBack();
                     }
 
+                    //dynElementSettings.SharedInstance.SubTransaction = null;
                     dynElementSettings.SharedInstance.SubTransaction.Dispose();
 
                     dynElementSettings.SharedInstance.Writer.WriteLine(ex.Message);
@@ -707,10 +716,11 @@ namespace Dynamo.Elements
                     dynElementSettings.SharedInstance.Bench.Log("Outputs could not be updated.");
                     if (ts == TransactionStatus.Committed)
                     {
-                        t.RollBack();
+                        dynElementSettings.SharedInstance.SubTransaction.RollBack();
                     }
 
-                    t.Dispose();
+                    //dynElementSettings.SharedInstance.SubTransaction = null;
+                    dynElementSettings.SharedInstance.SubTransaction.Dispose();
 
                     dynElementSettings.SharedInstance.Writer.WriteLine(ex.Message);
                     dynElementSettings.SharedInstance.Writer.WriteLine(ex.StackTrace);

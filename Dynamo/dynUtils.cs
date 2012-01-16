@@ -616,16 +616,22 @@ namespace Dynamo.Utilities
 
                 //see if there is an active transaction
                 //if there is, commit it
-                if (dynElementSettings.SharedInstance.SubTransaction != null)
-                {
-                    if (!dynElementSettings.SharedInstance.SubTransaction.HasEnded())
-                    {
-                        TransactionStatus ts = dynElementSettings.SharedInstance.SubTransaction.Commit();
-                    }
-                    dynElementSettings.SharedInstance.SubTransaction.Dispose();
-                }
+                //if (dynElementSettings.SharedInstance.SubTransaction != null)
+                //{
+                //    if (!dynElementSettings.SharedInstance.SubTransaction.HasEnded())
+                //    {
+                //        TransactionStatus ts = dynElementSettings.SharedInstance.SubTransaction.GetStatus();
+                //        if (ts == TransactionStatus.Started)
+                //        {
+                //            dynElementSettings.SharedInstance.SubTransaction.Commit();
+                //            dynElementSettings.SharedInstance.SubTransaction = null;
+                //        }
+                //    }
+                //}
                 
-                //trigger and event on the workbench that says sun and shadow settings have been updated
+                //trigger an event on the workbench that says sun and shadow settings have been updated
+                //this internally creates its own transaction, hence why we need
+                //to get rid of the one above
                 dynElementSettings.SharedInstance.Bench.OnSunAndShadowChanged(EventArgs.Empty);
 
             }

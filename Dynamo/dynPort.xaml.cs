@@ -80,12 +80,6 @@ namespace Dynamo.Connectors
             get { return connectors; }
             set { connectors = value; }
         }
-        
-        //public bool IsInputPort
-        //{
-        //    get { return isInputPort; }
-        //    set { isInputPort = value; }
-        //}
 
         public PortType PortType
         {
