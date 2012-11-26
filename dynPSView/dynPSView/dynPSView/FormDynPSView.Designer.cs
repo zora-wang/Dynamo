@@ -49,16 +49,16 @@ namespace dynPSView
             // 
             // openGLControl1
             // 
-            this.openGLControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.openGLControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
             this.openGLControl1.BitDepth = 32;
             this.openGLControl1.DrawFPS = false;
             this.openGLControl1.FrameRate = 28;
             this.openGLControl1.Location = new System.Drawing.Point(12, 12);
             this.openGLControl1.Name = "openGLControl1";
             this.openGLControl1.RenderContextType = SharpGL.RenderContextType.FBO;
-            this.openGLControl1.Size = new System.Drawing.Size(768, 443);
+            this.openGLControl1.Size = new System.Drawing.Size(968, 590);
             this.openGLControl1.TabIndex = 0;
             this.openGLControl1.OpenGLDraw += new System.Windows.Forms.PaintEventHandler(this.openGLControl1_OpenGLDraw);
             this.openGLControl1.Load += new System.EventHandler(this.openGLControl1_Load);
@@ -67,7 +67,7 @@ namespace dynPSView
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(792, 467);
+            this.ClientSize = new System.Drawing.Size(992, 614);
             this.Controls.Add(this.openGLControl1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "FormDynPSView";

@@ -47,18 +47,24 @@ namespace dynPSView
 
         public void InitParticleSystem()
         {
-            double stepSize = .1;
+            double maxLength = 2;
             int maxPart = 20;
+            double stepSize = maxLength/maxPart;
+            double mass = 1;
+            double springDampening = 1;
+            double springRestLength = stepSize/1;
+            double springConstant = 2500;
+
             for (int i = 0; i < maxPart; i++)
             {
                 if (i == 0)
                 {
-                    Particle a = mParticleSystem.makeParticle(1, new XYZ(0, 0, 0), true);
+                    Particle a = mParticleSystem.makeParticle(mass, new XYZ(0, 0, 0), true);
                 }
                 else
                 {
-                    Particle b = mParticleSystem.makeParticle(1, new XYZ(i * stepSize, 0, 0), false);
-                    mParticleSystem.makeSpring(mParticleSystem.getParticle(i - 1), b, .1, 500, 0.1);
+                    Particle b = mParticleSystem.makeParticle(mass, new XYZ(i * stepSize, 0, 0), false);
+                    mParticleSystem.makeSpring(mParticleSystem.getParticle(i - 1), b, springRestLength, springConstant, springDampening);
                 }
                 if (i == maxPart - 1)
                 {
