@@ -215,10 +215,12 @@ namespace Dynamo.Elements
         private bool dirty = true;
         private Dictionary<string, dynamic> stateDict = new Dictionary<string, dynamic>();
 
-        TextBox tb;
+        //TextBox tb;
+        string script;
 
         public dynPython()
         {
+            /*
             tb = new TextBox()
             {
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
@@ -234,14 +236,23 @@ namespace Dynamo.Elements
             tb.TextChanged += delegate { this.dirty = true; };
 
             this.ContentGrid.Children.Add(tb);
+            */
+
+            //add an edit window option to the 
+            //main context window
+            System.Windows.Controls.MenuItem editWindowItem = new System.Windows.Controls.MenuItem();
+            editWindowItem.Header = "Edit...";
+            editWindowItem.IsCheckable = false;
+            this.MainContextMenu.Items.Add(editWindowItem);
+            editWindowItem.Click += new RoutedEventHandler(editWindowItem_Click);
 
             InPortData.Add(new PortData("IN", "Input", typeof(object)));
             OutPortData = new PortData("OUT", "Result of the python script", typeof(object));
 
             base.RegisterInputsAndOutputs();
 
-            topControl.Height = 200;
-            topControl.Width = 300;
+            //topControl.Height = 200;
+            //topControl.Width = 300;
 
             this.UpdateLayout();
         }
@@ -256,11 +267,11 @@ namespace Dynamo.Elements
             set { }
         }
 
-
         public override void SaveElement(XmlDocument xmlDoc, XmlElement dynEl)
         {
             XmlElement script = xmlDoc.CreateElement("Script");
-            script.InnerText = this.tb.Text;
+            //script.InnerText = this.tb.Text;
+            script.InnerText = this.script;
             dynEl.AppendChild(script);
         }
 
@@ -269,7 +280,8 @@ namespace Dynamo.Elements
             foreach (XmlNode subNode in elNode.ChildNodes)
             {
                 if (subNode.Name == "Script")
-                    this.tb.Text = subNode.InnerText;
+                    //this.tb.Text = subNode.InnerText;
+                    script = subNode.InnerText;
             }
         }
 
@@ -318,11 +330,14 @@ namespace Dynamo.Elements
         {
             if (this.dirty)
             {
-                this.engine.ProcessCode(
+                /*this.engine.ProcessCode(
                    (string)this.tb.Dispatcher.Invoke(new Func<string>(
                       delegate { return this.tb.Text; }
                    ))
-                );
+                );*/
+
+                this.engine.ProcessCode(script);
+
                 this.dirty = false;
             }
 
@@ -368,7 +383,25 @@ namespace Dynamo.Elements
 
             return result;
         }
-    }
+
+        void editWindowItem_Click(object sender, RoutedEventArgs e)
+        {
+            dynEditWindow editWindow = new dynEditWindow();
+
+            //set the text of the edit window to begin
+            editWindow.editText.Text = script;
+
+            if (editWindow.ShowDialog() != true)
+            {
+                return;
+            }
+
+            //set the value from the text in the box
+            script = editWindow.editText.Text;
+            
+            this.dirty = true;
+        }
+     }
 
     [ElementName("Python Script From String")]
     [ElementCategory(BuiltinElementCategories.MISC)]

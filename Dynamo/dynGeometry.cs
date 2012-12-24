@@ -241,11 +241,114 @@ namespace Dynamo.Elements
         }
     }
 
+    [ElementName("UV Grid")]
+    [ElementCategory(BuiltinElementCategories.REVIT)]
+    [ElementDescription("Creates a grid of UVs froma domain.")]
+    [RequiresTransaction(false)]
+    public class 
+        dynUVGrid : dynNode
+    {
+        public dynUVGrid()
+        {
+            InPortData.Add(new PortData("dom", "A domain.", typeof(object)));
+            InPortData.Add(new PortData("U-count", "Number in the U direction.", typeof(double)));
+            InPortData.Add(new PortData("V-count", "Number in the V direction.", typeof(double)));
+            OutPortData = new PortData("UVs", "List of UVs in the grid", typeof(XYZ));
+
+            base.RegisterInputsAndOutputs();
+        }
+
+        public override Expression Evaluate(FSharpList<Expression> args)
+        {
+            FSharpList<Expression> domain;
+            double ui, vi;
+            
+            domain = ((Expression.List)args[0]).Item;
+            ui = ((Expression.Number)args[1]).Item;
+            vi = ((Expression.Number)args[2]).Item;
+            double us = ((Expression.Number)domain[2]).Item / ui;
+            double vs = ((Expression.Number)domain[3]).Item / vi;
+
+            FSharpList<Expression> result = FSharpList<Expression>.Empty;
+
+            UV min = ((Expression.Container)domain[0]).Item as UV;
+            UV max = ((Expression.Container)domain[1]).Item as UV;
+
+            for (double u = min.U; u <= max.U; u+=us)
+            {
+                for (double v = min.V; v <= max.V; v+=vs)
+                {
+                    result = FSharpList<Expression>.Cons(
+                        Expression.NewContainer(new UV(u,v)),
+                        result
+                    );
+                }
+            }
+
+            return Expression.NewList(
+               ListModule.Reverse(result)
+            );
+        }
+    }
+
+    [ElementName("UV Random Distribution")]
+    [ElementCategory(BuiltinElementCategories.REVIT)]
+    [ElementDescription("Creates a grid of UVs froma domain.")]
+    [RequiresTransaction(false)]
+    public class
+        dynUVRandom : dynNode
+    {
+        public dynUVRandom()
+        {
+            InPortData.Add(new PortData("dom", "A domain.", typeof(object)));
+            InPortData.Add(new PortData("U-count", "Number in the U direction.", typeof(double)));
+            InPortData.Add(new PortData("V-count", "Number in the V direction.", typeof(double)));
+            OutPortData = new PortData("UVs", "List of UVs in the grid", typeof(XYZ));
+
+            base.RegisterInputsAndOutputs();
+        }
+
+        public override Expression Evaluate(FSharpList<Expression> args)
+        {
+            FSharpList<Expression> domain;
+            double ui, vi;
+
+            domain = ((Expression.List)args[0]).Item;
+            ui = ((Expression.Number)args[1]).Item;
+            vi = ((Expression.Number)args[2]).Item;
+
+            FSharpList<Expression> result = FSharpList<Expression>.Empty;
+
+            UV min = ((Expression.Container)domain[0]).Item as UV;
+            UV max = ((Expression.Container)domain[1]).Item as UV;
+            
+            Random r = new Random();
+            double uSpan = max.U-min.U;
+            double vSpan = max.V-min.V;
+
+            for (int i = 0; i < ui; i++)
+            {
+                for (int j = 0; j < vi; j++)
+                {
+                    result = FSharpList<Expression>.Cons(
+                        Expression.NewContainer(new UV(min.U + r.NextDouble()*uSpan, min.V + r.NextDouble()*vSpan)),
+                        result
+                    );
+                }
+            }
+
+            return Expression.NewList(
+               ListModule.Reverse(result)
+            );
+        }
+    }
+
     [ElementName("XYZ Grid")]
     [ElementCategory(BuiltinElementCategories.REVIT)]
     [ElementDescription("Creates a grid of XYZs.")]
     [RequiresTransaction(false)]
-    public class dynReferencePtGrid : dynNode
+    public class
+        dynReferencePtGrid : dynNode
     {
         public dynReferencePtGrid()
         {
@@ -358,7 +461,6 @@ namespace Dynamo.Elements
         }
     }
 
-
     [ElementName("Plane")]
     [ElementCategory(BuiltinElementCategories.REVIT)]
     [ElementDescription("Creates a geometric plane.")]
@@ -395,7 +497,7 @@ namespace Dynamo.Elements
     {
         public dynSketchPlane()
         {
-            InPortData.Add(new PortData("plane", "The plane in which to define the sketch.", typeof(dynPlane)));
+            InPortData.Add(new PortData("plane", "The plane in which to define the sketch.", typeof(object))); // SketchPlane can accept Plane, Reference or PlanarFace
             OutPortData = new PortData("SP", "SketchPlane", typeof(dynSketchPlane));
 
             base.RegisterInputsAndOutputs();
@@ -417,12 +519,43 @@ namespace Dynamo.Elements
                    planeList.Select(
                       delegate(Expression x)
                       {
-                          SketchPlane p = this.UIDocument.Document.FamilyCreate.NewSketchPlane(
-                             (Plane)((Expression.Container)x).Item
-                          );
+                          SketchPlane sp = null;
 
-                          this.Elements.Add(p.Id);
-                          return Expression.NewContainer(p);
+                          //handle Plane, Reference or PlanarFace, also test for family or project doc. there probably is a cleaner way to test for all these conditions.
+                          if (x is Plane)
+                          {
+                              sp = (this.UIDocument.Document.IsFamilyDocument)
+                              ? this.UIDocument.Document.FamilyCreate.NewSketchPlane(
+                                 (Plane)((Expression.Container)x).Item
+                              )
+                              : this.UIDocument.Document.Create.NewSketchPlane(
+                                 (Plane)((Expression.Container)x).Item
+                              );
+                          }
+                          else if (x is Reference)
+                          {
+                              sp = (this.UIDocument.Document.IsFamilyDocument)
+                              ? this.UIDocument.Document.FamilyCreate.NewSketchPlane(
+                                 (Reference)((Expression.Container)x).Item
+                              )
+                              : this.UIDocument.Document.Create.NewSketchPlane(
+                                 (Reference)((Expression.Container)x).Item
+                              );
+                          }
+                          else if (x is PlanarFace)
+                          {
+                              sp = (this.UIDocument.Document.IsFamilyDocument)
+                              ? this.UIDocument.Document.FamilyCreate.NewSketchPlane(
+                                 (PlanarFace)((Expression.Container)x).Item
+                              )
+                              : this.UIDocument.Document.Create.NewSketchPlane(
+                                 (PlanarFace)((Expression.Container)x).Item
+                              );
+                          }
+
+
+                          this.Elements.Add(sp.Id);
+                          return Expression.NewContainer(sp);
                       }
                    )
                 );
@@ -431,11 +564,31 @@ namespace Dynamo.Elements
             }
             else
             {
-                Plane p = (Plane)((Expression.Container)input).Item;
 
-                SketchPlane sp = (this.UIDocument.Document.IsFamilyDocument)
-                   ? this.UIDocument.Document.FamilyCreate.NewSketchPlane(p)
-                   : this.UIDocument.Document.Create.NewSketchPlane(p);
+                var x = ((Expression.Container)input).Item;
+                SketchPlane sp = null;
+
+                //handle Plane, Reference or PlanarFace, also test for family or project doc. there probably is a cleaner way to test for all these conditions.
+                if (x is Plane)
+                {
+                    Plane p = x as Plane;
+                    sp  = (this.UIDocument.Document.IsFamilyDocument)
+                       ? this.UIDocument.Document.FamilyCreate.NewSketchPlane(p)
+                       : this.UIDocument.Document.Create.NewSketchPlane(p);
+                }
+                else if (x is Reference)
+                {
+                    Reference r = x as Reference;
+                    sp  = (this.UIDocument.Document.IsFamilyDocument)
+                       ? this.UIDocument.Document.FamilyCreate.NewSketchPlane(r)
+                       : this.UIDocument.Document.Create.NewSketchPlane(r);
+                } else if (x is PlanarFace)
+                {
+                    PlanarFace p = x as PlanarFace;
+                    sp = (this.UIDocument.Document.IsFamilyDocument)
+                       ? this.UIDocument.Document.FamilyCreate.NewSketchPlane(p)
+                       : this.UIDocument.Document.Create.NewSketchPlane(p);
+                }
 
                 this.Elements.Add(sp.Id);
 
@@ -498,63 +651,6 @@ namespace Dynamo.Elements
 
 
             return FScheme.Expression.NewContainer(new UV(u, v));
-        }
-    }
-
-    [ElementName("Domain")]
-    [ElementCategory(BuiltinElementCategories.REVIT)]
-    [ElementDescription("An element which returns the domain for a surface.")]
-    [RequiresTransaction(false)]
-    public class dynDomain : dynNode
-    {
-        public dynDomain()
-        {
-            InPortData.Add(new PortData("face", "Face", typeof(double)));
-
-            OutPortData = new PortData("dom", "Domain", typeof(UV));
-
-            base.RegisterInputsAndOutputs();
-        }
-
-        public override Expression Evaluate(FSharpList<Expression> args)
-        {
-            Reference faceRef = ((Expression.Container)args[0]).Item as Reference;
-            GeometryObject geob = dynElementSettings.SharedInstance.Doc.Document.GetElement(faceRef).GetGeometryObjectFromReference(faceRef);
-            Face f = geob as Face;
-            double periodU = 1.0;
-            double periodV = 1.0;
-
-            try
-            {
-                periodU = f.get_Period(0);
-            }
-            catch
-            {
-                periodU = 1.0;
-            }
-
-
-            try
-            {
-                periodV = f.get_Period(1);
-            }
-            catch 
-            {
-                periodV = 1.0;
-            }
-
-            IList<UV> uvPts = new List<UV>();  
-            BoundingBoxUV bb = f.GetBoundingBox();
-            UV min = bb.Min;
-            UV max = bb.Max;
-            uvPts.Add(new UV(min.U, min.V));
-            uvPts.Add(new UV(max.U, max.V));  
-
-            Expression result = Expression.NewList(Utils.convertSequence(
-                            (new double[]{periodU, periodV}).Select(Expression.NewNumber)
-                        ));
-
-            return result;
         }
     }
 

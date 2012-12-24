@@ -39,6 +39,7 @@ using System.Diagnostics.Contracts;
 using System.Text;
 using System.Windows.Input;
 using System.Windows.Data;
+using System.Globalization;
 
 namespace Dynamo.Elements
 {
@@ -1049,6 +1050,42 @@ namespace Dynamo.Elements
         }
     }
 
+    [ElementName("Mod")]
+    [ElementCategory(BuiltinElementCategories.MATH)]
+    [ElementDescription("Remainder of division of two numbers.")]
+    [ElementSearchTags("%", "modulo", "remainder")]
+    [RequiresTransaction(false)]
+    public class dynModulo : dynBuiltinFunction
+    {
+        public dynModulo()
+            : base("%")
+        {
+            InPortData.Add(new PortData("x", "operand", typeof(double)));
+            InPortData.Add(new PortData("y", "operand", typeof(double)));
+            OutPortData = new PortData("x%y", "result", typeof(double));
+
+            base.RegisterInputsAndOutputs();
+        }
+    }
+
+    [ElementName("Pow")]
+    [ElementCategory(BuiltinElementCategories.MATH)]
+    [ElementDescription("Raises a number to the power of another.")]
+    [ElementSearchTags("power", "exponentiation", "^")]
+    [RequiresTransaction(false)]
+    public class dynPow : dynBuiltinFunction
+    {
+        public dynPow()
+            : base("pow")
+        {
+            InPortData.Add(new PortData("x", "operand", typeof(double)));
+            InPortData.Add(new PortData("y", "operand", typeof(double)));
+            OutPortData = new PortData("x^y", "result", typeof(double));
+
+            base.RegisterInputsAndOutputs();
+        }
+    }
+
     [ElementName("Round")]
     [ElementCategory(BuiltinElementCategories.MATH)]
     [ElementDescription("Rounds a number to the nearest integer value.")]
@@ -1809,6 +1846,21 @@ namespace Dynamo.Elements
         {
             Type type = typeof(T);
             OutPortData = new PortData("", type.Name, type);
+
+            //add an edit window option to the 
+            //main context window
+            System.Windows.Controls.MenuItem editWindowItem = new System.Windows.Controls.MenuItem();
+            editWindowItem.Header = "Edit...";
+            editWindowItem.IsCheckable = false;
+
+            this.MainContextMenu.Items.Add(editWindowItem);
+
+            editWindowItem.Click += new RoutedEventHandler(editWindowItem_Click);
+        }
+
+        public virtual void editWindowItem_Click(object sender, RoutedEventArgs e)
+        {
+            //override in child classes
         }
 
         public override void SaveElement(XmlDocument xmlDoc, XmlElement dynEl)
@@ -1841,6 +1893,23 @@ namespace Dynamo.Elements
         public override Expression Evaluate(FSharpList<Expression> args)
         {
             return Expression.NewNumber(this.Value);
+        }
+
+        public override void editWindowItem_Click(object sender, RoutedEventArgs e)
+        {
+
+            dynEditWindow editWindow = new dynEditWindow();
+
+            //set the text of the edit window to begin
+            editWindow.editText.Text = base.Value.ToString();
+
+            if (editWindow.ShowDialog() != true)
+            {
+                return;
+            }
+
+            //set the value from the text in the box
+            this.Value = this.DeserializeValue(editWindow.editText.Text);
         }
     }
 
@@ -1913,6 +1982,23 @@ namespace Dynamo.Elements
         {
             return "\"" + base.PrintExpression() + "\"";
         }
+
+        public override void editWindowItem_Click(object sender, RoutedEventArgs e)
+        {
+
+            dynEditWindow editWindow = new dynEditWindow();
+
+            //set the text of the edit window to begin
+            editWindow.editText.Text = base.Value.ToString();
+
+            if (editWindow.ShowDialog() != true)
+            {
+                return;
+            }
+
+            //set the value from the text in the box
+            this.Value = this.DeserializeValue(editWindow.editText.Text);
+        }
     }
 
     #endregion
@@ -1923,12 +2009,13 @@ namespace Dynamo.Elements
     [RequiresTransaction(false)]
     public class dynDoubleInput : dynDouble
     {
-        dynTextBox tb;
+        //dynTextBox tb;
+        TextBlock nodeLabel;
 
         public dynDoubleInput()
         {
             //add a text box to the input grid of the control
-            tb = new dynTextBox();
+            /*tb = new dynTextBox();
             tb.HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch;
             tb.VerticalAlignment = System.Windows.VerticalAlignment.Center;
             inputGrid.Children.Add(tb);
@@ -1937,6 +2024,17 @@ namespace Dynamo.Elements
             tb.IsNumeric = true;
             tb.Text = "0.0";
             tb.OnChangeCommitted += delegate { this.Value = this.DeserializeValue(this.tb.Text); };
+            */
+
+            nodeLabel = new System.Windows.Controls.TextBlock();
+            nodeLabel.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
+            nodeLabel.VerticalAlignment = System.Windows.VerticalAlignment.Center;
+            nodeLabel.Text = "0.0";
+            nodeLabel.FontSize = 24;
+
+            inputGrid.Children.Add(nodeLabel);
+            System.Windows.Controls.Grid.SetColumn(nodeLabel, 0);
+            System.Windows.Controls.Grid.SetRow(nodeLabel, 0);
 
             base.RegisterInputsAndOutputs();
 
@@ -1944,6 +2042,7 @@ namespace Dynamo.Elements
             //and make this so it's not so wide
             this.inputGrid.Margin = new Thickness(10, 5, 10, 5);
             this.topControl.Width = 100;
+            this.topControl.Height = 50;
 
             this.UpdateLayout();
         }
@@ -1960,7 +2059,8 @@ namespace Dynamo.Elements
                     return;
 
                 base.Value = value;
-                this.tb.Text = value.ToString();
+                //this.tb.Text = value.ToString();
+                this.nodeLabel.Text = dynUtils.Ellipsis(value.ToString(), 5);
                 //this.tb.Pending = false;
             }
         }
@@ -1976,6 +2076,8 @@ namespace Dynamo.Elements
                 return 0;
             }
         }
+
+
     }
 
     //MDJ - added by Matt Jezyk 10.27.2011
@@ -2011,6 +2113,7 @@ namespace Dynamo.Elements
                 var pos = Mouse.GetPosition(elementCanvas);
                 Canvas.SetLeft(displayBox, pos.X);
             };
+
             tb_slider.PreviewMouseDown += delegate
             {
                 if (this.IsEnabled && !elementCanvas.Children.Contains(displayBox))
@@ -2021,12 +2124,12 @@ namespace Dynamo.Elements
                     Canvas.SetLeft(displayBox, pos.X);
                 }
             };
+
             tb_slider.PreviewMouseUp += delegate
             {
                 if (elementCanvas.Children.Contains(displayBox))
                     elementCanvas.Children.Remove(displayBox);
             };
-
 
             mintb = new dynTextBox();
             mintb.MaxLength = 3;
@@ -2072,17 +2175,23 @@ namespace Dynamo.Elements
             inputGrid.Children.Add(mintb);
             inputGrid.Children.Add(maxtb);
 
+            //make the middle column containing the slider
+            //take up most of the width
+            inputGrid.ColumnDefinitions[1].Width = new GridLength(.75 * this.topControl.Width);
+
             System.Windows.Controls.Grid.SetColumn(mintb, 0);
             System.Windows.Controls.Grid.SetColumn(maxtb, 2);
 
             base.RegisterInputsAndOutputs();
 
+            this.inputGrid.Margin = new Thickness(10, 5, 10, 5);
+
+
             displayBox = new TextBox()
             {
                 IsReadOnly = true,
                 Background = Brushes.White,
-                Foreground = Brushes.Black,
-                MaxLength = 5
+                Foreground = Brushes.Black
             };
             Canvas.SetTop(displayBox, this.Height);
             Canvas.SetZIndex(displayBox, int.MaxValue);
@@ -2096,18 +2205,18 @@ namespace Dynamo.Elements
             displayBox.SetBinding(TextBox.TextProperty, binding);
         }
 
-        #region Data Conversion
+        #region Value Conversion
         [ValueConversion(typeof(double), typeof(String))]
         private class DoubleDisplay : IValueConverter
         {
-            public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+            public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
             {
                 return ((double)value).ToString("F4");
             }
 
-            public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+            public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
             {
-                throw new NotImplementedException();
+                return null;
             }
         }
         #endregion
@@ -2180,6 +2289,7 @@ namespace Dynamo.Elements
                 }
             }
         }
+
     }
 
     [ElementName("Boolean")]
@@ -2281,12 +2391,14 @@ namespace Dynamo.Elements
     [RequiresTransaction(false)]
     public class dynStringInput : dynString
     {
-        dynTextBox tb;
+        //dynTextBox tb;
+        TextBlock tb;
 
         public dynStringInput()
         {
             //add a text box to the input grid of the control
-            tb = new dynTextBox();
+            //tb = new dynTextBox();
+            tb = new TextBlock();
             tb.HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch;
             tb.VerticalAlignment = System.Windows.VerticalAlignment.Center;
             inputGrid.Children.Add(tb);
@@ -2294,9 +2406,12 @@ namespace Dynamo.Elements
             System.Windows.Controls.Grid.SetRow(tb, 0);
             tb.Text = "";
 
-            tb.OnChangeCommitted += delegate { this.Value = this.tb.Text; };
+            //tb.OnChangeCommitted += delegate { this.Value = this.tb.Text; };
 
             base.RegisterInputsAndOutputs();
+
+            //remove the margins
+            this.inputGrid.Margin = new Thickness(10, 5, 10, 5);
         }
 
         public override string Value
@@ -2307,9 +2422,12 @@ namespace Dynamo.Elements
                     return;
 
                 base.Value = value;
+
+                this.tb.Text = dynUtils.Ellipsis(this.Value, 30);
             }
         }
 
+        /*
         void tb_LostFocus(object sender, RoutedEventArgs e)
         {
             this.Value = this.tb.Text;
@@ -2319,7 +2437,7 @@ namespace Dynamo.Elements
         {
             if (e.Key.Equals(Keys.Enter))
                 this.Value = this.tb.Text;
-        }
+        }*/
 
         protected override string DeserializeValue(string val)
         {
@@ -2344,7 +2462,7 @@ namespace Dynamo.Elements
                         if (attr.Name.Equals("value"))
                         {
                             this.Value = this.DeserializeValue(System.Web.HttpUtility.UrlDecode(attr.Value));
-                            this.tb.Text = this.Value;
+                            this.tb.Text = dynUtils.Ellipsis(this.Value, 30);
                         }
 
                     }
@@ -2664,4 +2782,3 @@ namespace Dynamo.Elements
 
     #endregion
 }
-

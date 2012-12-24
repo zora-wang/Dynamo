@@ -256,7 +256,7 @@ namespace Dynamo.Elements
         }
     }
 
-    [ElementName("Reference Point On Face")]
+    [ElementName("Reference Point On Face by UV components")]
     [ElementCategory(BuiltinElementCategories.REVIT)]
     [ElementDescription("Creates an element which owns a reference point on a selected face.")]
     [RequiresTransaction(true)]
@@ -294,7 +294,7 @@ namespace Dynamo.Elements
 
                 PointElementReference facePoint = this.UIDocument.Application.Application.Create.NewPointOnFace(r, new UV(u, v));
 
-                ReferencePoint pt;
+                ReferencePoint pt = null;
 
                 if (this.Elements.Any())
                 {
@@ -306,14 +306,84 @@ namespace Dynamo.Elements
                     }
                     else
                     {
-                        pt = this.UIDocument.Document.FamilyCreate.NewReferencePoint(facePoint);
-                        this.Elements[0] = pt.Id;
+                        if (this.UIDocument.Document.IsFamilyDocument)
+                        {
+                            pt = this.UIDocument.Document.FamilyCreate.NewReferencePoint(facePoint);
+                            this.Elements[0] = pt.Id;
+                        }
                     }
                 }
                 else
                 {
-                    pt = this.UIDocument.Document.FamilyCreate.NewReferencePoint(facePoint);
-                    this.Elements.Add(pt.Id);
+                    if (this.UIDocument.Document.IsFamilyDocument)
+                    {
+                        pt = this.UIDocument.Document.FamilyCreate.NewReferencePoint(facePoint);
+                        this.Elements.Add(pt.Id);
+                    }
+                }
+
+                return Expression.NewContainer(pt);
+            }
+            else
+            {
+                throw new Exception("Cannot cast first argument to Face.");
+            }
+        }
+    }
+
+    [ElementName("Reference Point On Face by UV")]
+    [ElementCategory(BuiltinElementCategories.REVIT)]
+    [ElementDescription("Creates an element which owns a reference point on a selected face.")]
+    [RequiresTransaction(true)]
+    public class dynPointOnFaceUV : dynNode
+    {
+        public dynPointOnFaceUV()
+        {
+            InPortData.Add(new PortData("face", "ModelFace", typeof(Reference)));
+            InPortData.Add(new PortData("UV", "U Parameter on face.", typeof(object)));
+            OutPortData = new PortData("pt", "PointOnFace", typeof(ReferencePoint));
+
+            base.RegisterInputsAndOutputs();
+        }
+
+        public override Expression Evaluate(FSharpList<Expression> args)
+        {
+            object arg0 = ((Expression.Container)args[0]).Item;
+            if (arg0 is Reference)
+            {
+               
+                Reference r = arg0 as Reference;
+
+                UV uv = ((Expression.Container)args[1]).Item as UV;
+
+                PointElementReference facePoint = this.UIDocument.Application.Application.Create.NewPointOnFace(r, uv);
+
+                ReferencePoint pt = null;
+
+                if (this.Elements.Any())
+                {
+                    Element e;
+                    if (dynUtils.TryGetElement(this.Elements[0], out e))
+                    {
+                        pt = e as ReferencePoint;
+                        pt.SetPointElementReference(facePoint);
+                    }
+                    else
+                    {
+                        if (this.UIDocument.Document.IsFamilyDocument)
+                        {
+                            pt = this.UIDocument.Document.FamilyCreate.NewReferencePoint(facePoint);
+                            this.Elements[0] = pt.Id;
+                        }
+                    }
+                }
+                else
+                {
+                    if (this.UIDocument.Document.IsFamilyDocument)
+                    {
+                        pt = this.UIDocument.Document.FamilyCreate.NewReferencePoint(facePoint);
+                        this.Elements.Add(pt.Id);
+                    }
                 }
 
                 return Expression.NewContainer(pt);
@@ -390,7 +460,7 @@ namespace Dynamo.Elements
         {
             
             InPortData.Add(new PortData("pt", "The point to extract the plane from", typeof(object)));
-            OutPortData = new PortData("pl", "Plane", typeof(Plane));
+            OutPortData = new PortData("r", "Reference", typeof(Reference));
 
             //add a drop down list to the window
             combo = new ComboBox();
@@ -468,38 +538,29 @@ namespace Dynamo.Elements
             Plane p = null;
             Reference r = null;
             ReferencePoint pt = ((Expression.Container)args[0]).Item as ReferencePoint;
-            Transform t = pt.GetCoordinateSystem();
-            XYZ norm = t.BasisZ;
-            XYZ origin = TransformPoint(XYZ.Zero, t); // origin in 'local' coordinates to handle point element orientation 
+            //Transform t = pt.GetCoordinateSystem();
+            //XYZ norm = t.BasisZ;
+            //XYZ origin = TransformPoint(XYZ.Zero, t); // origin in 'local' coordinates to handle point element orientation 
 
-            r = pt.GetCoordinatePlaneReferenceXY();// how to get a planar reference out of the point's ref planes and make sketchplane based on it? returns REFERENCE_TYPE_NONE The reference is to an element. 
-            //r = pt.GetCoordinatePlaneReferenceXZ();
-            //p = new Plane(r.GlobalPoint,origin);
-            XYZ test = r.GlobalPoint;
-            p = new Plane(norm,origin);
-            try
+            int n = combo.SelectedIndex;
+            switch (n)
             {
-                SketchPlane sp = this.UIDocument.Document.FamilyCreate.NewSketchPlane(r); // this seems to fail with a "Can't get Geometry" exception, need to cast ref as a plane?
-
-                //testing sketch plane creation by making a new model curve on it
-                //Line line = this.UIDocument.Document.Application.Create.NewLine(origin, origin.Add(new XYZ(0, 100, 0)), true);
-               // ModelCurve modelcurve = this.UIDocument.Document.FamilyCreate.NewModelCurve(line, sp);
-
-                this.Elements.Add(sp.Id);
-                //this.Elements.Add(modelcurve.Id);
+                case 0: //combo.SelectedValue == "XY"
+                    r = pt.GetCoordinatePlaneReferenceXY();
+                    break;
+                case 1: //combo.SelectedValue == "XZ"
+                    r = pt.GetCoordinatePlaneReferenceXZ();
+                    break;
+                case 2: //combo.SelectedValue == "YZ"
+                    r = pt.GetCoordinatePlaneReferenceYZ();
+                    break;
+                default:
+                    r = pt.GetCoordinatePlaneReferenceXY();
+                    break;
             }
-            catch (Exception e) //this sees to fail with a "Can't get Geometry" exception, seems like GetCoordinatePlaneReferenceXY just passes pack a ref to the point, not the underlying ref plane
-            {
-                SketchPlane sp = this.UIDocument.Document.FamilyCreate.NewSketchPlane(p);//try using plane created from ref instead of passing ref directly into sketchplane constructor
-
-                //testing sketchplane creation by making a new model curve on it
-                //Line line = this.UIDocument.Document.Application.Create.NewLine(origin, origin.Add(new XYZ(0, 100, 0)), true);
-                //ModelCurve modelcurve = this.UIDocument.Document.FamilyCreate.NewModelCurve(line, sp);
-
-                this.Elements.Add(sp.Id);
-                //this.Elements.Add(modelcurve.Id);
-            }
-            return Expression.NewContainer(p);
+            
+            
+            return Expression.NewContainer(r);
         }
 
     }

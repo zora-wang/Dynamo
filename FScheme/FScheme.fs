@@ -166,6 +166,7 @@ let Subtract = math (-) "subtraction"
 let Multiply = math (*) "multiplication"
 let Divide = math (/) "division"
 let Modulus = math (%) "modulus"
+let Exponent = math ( ** ) "exponent"
 
 ///Simple wrapper for comparison operations.
 let boolMath (op : (IComparable -> IComparable -> bool)) name cont args =
@@ -447,6 +448,7 @@ and environment =
        "%", ref (Function(Modulus))
        "+", ref (Function(Add))
        "-", ref (Function(Subtract))
+       "pow", ref (Function(Exponent))
        "if", ref (Special(If))
        "let", ref (Special(Let))
        "letrec", ref (Special(LetRec))
@@ -531,7 +533,7 @@ and apply cont env fn args =
 let rep env = List.ofSeq >> parse >> List.head >> eval id env >> print
 
 ///REPL -- Read/Eval/Print Loop
-let rec repl output =
+let rec repl output : unit =
    printf "%s\n> " output
    try Console.ReadLine() |> rep environment |> repl
    with ex -> repl ex.Message
