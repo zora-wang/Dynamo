@@ -610,14 +610,25 @@ namespace Dynamo.Controls
             {
                 // get the repo name
                 Uri repoUri = new Uri(repoLocation);
-                string cloneLocation = Path.Combine(nodesLocation, repoUri.Segments.Last());
-                Repository.Clone(repoLocation, cloneLocation);
+                string localRepoLocation = Path.Combine(nodesLocation, repoUri.Segments.Last());
+
+                //clone only if the directory doesn't exist
+                if (!Directory.Exists(localRepoLocation))
+                {
+                    Repository.Clone(repoLocation, localRepoLocation);
+                }
+                else
+                {
+                    //update the repo
+                    Repository repo = new Repository(localRepoLocation);
+
+                    repo.Fetch("origin");
+                    Branch master = repo.Branches["master"];
+                    repo.Checkout(master);
+
+                    loadUserWorkspaces(localRepoLocation);
+                }
             }
-
-            // then recurse through all the Node subdirectories
-            // and load all the workspaces
-
-            
         }
 
         private void loadUserWorkspaces(string directory)

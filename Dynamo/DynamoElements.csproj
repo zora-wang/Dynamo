@@ -299,7 +299,7 @@ copy ..\..\..\packages\libgit2sharp\LibGit2Sharp\bin\Debug\LibGit2Sharp.dll  ..\
 copy ..\..\..\packages\libgit2sharp\LibGit2Sharp\bin\Debug\LibGit2Sharp.pdb  ..\..\..\DynamoRevit\bin\Debug\LibGit2Sharp.pdb
 
 if not exist ..\..\..\DynamoRevit\bin\Debug\NativeBinaries md ..\..\..\DynamoRevit\bin\Debug\NativeBinaries
-xcopy ..\..\..\packages\libgit2sharp\LibGit2Sharp\bin\Debug\NativeBinaries  ..\..\..\DynamoRevit\bin\Debug\NativeBinaries /e
+xcopy ..\..\..\packages\libgit2sharp\LibGit2Sharp\bin\Debug\NativeBinaries  ..\..\..\DynamoRevit\bin\Debug\NativeBinaries /e /y
 
 </PostBuildEvent>
   </PropertyGroup>
