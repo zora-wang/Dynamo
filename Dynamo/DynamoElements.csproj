@@ -294,7 +294,14 @@ copy ..\..\..\packages\Helix3D\NET40\HelixToolkit.Wpf.Input.dll ..\..\..\DynamoR
 copy ..\..\..\packages\Helix3D\NET40\HelixToolkit.Wpf.pdb ..\..\..\DynamoRevit\bin\Debug\HelixToolkit.Wpf.pdb
 copy ..\..\..\packages\Helix3D\NET40\HelixToolkit.Wpf.Input.pdb ..\..\..\DynamoRevit\bin\Debug\HelixToolkit.Wpf.Input.pdb
 copy ..\..\..\packages\miconvexhull_3e3d8e61febb\lib\MIConvexHullPlugin.dll  ..\..\..\DynamoRevit\bin\Debug\MIConvexHullPlugin.dll
-copy ..\..\..\packages\miconvexhull_3e3d8e61febb\lib\MIConvexHullPlugin.pdb  ..\..\..\DynamoRevit\bin\Debug\MIConvexHullPlugin.pdb</PostBuildEvent>
+copy ..\..\..\packages\miconvexhull_3e3d8e61febb\lib\MIConvexHullPlugin.pdb  ..\..\..\DynamoRevit\bin\Debug\MIConvexHullPlugin.pdb
+copy ..\..\..\packages\libgit2sharp\LibGit2Sharp\bin\Debug\LibGit2Sharp.dll  ..\..\..\DynamoRevit\bin\Debug\LibGit2Sharp.dll
+copy ..\..\..\packages\libgit2sharp\LibGit2Sharp\bin\Debug\LibGit2Sharp.pdb  ..\..\..\DynamoRevit\bin\Debug\LibGit2Sharp.pdb
+
+if not exist ..\..\..\DynamoRevit\bin\Debug\NativeBinaries md ..\..\..\DynamoRevit\bin\Debug\NativeBinaries
+xcopy ..\..\..\packages\libgit2sharp\LibGit2Sharp\bin\Debug\NativeBinaries  ..\..\..\DynamoRevit\bin\Debug\NativeBinaries /e
+
+</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
