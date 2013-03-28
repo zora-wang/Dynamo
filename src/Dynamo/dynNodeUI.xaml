@@ -5,8 +5,8 @@
     xmlns:local="clr-namespace:Dynamo.Controls"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:dropShadow="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero"
-    Height="300"
-    Width="160" 
+    Height="Auto"
+    Width="100" 
     Name="topControl" 
     Loaded="topControl_Loaded" 
     KeyUp="OnKeyUp" 
@@ -17,6 +17,15 @@
         <local:MarginConverter x:Key="MarginConverter" />
         <local:BooleanToBrushConverter x:Key="BooleanToBrushConverter"/>
        <local:StateToColorConverter x:Key="StateToColorConverter"/>
+        <Style  x:Key="nodeListViewStyle" TargetType="ListViewItem">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+            <Setter Property="BorderBrush" Value="DarkGray" />
+        </Style>
     </UserControl.Resources>
     <UserControl.ToolTip>
         <Grid Width ="Auto" MaxWidth="235" MaxHeight="200" Height="Auto">
@@ -37,118 +46,75 @@
             </StackPanel>
         </Grid>
    </UserControl.ToolTip>
-   <Grid Name="grid">
-      <Grid.ContextMenu>
-         <ContextMenu Name="MainContextMenu" x:FieldModifier="public" ContextMenuOpening="MainContextMenu_ContextMenuOpening">
+    <Border BorderThickness="2" BorderBrush="{Binding Path=IsSelected, Converter={StaticResource BooleanToBrushConverter}, Mode=OneWay}">
+        <Grid Name="grid" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{Binding Path=State, Converter={StaticResource StateToColorConverter}, Mode=OneWay}">
+        <Grid.RowDefinitions>
+            <RowDefinition Name="titleRow" Height="30"/>
+            <RowDefinition Name="outputsRow"/>
+            <RowDefinition Name="inputsRow"/>
+            <RowDefinition Name="miscRow"/>
+    </Grid.RowDefinitions>
+        <Grid.ContextMenu>
+            <ContextMenu Name="MainContextMenu" x:FieldModifier="public" ContextMenuOpening="MainContextMenu_ContextMenuOpening">
             <MenuItem Name="deleteElem_cm" Header="Delete" Click="deleteElem_cm_Click" />
-         </ContextMenu>
-      </Grid.ContextMenu>
-      <Grid Name="gridLeft" 
-            Margin="-7,5,0,5"
-            HorizontalAlignment="Left"
-            IsHitTestVisible="True" 
-            Background="Transparent"
-            Canvas.ZIndex="90">
-         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="50"/>
-            <!--<ColumnDefinition Width="Auto"/>-->
-         </Grid.ColumnDefinitions>
-      </Grid>
-      <Grid Name="gridRight" 
-              HorizontalAlignment="Right" 
-              VerticalAlignment="Stretch"
-              Margin="0,5,-7,5" 
-              IsHitTestVisible="True" 
-              Background="Transparent"
-              Canvas.ZIndex="90">
-         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="50"/>
-            <!--<ColumnDefinition Width="Auto"/>-->
-         </Grid.ColumnDefinitions>
-      </Grid>
-      <Canvas Canvas.Left="0" 
-                Canvas.Top="0" 
-                Name="elementCanvas" 
-                Margin="0,0,0,0">
-         <Rectangle HorizontalAlignment="Right" 
-                       Canvas.Left="0"
-                       Canvas.Top="0"
-                       Width="{Binding ElementName=topControl, Path=Width}"
-                       Height="{Binding ElementName=topControl, Path=Height}"
-                       Name="elementRectangle" 
-                       RadiusX="10" 
-                       RadiusY="10"
-                       Canvas.ZIndex="90"
-                       Stroke="{Binding Path=IsSelected, Converter={StaticResource BooleanToBrushConverter}, Mode=OneWay}" 
-                       StrokeThickness="2"
-                       Fill="{Binding Path=State, Converter={StaticResource StateToColorConverter}, Mode=OneWay}">
-            <Rectangle.Effect>
-               <DropShadowEffect Opacity="0" />
-            </Rectangle.Effect>
-            <!--<Rectangle.Fill>
+            </ContextMenu>
+        </Grid.ContextMenu>
+        <Canvas Name="elementCanvas" 
+                HorizontalAlignment="Stretch" 
+                VerticalAlignment="Stretch">
+            <Rectangle HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"
+                       Name="elementRectangle" >
+                <Rectangle.Effect>
+                    <DropShadowEffect Opacity="0" />
+                </Rectangle.Effect>
+                <!--<Rectangle.Fill>
                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1" >
                   <GradientStop Color="Yellow" Offset="0.0" />
                   <GradientStop Color="Orange" Offset="1" />
                </LinearGradientBrush>
             </Rectangle.Fill>-->
-         </Rectangle>
-         <!--<Rectangle HorizontalAlignment="Right" 
-                       Canvas.Left="0"
-                       Canvas.Top="0"
-                       Width="{Binding ElementName=topControl, Path=Width}"
-                       Height="{Binding ElementName=topControl, Path=Height}"
-                       Name="elementBorder" 
-                       RadiusX="10" 
-                       RadiusY="10"
-                       Stroke="#FF555555"
-                       StrokeThickness="2"
-                       Canvas.ZIndex="90" 
-                       IsHitTestVisible="False">
-            </Rectangle>-->
-         <!--<Rectangle HorizontalAlignment="Right" 
-                     Canvas.Left="0"
-                     Canvas.Top="2"
-                     Width="{Binding ElementName=topControl, Path=Width}"
-                     Height="20" 
-                     Name="elementShine" 
-                     RadiusX="10" 
-                     RadiusY="10"
-                     Canvas.ZIndex="91"
-                     IsHitTestVisible="False">
-            <Rectangle.Fill>
-               <SolidColorBrush Opacity=".25" Color="white" />
-            </Rectangle.Fill>
-         </Rectangle>-->
-         <TextBlock  Height="Auto" 
-                     Name="nickNameBlock" 
-                     VerticalAlignment="Center" 
-                     HorizontalAlignment="Left"
-                     Text="{Binding NickName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                     Margin="{Binding RelativeSource={RelativeSource Self}, Path=ActualHeight, Converter={StaticResource MarginConverter}, Mode=OneWay}"
-                     FontFamily="Arial"
-                     FontSize="12" 
-                     FontWeight="Normal" 
-                     TextAlignment="Center" 
-                     IsHitTestVisible="False" 
-                     Canvas.ZIndex="99" 
-                     Width="{Binding ElementName=grid, Path=ActualWidth}"
-                     MaxWidth="{Binding ElementName=grid, Path=ActualWidth}"
-                     TextWrapping="Wrap"
-                     Background="Transparent" FontStyle="Normal" Foreground="#FF141414">
-            <!--<TextBox.Background>
-               <SolidColorBrush />
-            </TextBox.Background>-->
-            <!-- <TextBlock.Effect>
-               <DropShadowEffect ShadowDepth="0" Color="WhiteSmoke" BlurRadius="4" />
-            </TextBlock.Effect> -->
-         </TextBlock>
-      </Canvas>
-      <Grid Name="inputGrid"
+            </Rectangle>
+        </Canvas>
+        <ListView Name="gridLeft" ItemContainerStyle="{StaticResource nodeListViewStyle}"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+                  Height="Auto"
+            IsHitTestVisible="True" 
+            Grid.Row="2" ItemsSource="{Binding Path=InPorts}" BorderThickness="0" Margin="0" Padding="0" >
+        </ListView>
+        <ListView Name="gridRight" ItemContainerStyle="{StaticResource nodeListViewStyle}"
+              HorizontalAlignment="Stretch" 
+              VerticalAlignment="Stretch"
+                  Height="Auto"
+              IsHitTestVisible="True" 
+              Grid.Row="1" ItemsSource="{Binding Path=OutPorts}" BorderThickness="0" Margin="0" Padding="0" >
+        </ListView>
+        <Grid Name="inputGrid"
             x:FieldModifier="public"
             VerticalAlignment="Stretch"
             HorizontalAlignment="Stretch"
             Height="Auto"
             Width="Auto"
-            Margin="45,5,45,5"/>
-   </Grid>
+              Margin="10"
+            Grid.Row="3"/>
+            <Border Grid.Row="0" Height="30" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+        <TextBlock  Name="nickNameBlock" 
+                     VerticalAlignment="Center" 
+                     HorizontalAlignment="Center"
+                    Width="Auto"
+                     Text="{Binding NickName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     FontFamily="Arial"
+                     FontSize="12" 
+                     FontWeight="Normal" 
+                     TextAlignment="Center" 
+                     IsHitTestVisible="False" 
+                     TextWrapping="Wrap"
+                     Background="Transparent" 
+                    FontStyle="Normal" 
+                    Foreground="#FF141414">
+        </TextBlock>
+            </Border>
+        </Grid>
+    </Border>
 </UserControl>

@@ -177,8 +177,8 @@ namespace Dynamo.Nodes
 
             NodeUI.RegisterAllPorts();
 
-            NodeUI.Width = 450;
-            NodeUI.Height = 240 + 5;
+            //NodeUI.Width = 450;
+            //NodeUI.Height = 240 + 5;
 
             //Loaded += new RoutedEventHandler(topControl_Loaded);
 

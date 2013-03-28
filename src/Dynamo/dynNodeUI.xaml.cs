@@ -70,7 +70,7 @@ namespace Dynamo.Controls
         LacingType lacingType = LacingType.SHORTEST;
         dynNode nodeLogic;
         bool isSelected = false;
-        int preferredHeight = 30;
+        //int preferredHeight = 30;
         #endregion
 
         public delegate void SetToolTipDelegate(string message);
@@ -107,6 +107,7 @@ namespace Dynamo.Controls
             set 
             { 
                 inPorts = value;
+                NotifyPropertyChanged("InPorts");
             }
         }
 
@@ -116,6 +117,7 @@ namespace Dynamo.Controls
             set 
             {
                 outPorts = value;
+                NotifyPropertyChanged("OutPorts");
             }
         }
 
@@ -212,18 +214,18 @@ namespace Dynamo.Controls
             }
         }
 
-        public int PreferredHeight
-        {
-            get
-            {
-                return preferredHeight;
-            }
-            set
-            {
-                preferredHeight = value;
-                NotifyPropertyChanged("PreferredHeight");
-            }
-        }
+        //public int PreferredHeight
+        //{
+        //    get
+        //    {
+        //        return preferredHeight;
+        //    }
+        //    set
+        //    {
+        //        preferredHeight = value;
+        //        NotifyPropertyChanged("PreferredHeight");
+        //    }
+        //}
         #endregion
 
         #region constructors
@@ -240,6 +242,9 @@ namespace Dynamo.Controls
 
             //set the main grid's data context to 
             //this element
+            grid.DataContext = this;
+            gridLeft.DataContext = this;
+            gridRight.DataContext = this;
             nickNameBlock.DataContext = this;
             elementRectangle.DataContext = this;
             topControl.DataContext = this;
@@ -251,8 +256,8 @@ namespace Dynamo.Controls
             outPorts.CollectionChanged += new System.Collections.Specialized.NotifyCollectionChangedEventHandler(ports_collectionChanged);
             this.IsSelected = false;
 
-            Binding heightBinding = new Binding("PreferredHeight");
-            topControl.SetBinding(UserControl.HeightProperty, heightBinding);
+            //Binding heightBinding = new Binding("PreferredHeight");
+            //topControl.SetBinding(UserControl.HeightProperty, heightBinding);
             
             State = ElementState.DEAD;
 
@@ -276,14 +281,14 @@ namespace Dynamo.Controls
 
         void ports_collectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
-            PreferredHeight = Math.Max(inPorts.Count * 20 + 10, outPorts.Count * 20 + 10); //spacing for inputs + title space + bottom space
+            //PreferredHeight = Math.Max(inPorts.Count * 20 + 10, outPorts.Count * 20 + 10); //spacing for inputs + title space + bottom space
         }
 
         #endregion
 
         public void RegisterAllPorts()
         {
-            ResizeElementForPorts();
+            //ResizeElementForPorts();
             SetupPortGrids();
             RegisterInputs();
             RegisterOutputs();
@@ -367,37 +372,37 @@ namespace Dynamo.Controls
         /// </summary>
         public void SetupPortGrids()
         {
-            int count = 0;
-            int numRows = gridLeft.RowDefinitions.Count;
-            foreach (var input in nodeLogic.InPortData)
-            {
-                if (count++ < numRows)
-                    continue;
+            //int count = 0;
+            //int numRows = gridLeft.RowDefinitions.Count;
+            //foreach (var input in nodeLogic.InPortData)
+            //{
+            //    if (count++ < numRows)
+            //        continue;
 
-                RowDefinition rd = new RowDefinition();
-                gridLeft.RowDefinitions.Add(rd);
-            }
+            //    RowDefinition rd = new RowDefinition();
+            //    gridLeft.RowDefinitions.Add(rd);
+            //}
 
-            if (count < numRows)
-            {
-                gridLeft.RowDefinitions.RemoveRange(count, numRows - count);
-            }
+            //if (count < numRows)
+            //{
+            //    gridLeft.RowDefinitions.RemoveRange(count, numRows - count);
+            //}
 
-            count = 0;
-            numRows = gridRight.RowDefinitions.Count;
-            foreach (var input in nodeLogic.OutPortData)
-            {
-                if (count++ < numRows)
-                    continue;
+            //count = 0;
+            //numRows = gridRight.RowDefinitions.Count;
+            //foreach (var input in nodeLogic.OutPortData)
+            //{
+            //    if (count++ < numRows)
+            //        continue;
 
-                RowDefinition rd = new RowDefinition();
-                gridRight.RowDefinitions.Add(rd);
-            }
+            //    RowDefinition rd = new RowDefinition();
+            //    gridRight.RowDefinitions.Add(rd);
+            //}
 
-            if (count < numRows)
-            {
-                gridRight.RowDefinitions.RemoveRange(count, numRows - count);
-            }
+            //if (count < numRows)
+            //{
+            //    gridRight.RowDefinitions.RemoveRange(count, numRows - count);
+            //}
         }
 
         /// <summary>
@@ -420,9 +425,9 @@ namespace Dynamo.Controls
                 selectionBinding.Converter = new BooleanToBrushConverter();
                 port.ellipse1.SetBinding(Ellipse.StrokeProperty, selectionBinding);
 
-                Binding fillBinding = new Binding("State");
-                fillBinding.Converter = new StateToColorConverter();
-                port.ellipse1.SetBinding(Ellipse.FillProperty, fillBinding);
+                //Binding fillBinding = new Binding("State");
+                //fillBinding.Converter = new StateToColorConverter();
+                //port.ellipse1.SetBinding(Ellipse.FillProperty, fillBinding);
 
                 portDataDict[port] = pd;
                 count++;
@@ -449,7 +454,7 @@ namespace Dynamo.Controls
             {
                 //int index = inPorts.FindIndex(x => x == inport);
                 int index = inPorts.IndexOf(inport);
-                gridLeft.Children.Remove(inport);
+                //gridLeft.Children.Remove(inport);
 
                 while (inport.Connectors.Any())
                 {
@@ -478,9 +483,9 @@ namespace Dynamo.Controls
                 selectionBinding.Converter = new BooleanToBrushConverter();
                 port.ellipse1.SetBinding(Ellipse.StrokeProperty, selectionBinding);
 
-                Binding fillBinding = new Binding("State");
-                fillBinding.Converter = new StateToColorConverter();
-                port.ellipse1.SetBinding(Ellipse.FillProperty, fillBinding);
+                //Binding fillBinding = new Binding("State");
+                //fillBinding.Converter = new StateToColorConverter();
+                //port.ellipse1.SetBinding(Ellipse.FillProperty, fillBinding);
 
                 portDataDict[port] = pd;
                 count++;
@@ -540,9 +545,9 @@ namespace Dynamo.Controls
 
                     p.PortType = PortType.INPUT;
                     InPorts.Add(p);
-                    gridLeft.Children.Add(p);
-                    Grid.SetColumn(p, 0);
-                    Grid.SetRow(p, index);
+                    //gridLeft.Children.Add(p);
+                    //Grid.SetColumn(p, 0);
+                    //Grid.SetRow(p, index);
 
                     p.Owner = this;
                     p.PortName = name;
@@ -567,9 +572,9 @@ namespace Dynamo.Controls
                     p.PortType = PortType.OUTPUT;
                     OutPorts.Add(p);
                     //portTextBlocks[p] = tb;
-                    gridRight.Children.Add(p);
-                    Grid.SetColumn(p, 1);
-                    Grid.SetRow(p, index);
+                    //gridRight.Children.Add(p);
+                    //Grid.SetColumn(p, 1);
+                    //Grid.SetRow(p, index);
 
                     p.Owner = this;
                     p.PortName = name;
@@ -578,11 +583,17 @@ namespace Dynamo.Controls
                     p.PortConnected += new PortConnectedHandler(p_PortConnected);
                     p.PortDisconnected += new PortConnectedHandler(p_PortDisconnected);
 
-                    //flip the right hand ports
-                    ScaleTransform trans = new ScaleTransform(-1, 1, 25, p.Height / 2);
-                    p.portGrid.RenderTransform = trans;
-                    p.portNameTb.Margin = new Thickness(0, 0, 15, 0);
+                    p.portGrid.ColumnDefinitions[0].Width = new GridLength(30, GridUnitType.Star);
+                    p.portGrid.ColumnDefinitions[1].Width = new GridLength(30, GridUnitType.Star);
+                    p.portNameTb.SetValue(Grid.ColumnProperty, 0);
+                    p.ellipse1.SetValue(Grid.ColumnProperty, 1);
+                    p.ellipse1Dot.SetValue(Grid.ColumnProperty, 1);
                     p.portNameTb.TextAlignment = TextAlignment.Right;
+                    //flip the right hand ports
+                    //ScaleTransform trans = new ScaleTransform(-1, 1, p.ActualWidth/2, p.ActualHeight / 2);
+                    //p.portGrid.RenderTransform = trans;
+                    //p.portNameTb.Margin = new Thickness(0, 0, 15, 0);
+                    //p.portNameTb.TextAlignment = TextAlignment.Right;
                     return p;
                 }
             }
