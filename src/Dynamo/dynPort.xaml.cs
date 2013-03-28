@@ -133,8 +133,16 @@ namespace Dynamo.Connectors
             this.index = index;
             InitializeComponent();
 
-            this.MouseEnter += delegate { foreach (var c in connectors) c.Highlight(); };
-            this.MouseLeave += delegate { foreach (var c in connectors) c.Unhighlight(); };
+            this.MouseEnter += delegate 
+            { 
+                foreach (var c in connectors) c.Highlight();
+                portGrid.Background = new SolidColorBrush(Colors.LightGray);
+            };
+            this.MouseLeave += delegate 
+            { 
+                foreach (var c in connectors) c.Unhighlight();
+                portGrid.Background = new SolidColorBrush(Colors.White);
+            };
 
             portNameTb.DataContext = this;
         }
@@ -145,7 +153,7 @@ namespace Dynamo.Connectors
         {
             connectors.Add(connector);
 
-            ellipse1Dot.Fill = System.Windows.Media.Brushes.Black;
+            //ellipse1Dot.Fill = System.Windows.Media.Brushes.Black;
 
             //throw the event for a connection
             OnPortConnected(EventArgs.Empty);
@@ -165,7 +173,7 @@ namespace Dynamo.Connectors
             //don't set back to white if
             //there are still connectors on this port
             if (connectors.Count == 0)
-                ellipse1Dot.Fill = System.Windows.Media.Brushes.White;
+                //ellipse1Dot.Fill = System.Windows.Media.Brushes.White;
 
             if (connectors.Count == 0)
                 Owner.State = ElementState.DEAD;
@@ -186,7 +194,7 @@ namespace Dynamo.Connectors
         #region private methods
         Point UpdateCenter()
         {
-            GeneralTransform transform = ellipse1.TransformToAncestor(dynSettings.Workbench);
+            GeneralTransform transform = this.TransformToAncestor(dynSettings.Workbench);
             Point rootPoint = transform.Transform(new Point(0, 0));
 
             double x = rootPoint.X;
@@ -194,15 +202,14 @@ namespace Dynamo.Connectors
 
             if (this.portType == Dynamo.Connectors.PortType.OUTPUT)
             {
-                //x += this.Width / 2;
+                x += this.ActualWidth;
             }
-            else
-            {
+            //else
+            //{
                 //x += this.Width / 2;
-                x += ellipse1.Width / 2;
-            }
+            //}
             //y += this.Height / 2;
-            y += ellipse1.Height / 2;
+            y += this.ActualHeight / 2;
 
             return new Point(x, y);
 
@@ -289,6 +296,26 @@ namespace Dynamo.Connectors
         {
             foreach (var c in connectors.ToList())
                 c.Kill();
+        }
+
+        private void connector_MouseEnter(object sender, MouseEventArgs e)
+        {
+
+        }
+
+        private void connector_MouseLeave(object sender, MouseEventArgs e)
+        {
+
+        }
+
+        private void portGrid_MouseEnter(object sender, MouseEventArgs e)
+        {
+
+        }
+
+        private void portGrid_MouseLeave(object sender, MouseEventArgs e)
+        {
+
         }
     }
 

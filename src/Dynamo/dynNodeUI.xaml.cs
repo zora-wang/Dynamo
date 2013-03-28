@@ -423,7 +423,8 @@ namespace Dynamo.Controls
                 port.DataContext = this;
                 Binding selectionBinding = new Binding("IsSelected");
                 selectionBinding.Converter = new BooleanToBrushConverter();
-                port.ellipse1.SetBinding(Ellipse.StrokeProperty, selectionBinding);
+                //port.ellipse1.SetBinding(Ellipse.StrokeProperty, selectionBinding);
+                //port.connector.SetBinding(Rectangle.FillProperty, selectionBinding);
 
                 //Binding fillBinding = new Binding("State");
                 //fillBinding.Converter = new StateToColorConverter();
@@ -481,7 +482,8 @@ namespace Dynamo.Controls
                 port.DataContext = this;
                 Binding selectionBinding = new Binding("IsSelected");
                 selectionBinding.Converter = new BooleanToBrushConverter();
-                port.ellipse1.SetBinding(Ellipse.StrokeProperty, selectionBinding);
+                //port.ellipse1.SetBinding(Ellipse.StrokeProperty, selectionBinding);
+                //port.connector.SetBinding(Rectangle.FillProperty, selectionBinding);
 
                 //Binding fillBinding = new Binding("State");
                 //fillBinding.Converter = new StateToColorConverter();
@@ -583,12 +585,13 @@ namespace Dynamo.Controls
                     p.PortConnected += new PortConnectedHandler(p_PortConnected);
                     p.PortDisconnected += new PortConnectedHandler(p_PortDisconnected);
 
-                    p.portGrid.ColumnDefinitions[0].Width = new GridLength(30, GridUnitType.Star);
-                    p.portGrid.ColumnDefinitions[1].Width = new GridLength(30, GridUnitType.Star);
-                    p.portNameTb.SetValue(Grid.ColumnProperty, 0);
-                    p.ellipse1.SetValue(Grid.ColumnProperty, 1);
-                    p.ellipse1Dot.SetValue(Grid.ColumnProperty, 1);
+                    //p.portGrid.ColumnDefinitions[0].Width = new GridLength(30, GridUnitType.Star);
+                    //p.portGrid.ColumnDefinitions[1].Width = new GridLength(30, GridUnitType.Star);
+                    //p.portNameTb.SetValue(Grid.ColumnProperty, 0);
+                    ////p.ellipse1.SetValue(Grid.ColumnProperty, 1);
+                    //p.ellipse1Dot.SetValue(Grid.ColumnProperty, 1);
                     p.portNameTb.TextAlignment = TextAlignment.Right;
+
                     //flip the right hand ports
                     //ScaleTransform trans = new ScaleTransform(-1, 1, p.ActualWidth/2, p.ActualHeight / 2);
                     //p.portGrid.RenderTransform = trans;

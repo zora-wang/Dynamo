@@ -6,17 +6,13 @@
     MouseLeftButtonDown="UserControl_MouseLeftButtonDown" 
     Background="{x:Null}">
     <Grid Name="mainGrid" Background="White">
-            <Grid Name="portGrid" Margin="0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="30"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+            <Grid Name="portGrid" Margin="0" Height="30" MouseEnter="portGrid_MouseEnter" MouseLeave="portGrid_MouseLeave">
                 <Grid.ToolTip>
                     <ToolTip Name="toolTip1">
                         <TextBlock Name="toolTipText" FontFamily="Courier New" FontSize="11">This is the port's tooltip</TextBlock>
                     </ToolTip>
                 </Grid.ToolTip>
-                <Ellipse Height="20" 
+                <!--<Ellipse Height="20" 
                         Width="20" 
                         Name="ellipse1" 
                         HorizontalAlignment="Center" 
@@ -33,7 +29,7 @@
                             <MenuItem Header="Item3"/>
                         </ContextMenu>
                     </Ellipse.ContextMenu>
-                </Ellipse>
+                </Ellipse>-->
                 <!--<Ellipse Height="10" 
                         Width="10" 
                         Name="alwaysWhite" 
@@ -41,15 +37,16 @@
                         VerticalAlignment="Center" 
                         Fill="White" Margin="5" Grid.Column="0">-->
                 <!--</Ellipse>-->
-                <Ellipse Height="6" 
+                <!--<Ellipse Height="6" 
                         Width="6" 
                         Name="ellipse1Dot" 
                         HorizontalAlignment="Center" 
                         VerticalAlignment="Center" 
                         Fill="White" 
-                        Grid.Column="0">
-                </Ellipse>
+                        Grid.Column="0">-->
+                <!--</Ellipse>-->
                 <TextBlock Name="portNameTb" 
+                           Margin="5,0,5,0"
                            Padding="0,6,0,6"
                        Width="Auto"
                        Text="{Binding Path=PortName,Mode=OneWay}" 
