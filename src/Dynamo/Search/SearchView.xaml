@@ -1,0 +1,105 @@
+﻿
+  <UserControl x:Class="Dynamo.Search.SearchView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d" 
+             Visibility="{Binding Path=Visible}" d:DesignWidth="447" x:Name="SearchControl" MaxHeight="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Border}}, Path=ActualHeight}">
+    
+  <Grid Background="Black">
+
+    <StackPanel x:Name="RSearchContainerStackPanel"  Margin="0">
+      
+      <StackPanel Name="RSearchBoxStackPanel" Orientation="Horizontal">
+
+        <TextBox Name="SearchTextBox" Foreground="WhiteSmoke" Background="#222" BorderThickness="0" FontSize ="18" Padding="10,15,5,10" Margin ="0"
+                       IsEnabled="True" TextChanged="SearchTextBox_TextChanged" VerticalAlignment="Stretch" Width="355" Text="{Binding Path=SearchText,Mode=TwoWay}" />
+
+        <ToggleButton Name="RSearchBoxIncludeOnline" Margin="0" Width="90" FontSize="24" Foreground="White" ToolTip="Include nodes from online" 
+                      Style="{DynamicResource ResourceKey=SSearchOnlineToggleButton}" IsChecked="{Binding IncludePackageManagerSearchElements, Mode=TwoWay}" Tag="..\Images\cloud_download_arrow_white.png" />
+
+      </StackPanel>
+
+      <ScrollViewer HorizontalAlignment="Stretch" Margin="0" Name="RSearchResultsScrollView" VerticalAlignment="Stretch" 
+                      VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" MaxHeight="{Binding ElementName=SearchControl, Path=MaxHeight}" Background="Black" BorderThickness="0" Width="{Binding Path=ActualWidth,ElementName=SearchControl}">
+
+          <ListBox Name="SearchResultsListBox" ItemsSource="{Binding Path=SearchResults}" 
+                   BorderThickness="0" Padding="0" Background="Black" SelectedIndex="{Binding Path=SelectedIndex}">
+
+          <ListBox.ItemContainerStyle>
+            <Style TargetType="ListBoxItem">
+              <Style.Resources>
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
+                     Color="#FFF"/>
+                <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}"
+                     Color="#FFF" />
+              </Style.Resources>
+            </Style>
+          </ListBox.ItemContainerStyle>
+                       
+          <ListBox.ItemTemplate >
+
+            <DataTemplate>
+
+              <Grid Name="SearchEle" VerticalAlignment="Stretch"
+                      Width="{Binding ElementName=SearchResultsListBox,Path=ActualWidth}" 
+                      HorizontalAlignment="Left" Background="#CC000000">
+
+                  <Line X1="0" X2="{Binding ElementName=SearchResultsListBox,Path=ActualWidth}" 
+                            Stroke="#111" Y1="0" Y2="0" VerticalAlignment="Top"/>
+                  <TextBlock FontSize="24" Name="name" Text="{Binding Path=Name}" Foreground="AliceBlue" Padding="10,5,0,0"/>
+                  <TextBlock FontSize="12" Name="description" Text="{Binding Path=Description}" Foreground="Gray"  Padding="10, 39, 0, 10"/>
+                  <TextBlock FontSize="10" Name="keywords" Text="{Binding Path=Keywords}" HorizontalAlignment="Right" Foreground="Gray"  Padding="10, 20, 10, 10"/>
+                  <TextBlock FontSize="12" Name="type" Text="{Binding Path=Type}" Foreground="Azure" HorizontalAlignment="Right" Padding="10, 5, 10, 10"/>
+
+                <Line X1="0" X2="{Binding ElementName=SearchResultsListBox,Path=ActualWidth}" 
+                            Stroke="DimGray" Y1="0" Y2="0" VerticalAlignment="Bottom"/>
+                  
+              </Grid>
+                
+              <DataTemplate.Triggers>
+
+                <DataTrigger Binding="{Binding ElementName=type, Path=Text}" Value="Workspace">
+                    <DataTrigger.Setters>
+                    <Setter Property="Background" Value="#EE1A1600" TargetName="SearchEle" />
+                    <Setter Property="Foreground" Value="Gold" TargetName="type" />
+                  </DataTrigger.Setters>
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding ElementName=type, Path=Text}" Value="Community Node">
+                  <DataTrigger.Setters>
+                    <Setter Property="Background" Value="#EE111617" TargetName="SearchEle" />
+                    <Setter Property="Foreground" Value="#FFADD8E6" TargetName="type" />
+                  </DataTrigger.Setters>
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding ElementName=type, Path=Text}" Value="Category">
+                  <DataTrigger.Setters>
+                    <Setter Property="Background" Value="#EE0C1900" TargetName="SearchEle" />
+                    <Setter Property="Foreground" Value="#FF7CFC00" TargetName="type" />
+                  </DataTrigger.Setters>
+                </DataTrigger>
+
+              </DataTemplate.Triggers>
+
+            </DataTemplate>
+            
+          </ListBox.ItemTemplate>
+            
+          </ListBox>          
+        </ScrollViewer>
+      </StackPanel>
+  </Grid>
+
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="..\Themes\DynamoModern.xaml" />
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </UserControl.Resources>
+
+</UserControl>
+  
+  

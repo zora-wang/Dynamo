@@ -83,9 +83,12 @@ namespace Dynamo
             new Dictionary<string, dynNodeUI>();
     }
 
+
+
     public class FuncWorkspace : dynWorkspace
     {
         public String Category { get; set; }
+
 
         #region Contructors
 
@@ -141,6 +144,8 @@ namespace Dynamo
     {
         #region Contructors
 
+        private static bool initializedFunctionDefinition = false;
+
         public HomeWorkspace()
             : this(new List<dynNode>(), new List<dynConnector>(), 0, 0)
         { }
@@ -152,10 +157,14 @@ namespace Dynamo
         public HomeWorkspace(List<dynNode> e, List<dynConnector> c, double x, double y)
             : base("Home", e, c, x, y)
         {
-            var homeGuid = Guid.Parse("32AAC852-90A7-4FBD-B78A-8FDB69302670");
-            var homeWorkspaceFuncDef = new FunctionDefinition();
-            homeWorkspaceFuncDef.Workspace = this;
-            dynSettings.FunctionDict.Add( homeGuid, homeWorkspaceFuncDef );
+            if (!initializedFunctionDefinition)
+            {
+                var homeGuid = Guid.Parse("32AAC852-90A7-4FBD-B78A-8FDB69302670");
+                var homeWorkspaceFuncDef = new FunctionDefinition();
+                homeWorkspaceFuncDef.Workspace = this;
+                dynSettings.FunctionDict.Add(homeGuid, homeWorkspaceFuncDef);
+                initializedFunctionDefinition = true;
+            }
         }
 
         #endregion

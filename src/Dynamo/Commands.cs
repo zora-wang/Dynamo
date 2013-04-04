@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.ComponentModel;
 using System.Windows.Input;
 using System.Windows.Controls;
 using System.Windows;
@@ -10,22 +8,61 @@ using System.Collections;
 using System.Windows.Forms;
 using System.Windows.Media.Imaging;
 using System.Windows.Media;
-using System.Reflection;
 using System.IO;
-
 using Dynamo.Controls;
-using Dynamo.Search;
 using Dynamo.Utilities;
 using Dynamo.Nodes;
 using Dynamo.Connectors;
-
-//http://msdn.microsoft.com/en-us/library/ms752308.aspx
 
 namespace Dynamo.Commands
 {
 
     public static partial class DynamoCommands
     {
+        private static ShowSaveImageDialogAndSaveResultCommand showSaveImageDialogAndSaveResultCmd;
+        public static ShowSaveImageDialogAndSaveResultCommand ShowSaveImageDialogAndSaveResultCmd
+        {
+            get
+            {
+                if (showSaveImageDialogAndSaveResultCmd == null)
+                    showSaveImageDialogAndSaveResultCmd = new ShowSaveImageDialogAndSaveResultCommand();
+                return showSaveImageDialogAndSaveResultCmd;
+            }
+        }
+
+        private static ShowOpenDialogAndOpenResultCommand showOpenDialogAndOpenResultCmd;
+        public static ShowOpenDialogAndOpenResultCommand ShowOpenDialogAndOpenResultCmd
+        {
+            get
+            {
+                if (showOpenDialogAndOpenResultCmd == null)
+                    showOpenDialogAndOpenResultCmd = new ShowOpenDialogAndOpenResultCommand();
+                return showOpenDialogAndOpenResultCmd;
+            }
+        }
+
+        private static ShowSaveDialogIfNeededAndSaveResultCommand showSaveDialogIfNeededAndSaveResultCmd;
+        public static ShowSaveDialogIfNeededAndSaveResultCommand ShowSaveDialogIfNeededAndSaveResultCmd
+        {
+            get
+            {
+                if (showSaveDialogIfNeededAndSaveResultCmd == null)
+                    showSaveDialogIfNeededAndSaveResultCmd = new ShowSaveDialogIfNeededAndSaveResultCommand();
+                return showSaveDialogIfNeededAndSaveResultCmd;
+            }
+        }
+
+        private static ShowSaveDialogAndSaveResultCommand showSaveDialogAndSaveResultCmd;
+        public static ShowSaveDialogAndSaveResultCommand ShowSaveDialogAndSaveResultCmd
+        {
+            get
+            {
+                if (showSaveDialogAndSaveResultCmd == null)
+                    showSaveDialogAndSaveResultCmd = new ShowSaveDialogAndSaveResultCommand();
+                return showSaveDialogAndSaveResultCmd;
+            }
+        }
+
         private static GoToWorkspaceCommand goToWorkspaceCmd;
         public static GoToWorkspaceCommand GoToWorkspaceCmd
         {
@@ -238,15 +275,15 @@ namespace Dynamo.Commands
             }
         }
 
-        private static ShowConsoleCommand showConsoleCmd;
-        public static ShowConsoleCommand ShowConsoleCmd
+        private static ToggleConsoleShowingCommand _toggleConsoleShowingCmd;
+        public static ToggleConsoleShowingCommand ToggleConsoleShowingCmd
         {
             get
             {
-                if (showConsoleCmd == null)
-                    showConsoleCmd = new ShowConsoleCommand();
+                if (_toggleConsoleShowingCmd == null)
+                    _toggleConsoleShowingCmd = new ToggleConsoleShowingCommand();
 
-                return showConsoleCmd;
+                return _toggleConsoleShowingCmd;
             }
         }
 
@@ -360,26 +397,179 @@ namespace Dynamo.Commands
 
     }
 
-    public class DynamoCommand
+    public class ShowSaveImageDialogAndSaveResultCommand : ICommand
     {
-        public virtual void Log()
-        {
-            if (dynSettings.Writer != null)
-            {
-                dynSettings.Writer.WriteLine(string.Format("CMD:{0},{1}", this.GetType().ToString(), DateTime.Now.ToString()));
-            }
-        }
-    }
-
-    public class GoToWikiCommand : DynamoCommand, ICommand
-    {
-        public GoToWikiCommand():base()
-        {
-        }
+        private FileDialog _fileDialog;
 
         public void Execute(object parameters)
         {
-            Log();
+            if (_fileDialog == null)
+            {
+                _fileDialog = new SaveFileDialog()
+                {
+                    AddExtension = true,
+                    DefaultExt = ".png",
+                    FileName = "Capture.png",
+                    Filter = "PNG Image|*.png",
+                    Title = "Save your Workbench to an Image",
+                };
+            }
+
+            // if you've got the current space path, use it as the inital dir
+            if (!string.IsNullOrEmpty(dynSettings.Controller.CurrentSpace.FilePath))
+            {
+                var fi = new FileInfo(dynSettings.Controller.CurrentSpace.FilePath);
+                _fileDialog.InitialDirectory = fi.DirectoryName;
+            }
+
+            if (_fileDialog.ShowDialog() == DialogResult.OK)
+            {
+                DynamoCommands.SaveImageCmd.Execute(_fileDialog.FileName);
+            }
+        }
+
+        public event EventHandler CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
+
+        public bool CanExecute(object parameters)
+        {
+            return true;
+        }
+    }
+
+    public class ShowOpenDialogAndOpenResultCommand : ICommand
+    {
+        private FileDialog _fileDialog;
+
+        public void Execute(object parameters)
+        {
+            if (_fileDialog == null)
+            {
+                _fileDialog = new OpenFileDialog()
+                {
+                    Filter = "Dynamo Definitions (*.dyn; *.dyf)|*.dyn;*.dyf|All files (*.*)|*.*",
+                    Title = "Open Dynamo Definition..."
+                };
+            }
+
+            // if you've got the current space path, use it as the inital dir
+            if (!string.IsNullOrEmpty(dynSettings.Controller.CurrentSpace.FilePath))
+            {
+                var fi = new FileInfo(dynSettings.Controller.CurrentSpace.FilePath);
+                _fileDialog.InitialDirectory = fi.DirectoryName;
+            }
+
+            if (_fileDialog.ShowDialog() == DialogResult.OK)
+            {
+                DynamoCommands.OpenCmd.Execute(_fileDialog.FileName);
+            }
+        }
+
+        public event EventHandler CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
+
+        public bool CanExecute(object parameters)
+        {
+            return true;
+        }
+    }
+
+    public class ShowSaveDialogIfNeededAndSaveResultCommand : ICommand
+    {
+        public void Execute(object parameters)
+        {
+            if (dynSettings.Controller.CurrentSpace.FilePath != null)
+            {
+                DynamoCommands.SaveCmd.Execute(null);
+            }
+            else
+            {
+                DynamoCommands.ShowSaveDialogAndSaveResultCmd.Execute(null);
+            }
+        }
+
+        public event EventHandler CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
+
+        public bool CanExecute(object parameters)
+        {
+            return true;
+        }
+    }
+
+    public class ShowSaveDialogAndSaveResultCommand : ICommand
+    {
+
+        private FileDialog _fileDialog;
+
+        public void Execute(object parameters)
+        {
+            if (_fileDialog == null)
+            {
+                _fileDialog = new SaveFileDialog
+                {
+                    AddExtension = true,
+                };
+            }
+
+            string ext, fltr;
+            if ( dynSettings.Controller.ViewingHomespace )
+            {
+                ext = ".dyn";
+                fltr = "Dynamo Workspace (*.dyn)|*.dyn";
+            }
+            else
+            {
+                ext = ".dyf";
+                fltr = "Dynamo Function (*.dyf)|*.dyf";
+            }
+            fltr += "|All files (*.*)|*.*"; 
+          
+            _fileDialog.FileName = dynSettings.Controller.CurrentSpace.Name + ext;
+            _fileDialog.AddExtension = true;
+            _fileDialog.DefaultExt = ext;
+            _fileDialog.Filter = fltr;
+
+            //if the xmlPath is not empty set the default directory
+            if (!string.IsNullOrEmpty(dynSettings.Controller.CurrentSpace.FilePath))
+            {
+                var fi = new FileInfo(dynSettings.Controller.CurrentSpace.FilePath);
+                _fileDialog.InitialDirectory = fi.DirectoryName;
+            }
+
+            if (_fileDialog.ShowDialog() == DialogResult.OK)
+            {
+                dynSettings.Controller.SaveAs(_fileDialog.FileName);
+            }
+            
+        }
+
+        public event EventHandler CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
+
+        public bool CanExecute(object parameters)
+        {
+            return true;
+        }
+    }
+
+    public class GoToWikiCommand : ICommand
+    {
+
+        public void Execute(object parameters)
+        {
             System.Diagnostics.Process.Start("https://github.com/ikeough/Dynamo/wiki");
         }
 
@@ -395,15 +585,10 @@ namespace Dynamo.Commands
         }
     }
 
-    public class GoToSourceCodeCommand : DynamoCommand, ICommand
+    public class GoToSourceCodeCommand : ICommand
     {
-        public GoToSourceCodeCommand()
-        {
-        }
-
         public void Execute(object parameters)
         {
-            Log();
             System.Diagnostics.Process.Start("https://github.com/ikeough/Dynamo");
         }
 
@@ -419,16 +604,10 @@ namespace Dynamo.Commands
         }
     }
 
-    public class ExitCommand : DynamoCommand, ICommand
+    public class ExitCommand : ICommand
     {
-        public ExitCommand()
-        {
-        }
-
         public void Execute(object parameters)
         {
-            Log();
-            // TODO: ask for save
             dynSettings.Bench.Close();
         }
 
@@ -444,7 +623,7 @@ namespace Dynamo.Commands
         }
     }
 
-    public class NodeFromSelectionCommand : DynamoCommand, ICommand
+    public class NodeFromSelectionCommand : ICommand
     {
         public NodeFromSelectionCommand()
         {
@@ -461,7 +640,6 @@ namespace Dynamo.Commands
 
         public void Execute(object parameters)
         {
-            Log();
             if (dynSettings.Bench.WorkBench.Selection.Count > 0)
             {
                 dynSettings.Bench.Controller.NodeFromSelection(
@@ -482,16 +660,11 @@ namespace Dynamo.Commands
         }
     }
 
-    public class SelectNeighborsCommand : DynamoCommand, ICommand
+    public class SelectNeighborsCommand : ICommand
     {
-        public SelectNeighborsCommand()
-        {
-
-        }
 
         public void Execute(object parameters)
         {
-            Log();
             List<ISelectable> sels = dynSettings.Workbench.Selection.ToList<ISelectable>();
 
             foreach (ISelectable sel in sels)
@@ -512,16 +685,10 @@ namespace Dynamo.Commands
         }
     }
 
-    public class AddNoteCommand : DynamoCommand, ICommand
+    public class AddNoteCommand : ICommand
     {
-        public AddNoteCommand()
-        {
-
-        }
-
         public void Execute(object parameters)
         {
-            Log();
             Dictionary<string,object> inputs = (Dictionary<string,object>) parameters;
 
             dynNote n = new dynNote();
@@ -551,17 +718,10 @@ namespace Dynamo.Commands
         }
     }
 
-    public class DeleteCommand : DynamoCommand, ICommand
+    public class DeleteCommand : ICommand
     {
-        public DeleteCommand()
-        {
-
-        }
-
         public void Execute(object parameters)
         {
-            Log();
-
             //if you get an object in the parameters, just delete that object
             if (parameters != null)
             {
@@ -639,7 +799,7 @@ namespace Dynamo.Commands
         }
     }
 
-    public class ShowSplashScreenCommand : DynamoCommand, ICommand
+    public class ShowSplashScreenCommand : ICommand
     {
         public ShowSplashScreenCommand()
         {
@@ -648,7 +808,6 @@ namespace Dynamo.Commands
 
         public void Execute(object parameters)
         {
-            Log();
             dynSettings.Controller.SplashScreen = new Controls.DynamoSplash();
             dynSettings.Controller.SplashScreen.Show();
         }
@@ -670,16 +829,10 @@ namespace Dynamo.Commands
         }
     }
 
-    public class CloseSplashScreenCommand : DynamoCommand, ICommand
+    public class CloseSplashScreenCommand : ICommand
     {
-        public CloseSplashScreenCommand()
-        {
-
-        }
-
         public void Execute(object parameters)
         {
-            Log();
             dynSettings.Controller.SplashScreen.Close();
         }
 
@@ -700,16 +853,10 @@ namespace Dynamo.Commands
         }
     }
 
-    public class WriteToLogCommand : DynamoCommand,ICommand
+    public class WriteToLogCommand : ICommand
     {
-        public WriteToLogCommand()
-        {
-
-        }
-
         public void Execute(object parameters)
         {
-            Log();
             if (parameters == null) return;
 
             string logText = parameters.ToString();
@@ -733,16 +880,10 @@ namespace Dynamo.Commands
         }
     }
 
-    public class GoToWorkspaceCommand : DynamoCommand, ICommand
+    public class GoToWorkspaceCommand : ICommand
     {
-        public GoToWorkspaceCommand()
-        {
-
-        }
-
         public void Execute(object parameter)
         {
-            Log();
            if (parameter is Guid && dynSettings.FunctionDict.ContainsKey( (Guid)parameter ) )
            {
                dynSettings.Controller.DisplayFunction( dynSettings.FunctionDict[ (Guid) parameter] );   
@@ -761,16 +902,11 @@ namespace Dynamo.Commands
         }
     }
 
-    public class CreateNodeCommand : DynamoCommand, ICommand
+    public class CreateNodeCommand : ICommand
     {
-        public CreateNodeCommand()
-        {
-
-        }
-
         public void Execute(object parameters)
         {
-            Log();
+
             Dictionary<string, object> data = parameters as Dictionary<string, object>;
             if (data == null)
             {
@@ -801,23 +937,13 @@ namespace Dynamo.Commands
                 {
                     (node as dynBasicInteractive<bool>).Value = (bool)data["value"];
                 }
-                else if(typeof(dynVariableInput).IsAssignableFrom(node.GetType()))
-                {
-                    int portCount = (int)data["value"];
-                    for (int i = 0; i < portCount - 1; i++)
-                    {
-                        (node as dynVariableInput).AddInput();
-                    }
-                    (node as dynVariableInput).NodeUI.RegisterAllPorts();
-                    
-                }
             }
 
             //override the guid so we can store
             //for connection lookup
             if (data.ContainsKey("guid"))
             {
-                node.NodeUI.GUID = (Guid)data["guid"];
+                node.NodeUI.GUID = (Guid) data["guid"];
             }
 
             // by default place node at center
@@ -876,16 +1002,10 @@ namespace Dynamo.Commands
         }
     }
 
-    public class CreateConnectionCommand : DynamoCommand, ICommand
+    public class CreateConnectionCommand : ICommand
     {
-        public CreateConnectionCommand()
-        {
-
-        }
-
         public void Execute(object parameters)
         {
-            Log();
             Dictionary<string,object> connectionData = parameters as Dictionary<string,object>;
             
             dynNodeUI start = (dynNodeUI)connectionData["start"];
@@ -915,16 +1035,10 @@ namespace Dynamo.Commands
         }
     }
 
-    public class RunExpressionCommand : DynamoCommand, ICommand
+    public class RunExpressionCommand : ICommand
     {
-        public RunExpressionCommand()
-        {
-
-        }
-
         public void Execute(object parameters)
         {
-            Log();
             dynSettings.Controller.RunExpression(Convert.ToBoolean(parameters));
         }
 
@@ -945,17 +1059,10 @@ namespace Dynamo.Commands
         }
     }
 
-    public class CopyCommand : DynamoCommand, ICommand
+    public class CopyCommand : ICommand
     {
-        public CopyCommand()
-        {
-
-        }
-
         public void Execute(object parameters)
         {
-            Log();
-
             dynSettings.Controller.ClipBoard.Clear();
 
             foreach (ISelectable sel in dynSettings.Workbench.Selection)
@@ -1000,16 +1107,10 @@ namespace Dynamo.Commands
         }
     }
 
-    public class PasteCommand : DynamoCommand, ICommand
+    public class PasteCommand : ICommand
     {
-        public PasteCommand()
-        {
-
-        }
-
         public void Execute(object parameters)
         {
-            Log();
             //make a lookup table to store the guids of the
             //old nodes and the guids of their pasted versions
             Hashtable nodeLookup = new Hashtable();
@@ -1044,13 +1145,6 @@ namespace Dynamo.Commands
                 else if (typeof(dynBasicInteractive<bool>).IsAssignableFrom(node.NodeLogic.GetType()))
                 {
                     nodeData.Add("value", (node.NodeLogic as dynBasicInteractive<bool>).Value);
-                }
-                else if(typeof(dynVariableInput).IsAssignableFrom(node.NodeLogic.GetType()))
-                {
-                    //for list type nodes send the number of ports
-                    //as the value - so we can setup the new node with
-                    //the right number of ports
-                    nodeData.Add("value", node.InPorts.Count);
                 }
 
                 dynSettings.Controller.CommandQueue.Add(Tuple.Create<object, object>(DynamoCommands.CreateNodeCmd, nodeData));
@@ -1106,7 +1200,7 @@ namespace Dynamo.Commands
 
             dynSettings.Controller.ProcessCommandQueue();
 
-            //dynSettings.Controller.ClipBoard.Clear();
+            //dynSettings.ViewModel.ClipBoard.Clear();
         }
 
         public event EventHandler CanExecuteChanged
@@ -1126,17 +1220,10 @@ namespace Dynamo.Commands
         }
     }
 
-    public class SelectCommand : DynamoCommand, ICommand
+    public class SelectCommand : ICommand
     {
-        public SelectCommand()
-        {
-
-        }
-
         public void Execute(object parameters)
         {
-            Log();
-
             dynNodeUI node = parameters as dynNodeUI;
 
             if (!node.IsSelected)
@@ -1176,16 +1263,10 @@ namespace Dynamo.Commands
         }
     }
 
-    public class AddToSelectionCommand : DynamoCommand, ICommand
+    public class AddToSelectionCommand : ICommand
     {
-        public AddToSelectionCommand()
-        {
-
-        }
-
         public void Execute(object parameters)
         {
-            Log();
             dynNodeUI node = parameters as dynNodeUI;
 
             if (!node.IsSelected)
@@ -1213,16 +1294,10 @@ namespace Dynamo.Commands
         }
     }
 
-    public class ShowConsoleCommand : DynamoCommand, ICommand
+    public class ToggleConsoleShowingCommand : ICommand
     {
-        public ShowConsoleCommand()
-        {
-
-        }
-
         public void Execute(object parameters)
         {
-            Log();
             if (dynSettings.Bench.ConsoleShowing)
             {
                 dynSettings.Bench.consoleRow.Height = new GridLength(0.0);
@@ -1247,16 +1322,10 @@ namespace Dynamo.Commands
         }
     }
 
-    public class CancelRunCommand : DynamoCommand, ICommand
+    public class CancelRunCommand : ICommand
     {
-        public CancelRunCommand()
-        {
-
-        }
-
         public void Execute(object parameters)
         {
-            Log();
             dynSettings.Controller.RunCancelled = true;
         }
 
@@ -1272,17 +1341,12 @@ namespace Dynamo.Commands
         }
     }
 
-    public class SaveAsCommand : DynamoCommand, ICommand
+    public class SaveAsCommand : ICommand
     {
-        public SaveAsCommand()
-        {
-
-        }
-
         public void Execute(object parameters)
         {
-            Log();
-            dynSettings.Controller.SaveAs();
+            if (parameters is string)
+                dynSettings.Controller.SaveAs( (string) parameters );
         }
 
         public event EventHandler CanExecuteChanged
@@ -1297,16 +1361,10 @@ namespace Dynamo.Commands
         }
     }
 
-    public class SaveCommand : DynamoCommand, ICommand
+    public class SaveCommand : ICommand
     {
-        public SaveCommand()
-        {
-
-        }
-
         public void Execute(object parameters)
         {
-            Log();
             dynSettings.Controller.Save();
         }
 
@@ -1322,28 +1380,11 @@ namespace Dynamo.Commands
         }
     }
 
-    public class OpenCommand : DynamoCommand, ICommand
+    public class OpenCommand : ICommand
     {
-        public OpenCommand()
-        {
-
-        }
-
         public void Execute(object parameters)
         {
-            Log();
-            //string xmlPath = "C:\\test\\myWorkbench.xml";
-            string xmlPath = "";
-
-            System.Windows.Forms.OpenFileDialog openDialog = new OpenFileDialog()
-            {
-                Filter = "Dynamo Definitions (*.dyn; *.dyf)|*.dyn;*.dyf|All files (*.*)|*.*"
-            };
-
-            if (openDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                xmlPath = openDialog.FileName;
-            }
+            string xmlPath = parameters as string;
 
             if (!string.IsNullOrEmpty(xmlPath))
             {
@@ -1371,9 +1412,6 @@ namespace Dynamo.Commands
                 }
                 dynSettings.Bench.UnlockUI();
             }
-
-            //clear the clipboard to avoid copying between dyns
-            dynSettings.Controller.ClipBoard.Clear();
         }
 
         public event EventHandler CanExecuteChanged
@@ -1388,16 +1426,10 @@ namespace Dynamo.Commands
         }
     }
 
-    public class HomeCommand : DynamoCommand, ICommand
+    public class HomeCommand : ICommand
     {
-        public HomeCommand()
-        {
-
-        }
-
         public void Execute(object parameters)
         {
-            Log();
             dynSettings.Controller.ViewHomeWorkspace();
         }
 
@@ -1413,23 +1445,14 @@ namespace Dynamo.Commands
         }
     }
 
-    public class SaveImageCommand : DynamoCommand, ICommand
+    public class SaveImageCommand : ICommand
     {
-        public SaveImageCommand()
-        {
-
-        }
-
         public void Execute(object parameters)
         {
-            Log();
-            SaveFileDialog sfd = new SaveFileDialog();
-            sfd.Filter = "PNG Image|*.png";
-            sfd.Title = "Save your Workbench to an Image";
-            if (sfd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                string imagePath = sfd.FileName;
+            string imagePath = parameters as string;
 
+            if (!string.IsNullOrEmpty(imagePath))
+            {
                 Transform trans = dynSettings.Workbench.LayoutTransform;
                 dynSettings.Workbench.LayoutTransform = null;
                 Size size = new Size(dynSettings.Workbench.Width, dynSettings.Workbench.Height);
@@ -1457,7 +1480,7 @@ namespace Dynamo.Commands
                 BitmapEncoder pngEncoder = new PngBitmapEncoder();
                 pngEncoder.Frames.Add(BitmapFrame.Create(rtb));
 
-                using (var stm = System.IO.File.Create(sfd.FileName))
+                using (var stm = File.Create(imagePath))
                 {
                     pngEncoder.Save(stm);
                 }
@@ -1476,16 +1499,10 @@ namespace Dynamo.Commands
         }
     }
 
-    public class LayoutAllCommand : DynamoCommand, ICommand
+    public class LayoutAllCommand : ICommand
     {
-        public LayoutAllCommand()
-        {
-
-        }
-
         public void Execute(object parameters)
         {
-            Log();
             dynSettings.Bench.LockUI();
             dynSettings.Controller.CleanWorkbench();
 
@@ -1532,7 +1549,7 @@ namespace Dynamo.Commands
                 List<Type> catTypes = de.Value as List<Type>;
 
                 //add the name of the category here
-                //AddNote(de.Key.ToString(), x, y, Controller.CurrentSpace);
+                //AddNote(de.Key.ToString(), x, y, ViewModel.CurrentSpace);
                 Dictionary<string, object> paramDict = new Dictionary<string, object>();
                 paramDict.Add("x", x);
                 paramDict.Add("y", y);
@@ -1551,6 +1568,8 @@ namespace Dynamo.Commands
                            t, elNameAttrib.Name, Guid.NewGuid(), x, y,
                            dynSettings.Controller.CurrentSpace
                         );
+
+                    if (el == null) continue;
 
                     el.DisableReporting();
 
@@ -1591,16 +1610,10 @@ namespace Dynamo.Commands
         }
     }
 
-    public class ClearCommand : DynamoCommand, ICommand
+    public class ClearCommand : ICommand
     {
-        public ClearCommand()
-        {
-
-        }
-
         public void Execute(object parameters)
         {
-            Log();
             dynSettings.Bench.LockUI();
             dynSettings.Controller.CleanWorkbench();
 
@@ -1622,16 +1635,10 @@ namespace Dynamo.Commands
         }
     }
 
-    public class ClearLogCommand : DynamoCommand, ICommand
+    public class ClearLogCommand : ICommand
     {
-        public ClearLogCommand()
-        {
-
-        }
-
         public void Execute(object parameters)
         {
-            Log();
             dynSettings.Bench.sw.Flush();
             dynSettings.Bench.sw.Close();
             dynSettings.Bench.sw = new StringWriter();
@@ -1649,5 +1656,4 @@ namespace Dynamo.Commands
             return true;
         }
     }
-
 }
