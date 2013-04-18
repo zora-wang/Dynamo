@@ -54,6 +54,8 @@ namespace Dynamo.Connectors
         const int STROKE_THICKNESS = 2;
         const double STROKE_OPACITY = .6;
         const double DEFAULT_BEZ_OFFSET = 20;
+        const int END_DOT_SIZE = 6;
+        double bezOffset = 20;
 
         dynPort pStart;
         dynPort pEnd;
@@ -65,25 +67,24 @@ namespace Dynamo.Connectors
         ConnectorType connectorType;
 
         Ellipse endDot;
-        const int END_DOT_SIZE = 6;
+        
         Path connector;
         Path plineConnector;
         Brush strokeBrush;
 
-        double bezOffset = 20;
-
-        //Canvas workBench;
         bool isDrawing = false;
 
         public bool IsDrawing
         {
             get { return isDrawing; }
         }
+        
         public dynPort Start
         {
             get { return pStart; }
             set { pStart = value; }
         }
+        
         public dynPort End
         {
             get { return pEnd; }
@@ -92,6 +93,7 @@ namespace Dynamo.Connectors
                 pEnd = value;
             }
         }
+        
         public ConnectorType ConnectorType
         {
             get { return connectorType; }
@@ -125,6 +127,7 @@ namespace Dynamo.Connectors
             }
         }
 
+        #region constructors
         public dynConnector(dynPort port, Canvas workBench, Point mousePt)
         {
             //don't allow connections to start at an input port
@@ -218,13 +221,8 @@ namespace Dynamo.Connectors
                 Canvas.SetZIndex(connector, 0);
                 Canvas.SetZIndex(endDot, 1);
 
-                //register an event listener for the start port update
-                //this will tell the connector to set the elements at either
-                //end to be equal if pStart and pEnd are not null
-                //pStart.Owner.Outputs[pStart.Index].dynElementUpdated += new Dynamo.Nodes.dynElementUpdatedHandler(StartPortUpdated);
-                this.ConnectorType = dynSettings.Bench.ConnectorType;
-                dynSettings.Bench.settings_curves.Checked += new RoutedEventHandler(settings_curves_Checked);
-                dynSettings.Bench.settings_plines.Checked += new RoutedEventHandler(settings_plines_Checked);
+                ConnectorType = dynSettings.Bench.ConnectorType;
+
             }
             else
             {
@@ -233,25 +231,16 @@ namespace Dynamo.Connectors
 
         }
 
-        void settings_plines_Checked(object sender, RoutedEventArgs e)
-        {
-            this.ConnectorType = Connectors.ConnectorType.POLYLINE;
-            Redraw();
-        }
-
-        void settings_curves_Checked(object sender, RoutedEventArgs e)
-        {
-            this.ConnectorType = Connectors.ConnectorType.BEZIER;
-            Redraw();
-        }
-
         public dynConnector(dynNodeUI start, dynNodeUI end, int startIndex, int endIndex, int portType, bool visible)
         {
-            //this.workBench = settings.WorkBench;
+            //don't try to create a connector with a bad start,
+            //end, or if we're trying to connector the same
+            //port to itself.
+            if (start == null || end == null || start == end)
+            {
+                throw new Exception("Attempting to create connector with invalid start or end nodes.");
+            }
 
-            //if (start != null && end != null && start != end)
-            //{
-            //in the start element, find the out port at the startIndex
             pStart = start.OutPorts[startIndex];
 
             dynPort endPort = null;
@@ -347,23 +336,23 @@ namespace Dynamo.Connectors
             Dynamo.Controls.DragCanvas.SetCanBeDragged(connector, false);
 
             //set the z order to the front
-            Canvas.SetZIndex(this, 300);
+            //Canvas.SetZIndex(this, 300);
+            Canvas.SetZIndex(this, 1);
 
             this.Connect(endPort);
 
-            this.ConnectorType = dynSettings.Bench.ConnectorType;
-            dynSettings.Bench.settings_curves.Checked += new RoutedEventHandler(settings_curves_Checked);
-            dynSettings.Bench.settings_plines.Checked += new RoutedEventHandler(settings_plines_Checked);
-        }
-
-        void endDot_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            throw new NotImplementedException();
+            ConnectorType = dynSettings.Bench.ConnectorType;
         }
 
         public dynConnector(dynNodeUI start, dynNodeUI end, int startIndex, int endIndex, int portType)
             : this(start, end, startIndex, endIndex, portType, true)
         { }
+        #endregion
+        
+        void endDot_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
 
         public void Highlight()
         {
@@ -381,25 +370,6 @@ namespace Dynamo.Connectors
                 connector.StrokeThickness = STROKE_THICKNESS;
                 plineConnector.StrokeThickness = STROKE_THICKNESS;
             }
-        }
-
-        public void SendMessage()
-        {
-
-            if (pEnd != null)
-            {
-                if (pEnd.Owner != null)
-                {
-                    //if (pEnd.PortType == PortType.INPUT)
-                    //   pEnd.Owner.InPortData[pEnd.Index].Object = pStart.Owner.OutPortData.Object;
-                    //else if (pEnd.PortType == PortType.STATE)
-                    //   pEnd.Owner.StatePortData[pEnd.Index].Object = pStart.Owner.OutPortData.Object;
-
-                    //tell the end port's ownder to update
-                    //pEnd.Owner.Update();
-                }
-            }
-
         }
 
         public bool Connect(dynPort p)
@@ -424,24 +394,6 @@ namespace Dynamo.Connectors
             {
                 return false;
             }
-
-            //TODO: Re-enable
-            //test if the port element at B can connect to the port at A
-            //test if you can convert the element at A to the element at b
-            //if (p.PortType == PortType.INPUT)
-            //{
-            //    if (!p.Owner.InPortData[p.Index].PortType.IsAssignableFrom(pStart.Owner.OutPortData[pStart.Index].PortType))
-            //    {
-            //        return false;
-            //    }
-            //}
-            //else if (p.PortType == PortType.STATE)
-            //{
-            //    if (!p.Owner.StatePortData[p.Index].PortType.IsAssignableFrom(pStart.Owner.OutPortData[pStart.Index].PortType))
-            //    {
-            //        return false;
-            //    }
-            //}
 
             //turn the line solid
             connector.StrokeDashArray.Clear();
@@ -621,34 +573,6 @@ namespace Dynamo.Connectors
             }
         }
 
-        public dynNodeUI FindDynElementByGuid(Guid guid)
-        {
-            foreach (UIElement uiel in dynSettings.Workbench.Children)
-            {
-                dynNodeUI testEl = null;
-
-                //walk up through the inheritance to find whether the base type is a dynElement
-                Type startType = uiel.GetType();
-                while (startType.BaseType != null)
-                {
-                    startType = startType.BaseType;
-                    if (startType == typeof(dynNodeUI))
-                    {
-                        testEl = uiel as dynNodeUI;
-                        break;
-                    }
-                }
-
-                if (testEl != null)
-                {
-                    if (testEl.GUID == guid)
-                    {
-                        return testEl;
-                    }
-                }
-            }
-            return null;
-        }
     }
 
     public class InvalidPortException : ApplicationException

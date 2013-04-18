@@ -19,22 +19,20 @@ using Value = Dynamo.FScheme.Value;
 
 namespace Dynamo
 {
-
     public class DynamoController_Revit : DynamoController
     {
-        
         public DynamoUpdater Updater { get; private set; }
 
         PredicateTraverser checkManualTransaction;
         PredicateTraverser checkRequiresTransaction;
 
-        Dynamo.Nodes.PythonEngine.EvaluationDelegate oldPyEval;
+        dynamic oldPyEval;
 
-        public DynamoController_Revit(DynamoUpdater updater)
-            : base()
+        public DynamoController_Revit(FSchemeInterop.ExecutionEnvironment env, DynamoUpdater updater)
+            : base(env)
         {
             Updater = updater;
-
+            
             dynRevitSettings.Controller = this;
 
             Predicate<dynNode> manualTransactionPredicate = delegate(dynNode node)
@@ -51,6 +49,26 @@ namespace Dynamo
 
             AddPythonBindings();
             AddWatchNodeHandler();
+
+            dynRevitSettings.Revit.Application.DocumentClosed += new EventHandler<Autodesk.Revit.DB.Events.DocumentClosedEventArgs>(Application_DocumentClosed);
+            dynRevitSettings.Revit.Application.DocumentOpened += new EventHandler<Autodesk.Revit.DB.Events.DocumentOpenedEventArgs>(Application_DocumentOpened);
+        }
+
+        void Application_DocumentOpened(object sender, Autodesk.Revit.DB.Events.DocumentOpenedEventArgs e)
+        {
+            //when a document is closed
+            if (dynRevitSettings.Doc == null)
+            {
+                dynRevitSettings.Doc = dynRevitSettings.Revit.ActiveUIDocument;
+                Bench.Controller.RunEnabled = true;
+            }
+        }
+
+        void Application_DocumentClosed(object sender, Autodesk.Revit.DB.Events.DocumentClosedEventArgs e)
+        {
+            //Disable running against revit without a document
+            dynRevitSettings.Doc = null;
+            Bench.Controller.RunEnabled = false;
         }
 
         #region Python Nodes Revit Hooks
@@ -90,7 +108,7 @@ namespace Dynamo
                 {
                     return Activator.CreateInstance(Binding, new object[] { name, boundObject });
                 };
-                
+
                 Action<string, object> AddToBindings = delegate(string name, object boundObject)
                 {
                     pyBindings.GetType().InvokeMember("Add", BindingFlags.InvokeMethod, null, pyBindings, new object[] { CreateBinding(name, boundObject) });
@@ -115,24 +133,37 @@ namespace Dynamo
 
                 var PythonEngine = ironPythonAssembly.GetType("Dynamo.Nodes.PythonEngine");
                 var evaluatorField = PythonEngine.GetField("Evaluator");
-                oldPyEval = evaluatorField.GetValue(null) as Dynamo.Nodes.PythonEngine.EvaluationDelegate;
 
-                Dynamo.Nodes.PythonEngine.EvaluationDelegate evaluator = evaluate;
-                evaluatorField.SetValue(null, evaluator);
+                oldPyEval = (dynamic)evaluatorField.GetValue(null);
+
+                //var x = PythonEngine.GetMembers();
+                //foreach (var y in x)
+                //    Console.WriteLine(y);
+
+                var evalDelegateType = ironPythonAssembly.GetType("Dynamo.Nodes.PythonEngine+EvaluationDelegate");
+
+                Delegate d = Delegate.CreateDelegate(
+                    evalDelegateType,
+                    this,
+                    typeof(DynamoController_Revit)
+                        .GetMethod("newEval", BindingFlags.NonPublic | BindingFlags.Instance));
+
+                evaluatorField.SetValue(
+                    null,
+                    d);
 
                 // use this to pass into the python script a list of previously created elements from dynamo
                 //TODO: ADD BACK IN
                 //bindings.Add(new Binding("DynStoredElements", this.Elements));
             }
-            catch(Exception e) 
+            catch (Exception e)
             {
                 Debug.WriteLine(e.Message);
                 Debug.WriteLine(e.StackTrace);
             }
         }
-        #endregion
 
-        private Value evaluate(bool dirty, string script, IEnumerable<Dynamo.Nodes.Binding> bindings)
+        Value newEval(bool dirty, string script, dynamic bindings)
         {
             bool transactionRunning = Transaction != null && Transaction.GetStatus() == TransactionStatus.Started;
 
@@ -171,6 +202,7 @@ namespace Dynamo
 
             return result;
         }
+        #endregion
 
         #region Watch Node Revit Hooks
         void AddWatchNodeHandler()
@@ -203,6 +235,16 @@ namespace Dynamo
             #endregion
         }
         #endregion
+
+        protected override dynFunction CreateFunction(IEnumerable<string> inputs, IEnumerable<string> outputs, FunctionDefinition functionDefinition)
+        {
+            if (functionDefinition.Workspace.Nodes.Any(x => x is dynRevitTransactionNode)
+                || functionDefinition.Dependencies.Any(d => d.Workspace.Nodes.Any(x => x is dynRevitTransactionNode)))
+            {
+                return new dynFunctionWithRevit(inputs, outputs, functionDefinition);
+            }
+            return base.CreateFunction(inputs, outputs, functionDefinition);
+        }
 
         public bool InIdleThread;
 
@@ -277,9 +319,18 @@ namespace Dynamo
 
         bool ExecutionRequiresManualTransaction()
         {
-            return homeSpace.GetTopMostNodes().Any(
-                checkManualTransaction.TraverseUntilAny
-            );
+            //if there are no topmost nodes, just return false
+            //this will avoid a binding error during bench initialization
+            if (HomeSpace.GetTopMostNodes().Count() > 0)
+            {
+                return HomeSpace.GetTopMostNodes().Any(
+                    checkManualTransaction.TraverseUntilAny
+                );
+            }
+            else
+            {
+                return false;
+            }
         }
 
         private List<Autodesk.Revit.DB.ElementId> _transElements = new List<Autodesk.Revit.DB.ElementId>();
@@ -417,11 +468,15 @@ namespace Dynamo
 
         protected override void OnRunCancelled(bool error)
         {
+            base.OnRunCancelled(error);
+
             this.CancelTransaction();
         }
 
         protected override void OnEvaluationCompleted()
         {
+            base.OnEvaluationCompleted();
+
             //Cleanup Delegate
             Action cleanup = delegate
             {
@@ -451,6 +506,7 @@ namespace Dynamo
 
         protected override void Run(IEnumerable<dynNode> topElements, FScheme.Expression runningExpression)
         {
+
             //If we are not running in debug...
             if (!this.RunInDebug)
             {

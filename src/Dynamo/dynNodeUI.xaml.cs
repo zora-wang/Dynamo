@@ -43,7 +43,6 @@ namespace Dynamo.Controls
     /// Interaction logic for dynControl.xaml
     /// </summary>
     public enum ElementState { DEAD, ACTIVE, ERROR };
-    public enum LacingType { SHORTEST, LONGEST, FULL };
 
     public partial class dynNodeUI : UserControl, INotifyPropertyChanged, ISelectable
     {
@@ -67,7 +66,6 @@ namespace Dynamo.Controls
         Guid guid;
         string toolTipText = "";
         ElementState state;
-        LacingType lacingType = LacingType.SHORTEST;
         dynNode nodeLogic;
         bool isSelected = false;
         int preferredHeight = 30;
@@ -148,12 +146,6 @@ namespace Dynamo.Controls
                 state = value;
                 NotifyPropertyChanged("State");
             }
-        }
-
-        public LacingType LacingType
-        {
-            get { return lacingType; }
-            set { lacingType = value; }
         }
 
         public Grid ContentGrid
@@ -251,8 +243,8 @@ namespace Dynamo.Controls
             outPorts.CollectionChanged += new System.Collections.Specialized.NotifyCollectionChangedEventHandler(ports_collectionChanged);
             this.IsSelected = false;
 
-            Binding heightBinding = new Binding("PreferredHeight");
-            topControl.SetBinding(UserControl.HeightProperty, heightBinding);
+            //Binding heightBinding = new Binding("PreferredHeight");
+            //topControl.SetBinding(UserControl.HeightProperty, heightBinding);
             
             State = ElementState.DEAD;
 
@@ -283,14 +275,11 @@ namespace Dynamo.Controls
 
         public void RegisterAllPorts()
         {
-            ResizeElementForPorts();
-            SetupPortGrids();
             RegisterInputs();
             RegisterOutputs();
 
             UpdateLayout();
 
-            SetToolTips();
             ValidateConnections();
         }
 
@@ -339,68 +328,6 @@ namespace Dynamo.Controls
         }
 
         /// <summary>
-        /// Resize the control based on the number of inputs.
-        /// </summary>
-        public void ResizeElementForPorts()
-        {
-            Thickness leftGridThick = new Thickness(gridLeft.Margin.Left, gridLeft.Margin.Top, gridLeft.Margin.Right, 5);
-            gridLeft.Margin = leftGridThick;
-
-            Thickness rightGridThick = new Thickness(gridRight.Margin.Left, gridRight.Margin.Top, gridRight.Margin.Right, 5);
-            gridRight.Margin = rightGridThick;
-
-            Thickness inputGridThick = new Thickness(inputGrid.Margin.Left, inputGrid.Margin.Top, inputGrid.Margin.Right, 5);
-            inputGrid.Margin = inputGridThick;
-
-            grid.UpdateLayout();
-
-            if (inputGrid.Children.Count == 0)
-            {
-                //decrease the width of the node because
-                //there's nothing in the middle grid
-                topControl.Width = 100;
-            }
-        }
-
-        /// <summary>
-        /// Sets up the control's grids based on numbers of input and output ports.
-        /// </summary>
-        public void SetupPortGrids()
-        {
-            int count = 0;
-            int numRows = gridLeft.RowDefinitions.Count;
-            foreach (var input in nodeLogic.InPortData)
-            {
-                if (count++ < numRows)
-                    continue;
-
-                RowDefinition rd = new RowDefinition();
-                gridLeft.RowDefinitions.Add(rd);
-            }
-
-            if (count < numRows)
-            {
-                gridLeft.RowDefinitions.RemoveRange(count, numRows - count);
-            }
-
-            count = 0;
-            numRows = gridRight.RowDefinitions.Count;
-            foreach (var input in nodeLogic.OutPortData)
-            {
-                if (count++ < numRows)
-                    continue;
-
-                RowDefinition rd = new RowDefinition();
-                gridRight.RowDefinitions.Add(rd);
-            }
-
-            if (count < numRows)
-            {
-                gridRight.RowDefinitions.RemoveRange(count, numRows - count);
-            }
-        }
-
-        /// <summary>
         /// Reads inputs list and adds ports for each input.
         /// </summary>
         public void RegisterInputs()
@@ -416,13 +343,6 @@ namespace Dynamo.Controls
                 var port = AddPort(PortType.INPUT, nodeLogic.InPortData[count].NickName, count);
 
                 port.DataContext = this;
-                Binding selectionBinding = new Binding("IsSelected");
-                selectionBinding.Converter = new BooleanToBrushConverter();
-                port.ellipse1.SetBinding(Ellipse.StrokeProperty, selectionBinding);
-
-                Binding fillBinding = new Binding("State");
-                fillBinding.Converter = new StateToColorConverter();
-                port.ellipse1.SetBinding(Ellipse.FillProperty, fillBinding);
 
                 portDataDict[port] = pd;
                 count++;
@@ -474,13 +394,6 @@ namespace Dynamo.Controls
                 var port = AddPort(PortType.OUTPUT, pd.NickName, count);
 
                 port.DataContext = this;
-                Binding selectionBinding = new Binding("IsSelected");
-                selectionBinding.Converter = new BooleanToBrushConverter();
-                port.ellipse1.SetBinding(Ellipse.StrokeProperty, selectionBinding);
-
-                Binding fillBinding = new Binding("State");
-                fillBinding.Converter = new StateToColorConverter();
-                port.ellipse1.SetBinding(Ellipse.FillProperty, fillBinding);
 
                 portDataDict[port] = pd;
                 count++;
@@ -502,25 +415,6 @@ namespace Dynamo.Controls
             }
         }
 
-        public void SetToolTips()
-        {
-            //set all the tooltips
-            int count = 0;
-            foreach (dynPort p in InPorts)
-            {
-                //get the types from the types list
-                p.toolTipText.Text = nodeLogic.InPortData[count].ToolTipString;
-                count++;
-            }
-
-            count = 0;
-            foreach (dynPort p in OutPorts)
-            {
-                p.toolTipText.Text = nodeLogic.OutPortData[count].ToolTipString;
-                count++;
-            }
-        }
-
         /// <summary>
         /// Add a dynPort element to this control.
         /// </summary>
@@ -536,16 +430,9 @@ namespace Dynamo.Controls
                 }
                 else
                 {
-                    dynPort p = new dynPort(index);
+                    dynPort p = new dynPort(index, portType, this, name);
 
-                    p.PortType = PortType.INPUT;
                     InPorts.Add(p);
-                    gridLeft.Children.Add(p);
-                    Grid.SetColumn(p, 0);
-                    Grid.SetRow(p, index);
-
-                    p.Owner = this;
-                    p.PortName = name;
 
                     //register listeners on the port
                     p.PortConnected += new PortConnectedHandler(p_PortConnected);
@@ -562,27 +449,14 @@ namespace Dynamo.Controls
                 }
                 else
                 {
-                    dynPort p = new dynPort(index);
+                    dynPort p = new dynPort(index, portType, this, name);
 
-                    p.PortType = PortType.OUTPUT;
                     OutPorts.Add(p);
-                    //portTextBlocks[p] = tb;
-                    gridRight.Children.Add(p);
-                    Grid.SetColumn(p, 1);
-                    Grid.SetRow(p, index);
-
-                    p.Owner = this;
-                    p.PortName = name;
 
                     //register listeners on the port
                     p.PortConnected += new PortConnectedHandler(p_PortConnected);
                     p.PortDisconnected += new PortConnectedHandler(p_PortDisconnected);
 
-                    //flip the right hand ports
-                    ScaleTransform trans = new ScaleTransform(-1, 1, 25, p.Height / 2);
-                    p.portGrid.RenderTransform = trans;
-                    p.portNameTb.Margin = new Thickness(0, 0, 15, 0);
-                    p.portNameTb.TextAlignment = TextAlignment.Right;
                     return p;
                 }
             }
@@ -649,11 +523,7 @@ namespace Dynamo.Controls
             }
             else
             {
-                //don't override state if it's in error
-                //if (State != ElementState.ERROR)
-                //{
-                    State = ElementState.ACTIVE;
-                //}
+                State = ElementState.ACTIVE;
             }
         }
 
@@ -709,6 +579,21 @@ namespace Dynamo.Controls
             object[] rtAttribs = t.GetCustomAttributes(typeof(NodeDescriptionAttribute), true); 
             return ((NodeDescriptionAttribute)rtAttribs[0]).ElementDescription; 
         }}
+
+        public List<string> Tags
+        {
+            get
+            {
+                Type t = NodeLogic.GetType();
+                object[] rtAttribs = t.GetCustomAttributes(typeof(NodeSearchTagsAttribute), true);
+
+                if ( rtAttribs.Length > 0 )
+                    return ((NodeSearchTagsAttribute)rtAttribs[0]).Tags;
+                else 
+                    return new List<string>();
+
+            }
+        }
 
         void SetTooltip()
         {
@@ -806,7 +691,7 @@ namespace Dynamo.Controls
         private void topControl_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             dynSettings.Bench.mainGrid.Focus();
-            dynSettings.Controller.CommandQueue.Add(Tuple.Create<object, object>(DynamoCommands.SelectCmd, this));
+            dynSettings.Controller.CommandQueue.Enqueue(Tuple.Create<object, object>(DynamoCommands.SelectCmd, this));
             dynSettings.Controller.ProcessCommandQueue();
         }
 
@@ -817,227 +702,4 @@ namespace Dynamo.Controls
         }
     }
 
-    [ValueConversion(typeof(double), typeof(Thickness))]
-    public class MarginConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            double height = (double)value;
-            return new Thickness(0, -1 * height - 3, 0, 0);
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            return null;
-        }
-    }
-
-    public class BooleanToBrushConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            bool condition = (bool)value;
-            if (condition)
-            {
-                return new SolidColorBrush(Colors.Cyan);
-            }
-            else
-            {
-                return new SolidColorBrush(Colors.Black);
-            }
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            return null;
-        }
-    }
-
-    public class StateToColorConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            ElementState state = (ElementState)value;
-            switch (state)
-            {
-                case ElementState.ACTIVE:
-                    return dynSettings.ActiveBrush;
-                case ElementState.DEAD:
-                    return dynSettings.DeadBrush;
-                case ElementState.ERROR:
-                    return dynSettings.ErrorBrush;
-            }
-
-            return dynSettings.DeadBrush;
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            return null;
-        }
-    }
-
-    public class PortCountToHeightConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            ObservableCollection<dynPort> ports = (ObservableCollection<dynPort>)value;
-            return Math.Max(30, ports.Count * 20 + 10); //spacing for inputs + title space + bottom space
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            return null;
-        }
-    }
-
-    public class ListHasItemsToBoolConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            List<object> list = (List<object>)value;
-            return list.Count > 0; //spacing for inputs + title space + bottom space
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            return null;
-        }
-    }
-
-    [ValueConversion(typeof(bool), typeof(bool))]
-    public class InverseBooleanConverter : IValueConverter
-    {
-        #region IValueConverter Members
-
-        public object Convert(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            if (targetType != typeof(bool))
-                throw new InvalidOperationException("The target must be a boolean");
-
-            return !(bool)value;
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            throw new NotSupportedException();
-        }
-
-        #endregion
-    }
-
-    public class ShowHideConsoleMenuItemConverter : IValueConverter
-    {
-        #region IValueConverter Members
-
-        public object Convert(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            if ((bool)value == true)
-            {
-                return "Hide Console";
-            }
-            else
-            {
-                return "Show Console";
-            }
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            throw new NotSupportedException();
-        }
-
-        #endregion
-    }
-
-    public class ZoomStatConverter : IValueConverter
-    {
-        #region IValueConverter Members
-
-        public object Convert(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            return string.Format("Zoom : {0}", value.ToString());
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            throw new NotSupportedException();
-        }
-
-        #endregion
-    }
-
-    public class TransformOriginStatConverter : IValueConverter
-    {
-        #region IValueConverter Members
-
-        public object Convert(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            Point p = (Point)value;
-            return string.Format("Transform origin X: {0}, Y: {1}", p.X, p.Y);
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            throw new NotSupportedException();
-        }
-
-        #endregion
-    }
-
-    public class CurrentOffsetStatConverter : IValueConverter
-    {
-        #region IValueConverter Members
-
-        public object Convert(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            Point p = (Point)value;
-            return string.Format("Current offset X: {0}, Y: {1}", p.X, p.Y);
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter,
-            System.Globalization.CultureInfo culture)
-        {
-            throw new NotSupportedException();
-        }
-
-        #endregion
-    }
-
-    public class EnumToBooleanConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            // You could also directly pass an enum value using {x:Static},
-            // then there is no need to parse
-            string parameterString = parameter as string;
-            if (parameterString == null)
-                return DependencyProperty.UnsetValue;
-
-            if (Enum.IsDefined(value.GetType(), value) == false)
-                return DependencyProperty.UnsetValue;
-
-            object parameterValue = Enum.Parse(value.GetType(), parameterString);
-
-            return parameterValue.Equals(value);
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            string parameterString = parameter as string;
-            if (parameterString == null)
-                return DependencyProperty.UnsetValue;
-
-            return Enum.Parse(targetType, parameterString);
-        }
-    }
 }

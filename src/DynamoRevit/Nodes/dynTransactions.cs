@@ -69,7 +69,7 @@ namespace Dynamo.Nodes
 
         protected override InputNode Compile(IEnumerable<string> portNames)
         {
-            return new TransactionProcedureNode(this, portNames);
+            return new TransactionProcedureNode(this, InPortData.Select(x => x.NickName));
         }
 
         private class TransactionProcedureNode : InputNode

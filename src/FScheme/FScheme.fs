@@ -425,16 +425,16 @@ let RandomDbl = function
     | m  -> malformed "random" <| List(m)
 
 //List Functions
-let Car =      function [List(h :: _)]       -> h                                      | m -> malformed "car"    <| List(m)
-let Cdr =      function [List(_ :: t)]       -> List(t)                                | m -> malformed "cdr"    <| List(m)
-let Cons =     function [h; List(t)]         -> (List(h :: t))                         | m -> malformed "cons"   <| List(m)
-let Get =      function [Number(n); List(l)] -> l.Item (int n)                         | m -> malformed "get"    <| List(m)
-let Rev =      function [List(l)]            -> List(List.rev l)                       | m -> malformed "reverse"<| List(m)
-let Len =      function [List(l)]            -> Number(double l.Length)                | m -> malformed "len"    <| List(m)
-let Append =   function [List(l1); List(l2)] -> List(List.append l1 l2)                | m -> malformed "append" <| List(m)
-let Take =     function [Number(n); List(l)] -> List(Seq.take (int n) l |> List.ofSeq) | m -> malformed "take"   <| List(m)
-let Drop =     function [Number(n); List(l)] -> List(Seq.skip (int n) l |> List.ofSeq) | m -> malformed "drop"   <| List(m)
-let IsEmpty =  function [List(l)]            -> Number(if l.IsEmpty then 1. else 0.)   | m -> malformed "empty?" <| List(m)
+let Car =     function [List(h :: _)]       -> h                                      | m -> malformed "car"    <| List(m)
+let Cdr =     function [List(_ :: t)]       -> List(t)                                | m -> malformed "cdr"    <| List(m)
+let Cons =    function [h; List(t)]         -> (List(h :: t))                         | m -> malformed "cons"   <| List(m)
+let Get =     function [Number(n); List(l)] -> l.Item (int n)                         | m -> malformed "get"    <| List(m)
+let Rev =     function [List(l)]            -> List(List.rev l)                       | m -> malformed "reverse"<| List(m)
+let Len =     function [List(l)]            -> Number(double l.Length)                | m -> malformed "len"    <| List(m)
+let Append =  function [List(l1); List(l2)] -> List(List.append l1 l2)                | m -> malformed "append" <| List(m)
+let Take =    function [Number(n); List(l)] -> List(Seq.take (int n) l |> List.ofSeq) | m -> malformed "take"   <| List(m)
+let Drop =    function [Number(n); List(l)] -> List(Seq.skip (int n) l |> List.ofSeq) | m -> malformed "drop"   <| List(m)
+let IsEmpty = function [List(l)]            -> Number(if l.IsEmpty then 1. else 0.)   | m -> malformed "empty?" <| List(m)
 
 let rec private reduceLists = function
     | []     -> Seq.empty
@@ -733,7 +733,7 @@ let rec private compile (compenv : CompilerEnv) expression : (Environment -> Val
                 pred [] exprs
             | Define(name, _) -> [name]
             | _               -> []
-        ///All identifiers being defined in the funtion's body.
+        ///All identifiers being defined in the function's body.
         let defs = findAllDefs body
         ///Utility to extract the name of the given parameter.
         let paramToString = function Normal(s) | Tail(s) -> s
@@ -856,7 +856,7 @@ and private makeQuote isQuasi compenv = function
         fun env -> List(List.map (fun x -> x env) qargs)
 
 ///Eval construct -- evaluates code quotations
-and Eval args =
+(*and Eval args =
     let rec toParser = function
         | Symbol(s)   -> Symbol_S(s)
         | Number(n)   -> Number_S(n)
@@ -866,36 +866,42 @@ and Eval args =
         | m           -> malformed "eval" m
     match args with
     | [arg] -> (toParser arg |> syntaxToExpression macroEnv |> compile compileEnvironment) environment
-    | m     -> malformed "eval" <| List(m)
+    | m     -> malformed "eval" <| List(m)*)
 
 
-///Load construct -- loads library files, reads them using the simple tokenizer and parser.
-and load file = Load [String(file)] |> ignore
-and Load = function
-    | [String(file)] ->
-         (File.OpenText(file)).ReadToEnd()
-             |> List.ofSeq |> parse
-             |> List.iter (fun x -> compile compileEnvironment x environment |> ignore)
-         Dummy(sprintf "Loaded '%s'." file)
-    | m -> malformed "load" <| List(m)
+type FSchemeEnvironment = { cEnv : CompilerEnv; rEnv : Environment }
 
-///Our base compiler environment
-and compileEnvironment : CompilerEnv = ref [[]]
+let private eval ce env syntax = compile ce syntax env
 
-///Our base environment
-and environment : Environment = ref [ref [||]]
+///Evaluates the given Syntax
+let Evaluate { cEnv=cEnv; rEnv=env } = eval cEnv env
 
-let mutable private tempEnv : (string * Value ref) list = []
+///Evaluates the given Syntax in the given Environment
+let EvaluateInEnvironment = eval
 
-let EnvironmentMap : Map<string, Value ref> ref = ref Collections.Map.empty
+///Parses and evaluates an expression given in text form, and returns the resulting expression
+let ParseText e = List.ofSeq >> parse >> Begin >> Evaluate e
 
-///Adds a new binding to the default environment
-let AddDefaultBinding name expr = 
-   let eRef = ref expr
-   tempEnv <- (name, eRef) :: tempEnv
-   EnvironmentMap := Collections.Map.add name eRef EnvironmentMap.Value
+let CreateEnvironments() =
+    let evaluateSchemeDefs e =
+        "
+        ;; Y Combinator
+        (define (Y f) ((λ (x) (x x)) (λ (x) (f (λ (g) ((x x) g))))))
+        " |> ParseText e |> ignore
 
-let private makeEnvironments() =
+    ///Our base compiler environment
+    let compileEnvironment : CompilerEnv = ref [[]]
+        
+    ///Our base environment
+    let environment : Environment = ref [ref [||]]
+
+    let tempEnv = ref []
+
+    ///Adds a new binding to the default environment
+    let AddDefaultBinding name expr = 
+        let eRef = ref expr
+        tempEnv := (name, eRef) :: !tempEnv
+
     AddDefaultBinding "*" (Function(Multiply))
     AddDefaultBinding "/" (Function(Divide))
     AddDefaultBinding "%" (Function(Modulus))
@@ -914,7 +920,6 @@ let private makeEnvironments() =
     AddDefaultBinding "get" (Function(Get))
     AddDefaultBinding "drop" (Function(Drop))
     AddDefaultBinding "build-list" (Function(BuildSeq))
-    AddDefaultBinding "load" (Function(Load))
     AddDefaultBinding "display" (Function(Display))
     AddDefaultBinding "true" (Number(1.))
     AddDefaultBinding "false" (Number(0.))
@@ -935,7 +940,7 @@ let private makeEnvironments() =
     AddDefaultBinding "string->num" (Function(StringToNum))
     AddDefaultBinding "num->string"(Function(NumToString))
     AddDefaultBinding "concat-strings" (Function(Concat))
-    AddDefaultBinding "eval" (Function(Eval))
+    //AddDefaultBinding "eval" (Function(Eval))
     AddDefaultBinding "apply" (Function(Apply))
     AddDefaultBinding "add1" (Function(Add1))
     AddDefaultBinding "sub1" (Function(Sub1))
@@ -953,44 +958,30 @@ let private makeEnvironments() =
     AddDefaultBinding "flatten" (Function(Flatten))
     AddDefaultBinding "sqrt" (Function(Sqrt))
 
-let private eval ce env syntax = compile ce syntax env
+    environment := [Seq.map (fun (_, x) -> x) !tempEnv |> Seq.toArray |> ref]
+    compileEnvironment := [List.map (fun (x, _) -> x) !tempEnv]
 
-///Evaluates the given Syntax
-let Evaluate = eval compileEnvironment environment
-
-///Evaluates the given Syntax in the given Environment
-let EvaluateInEnvironment = eval
-
-///Parses and evaluates an expression given in text form, and returns the resulting expression
-let ParseText = List.ofSeq >> parse >> Begin >> Evaluate
-
-let private evaluateSchemeDefs() =
-    "
-    ;; Y Combinator
-    (define (Y f) ((λ (x) (x x)) (λ (x) (f (λ (g) ((x x) g))))))
-    " |> ParseText |> ignore
-
-makeEnvironments()
-environment := [Seq.map (fun (_, x) -> x) tempEnv |> Seq.toArray |> ref]
-compileEnvironment := [List.map (fun (x, _) -> x) tempEnv]
-evaluateSchemeDefs()
+    let env = { rEnv=environment; cEnv=compileEnvironment }
+    evaluateSchemeDefs env
+    env
 
 ///Read/Eval/Print
-let REP = ParseText >> print
+let REP e = ParseText e >> print
 
 ///Debug version of rep
-let private REPd text =
+let private REPd e text =
     let watch = Stopwatch.StartNew()
-    let x = ParseText text
+    let x = ParseText e text
     watch.Stop()
     sprintf "%s\nTime Elapsed: %d ms" (print x) watch.ElapsedMilliseconds
 
 ///Read/Eval/Print Loop
 let REPL debug : unit =
+    let env = CreateEnvironments()
     let runner = if debug then REPd else REP
     let rec repl' output =
         printf "%s\n> " output
-        try Console.ReadLine() |> runner |> repl'
+        try Console.ReadLine() |> runner env |> repl'
         with ex -> repl' ex.Message
     repl' ""
 
@@ -1001,6 +992,7 @@ type ErrorLog = delegate of string -> unit
 let RunTests (log : ErrorLog) =
     let success = ref true
     let rep ce env = List.ofSeq >> parse >> Begin >> eval ce env >> print
+    let env = CreateEnvironments()
     let case source expected =
         try
             let testEnv : Environment =
@@ -1009,9 +1001,9 @@ let RunTests (log : ErrorLog) =
                                             -> ref y.Value)
                                       x.Value
                             |> ref)
-                         environment.Value
+                         env.rEnv.Value
                 |> ref
-            let testCEnv = compileEnvironment.Value |> ref
+            let testCEnv = env.cEnv.Value |> ref
             let output = rep testCEnv testEnv source
             if output <> expected then
                 success := false
@@ -1022,7 +1014,7 @@ let RunTests (log : ErrorLog) =
 
     //Engine Tests
     case "(quote (* 2 3))" "(* 2 3)" // quote primitive
-    case "(eval '(* 2 3))" "6" // eval quoted expression
+    //case "(eval '(* 2 3))" "6" // eval quoted expression
     case "(quote (* 2 (- 5 2)))" "(* 2 (- 5 2))" // quote nested
     case "(quote (* 2 (unquote (- 5 2))))" "(* 2 (unquote (- 5 2)))" // quote nested unquote
     case "(quasiquote (* 2 (unquote (- 5 2))))" "(* 2 3)" // quote nested unquote

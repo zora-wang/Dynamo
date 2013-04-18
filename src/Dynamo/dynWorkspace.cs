@@ -21,8 +21,9 @@ using Dynamo.Connectors;
 using System.Windows;
 using Dynamo.Utilities;
 using Dynamo.Controls;
+using Dynamo.Nodes;
 
-namespace Dynamo.Nodes
+namespace Dynamo
 {
     public abstract class dynWorkspace
     {
@@ -33,7 +34,6 @@ namespace Dynamo.Nodes
         public double PositionX { get; set; }
         public double PositionY { get; set; }
         public string FilePath { get; set; }
-
         public String Name { get; set; }
 
         public event Action OnModified;
@@ -83,9 +83,12 @@ namespace Dynamo.Nodes
             new Dictionary<string, dynNodeUI>();
     }
 
+
+
     public class FuncWorkspace : dynWorkspace
     {
         public String Category { get; set; }
+
 
         #region Contructors
 
@@ -108,36 +111,40 @@ namespace Dynamo.Nodes
         }
 
         #endregion
+
         public override void Modified()
         {
             base.Modified();
 
-            dynSettings.Controller.SaveFunction(this);
+            dynSettings.Controller.SaveFunction(
+                dynSettings.FunctionDict.Values.First(x => x.Workspace == this));
         }
 
         public override void OnDisplayed()
         {
             var bench = dynSettings.Bench;
 
-            if (bench.addMenuItemsDictNew.ContainsKey("Variable"))
-                return;
+            //if (bench.addMenuItemsDictNew.ContainsKey("Variable"))
+            //    return;
 
-            var variable = WorkspaceHelpers.hiddenNodes["Variable"];
-            var output = WorkspaceHelpers.hiddenNodes["Output"];
-            WorkspaceHelpers.hiddenNodes.Remove("Variable");
-            WorkspaceHelpers.hiddenNodes.Remove("Output");
-            variable.Visibility = Visibility.Visible;
-            variable.Visibility = Visibility.Visible;
-            bench.addMenuItemsDictNew["Variable"] = variable;
-            bench.addMenuItemsDictNew["Output"] = output;
+            //var variable = WorkspaceHelpers.hiddenNodes["Variable"];
+            //var output = WorkspaceHelpers.hiddenNodes["Output"];
+            //WorkspaceHelpers.hiddenNodes.Remove("Variable");
+            //WorkspaceHelpers.hiddenNodes.Remove("Output");
+            //variable.Visibility = Visibility.Visible;
+            //variable.Visibility = Visibility.Visible;
+            //bench.addMenuItemsDictNew["Variable"] = variable;
+            //bench.addMenuItemsDictNew["Output"] = output;
 
-            dynSettings.Controller.UpdateSearch(bench.SearchBox.Text.Trim());
+            //dynSettings.Controller.UpdateSearch(bench.SearchBox.Text.Trim());
         }
     }
 
     public class HomeWorkspace : dynWorkspace
     {
         #region Contructors
+
+        private static bool initializedFunctionDefinition = false;
 
         public HomeWorkspace()
             : this(new List<dynNode>(), new List<dynConnector>(), 0, 0)
@@ -149,7 +156,16 @@ namespace Dynamo.Nodes
 
         public HomeWorkspace(List<dynNode> e, List<dynConnector> c, double x, double y)
             : base("Home", e, c, x, y)
-        { }
+        {
+            if (!initializedFunctionDefinition)
+            {
+                var homeGuid = Guid.Parse("32AAC852-90A7-4FBD-B78A-8FDB69302670");
+                var homeWorkspaceFuncDef = new FunctionDefinition();
+                homeWorkspaceFuncDef.Workspace = this;
+                dynSettings.FunctionDict.Add(homeGuid, homeWorkspaceFuncDef);
+                initializedFunctionDefinition = true;
+            }
+        }
 
         #endregion
 
@@ -175,19 +191,19 @@ namespace Dynamo.Nodes
         {
             var bench = dynSettings.Bench;
             
-            if (!bench.addMenuItemsDictNew.ContainsKey("Variable"))
-                return;
+            //if (!bench.addMenuItemsDictNew.ContainsKey("Variable"))
+            //    return;
 
-            var variable = bench.addMenuItemsDictNew["Variable"];
-            var output = bench.addMenuItemsDictNew["Output"];
-            bench.addMenuItemsDictNew.Remove("Variable");
-            bench.addMenuItemsDictNew.Remove("Output");
-            variable.Visibility = Visibility.Collapsed;
-            variable.Visibility = Visibility.Collapsed;
-            WorkspaceHelpers.hiddenNodes["Variable"] = variable;
-            WorkspaceHelpers.hiddenNodes["Output"] = output;
+            //var variable = bench.addMenuItemsDictNew["Variable"];
+            //var output = bench.addMenuItemsDictNew["Output"];
+            //bench.addMenuItemsDictNew.Remove("Variable");
+            //bench.addMenuItemsDictNew.Remove("Output");
+            //variable.Visibility = Visibility.Collapsed;
+            //variable.Visibility = Visibility.Collapsed;
+            //WorkspaceHelpers.hiddenNodes["Variable"] = variable;
+            //WorkspaceHelpers.hiddenNodes["Output"] = output;
 
-            dynSettings.Controller.UpdateSearch(bench.SearchBox.Text.Trim());
+            //dynSettings.Controller.UpdateSearch(bench.SearchBox.Text.Trim());
         }
     }
 }

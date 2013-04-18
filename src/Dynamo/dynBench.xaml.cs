@@ -13,53 +13,66 @@
 //limitations under the License.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Shapes;
-using System.Xml;
-using System.Xml.Serialization;
-using System.Text.RegularExpressions;
 using System.Windows.Media.Imaging;
-using System.Windows.Threading;
-
+using System.Windows.Shapes;
+using Dynamo.Commands;
 using Dynamo.Connectors;
 using Dynamo.Nodes;
-using Dynamo.FSchemeInterop;
 using Dynamo.Utilities;
-using Dynamo.Commands;
-
-using Path = System.IO.Path;
-using Expression = Dynamo.FScheme.Expression;
-using Value = Dynamo.FScheme.Value;
-
 
 namespace Dynamo.Controls
 {
     /// <summary>
-    /// Interaction logic for DynamoForm.xaml
+    ///     Interaction logic for DynamoForm.xaml
     /// </summary>
     public partial class dynBench : Window, INotifyPropertyChanged
     {
+        public const int CANVAS_OFFSET_Y = 0;
+        public const int CANVAS_OFFSET_X = 0;
+        private dynConnector activeConnector;
 
-        public StringWriter sw;
-        private string logText;
-        private bool isWindowSelecting = false;
-        private Point mouseDownPos;
+        internal Dictionary<string, Expander> addMenuCategoryDict
+            = new Dictionary<string, Expander>();
+
+        internal Dictionary<string, dynNodeUI> addMenuItemsDictNew
+            = new Dictionary<string, dynNodeUI>();
+
+        private bool beginNameEditClick;
+
         private SortedDictionary<string, TypeLoadData> builtinTypes = new SortedDictionary<string, TypeLoadData>();
-        Point dragOffset;
 
         private ConnectorType connectorType;
+        private bool consoleShowing;
+        private DynamoController controller;
+        private Point dragOffset;
+        private dynNodeUI draggedElementMenuItem;
+        private dynNodeUI draggedNode;
+        private bool editingName;
+        private bool hoveringEditBox;
+        private bool isWindowSelecting;
+        private string logText;
+        private Point mouseDownPos;
+        public StringWriter sw;
+
+        private Point transformOrigin;
+
+        internal dynBench(DynamoController controller)
+        {
+            Controller = controller;
+            sw = new StringWriter();
+            ConnectorType = ConnectorType.BEZIER;
+        }
+
         public ConnectorType ConnectorType
         {
             get { return connectorType; }
@@ -70,18 +83,16 @@ namespace Dynamo.Controls
             }
         }
 
-        Point transformOrigin;
         public Point TransformOrigin
         {
             get { return transformOrigin; }
-            set 
+            set
             {
                 transformOrigin = value;
                 NotifyPropertyChanged("TransformOrigin");
             }
         }
 
-        private bool consoleShowing = false;
         public bool ConsoleShowing
         {
             get { return consoleShowing; }
@@ -92,68 +103,20 @@ namespace Dynamo.Controls
             }
         }
 
-        private dynConnector activeConnector;
         public dynConnector ActiveConnector
         {
             get { return activeConnector; }
             set { activeConnector = value; }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        /// <summary>
-        /// Used by various properties to notify observers that a property has changed.
-        /// </summary>
-        /// <param name="info">What changed.</param>
-        private void NotifyPropertyChanged(String info)
-        {
-            if (PropertyChanged != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(info));
-            }
-        }
-
-        DynamoController controller;
         public DynamoController Controller
         {
             get { return controller; }
             set
             {
                 controller = value;
-                NotifyPropertyChanged("Controller");
+                NotifyPropertyChanged("ViewModel");
             }
-        }
-
-        internal dynBench(DynamoController controller)
-        {
-            Controller = controller;
-            sw = new StringWriter();
-            this.ConnectorType = ConnectorType.BEZIER;
-        }
-
-        public void LockUI()
-        {
-            this.UILocked = true;
-            this.saveButton.IsEnabled = false;
-            this.clearButton.IsEnabled = false;
-
-            this.overlayCanvas.IsHitTestVisible = true;
-            this.overlayCanvas.Cursor = System.Windows.Input.Cursors.AppStarting;
-            this.overlayCanvas.ForceCursor = true;
-
-            //this.workBench.Visibility = System.Windows.Visibility.Hidden;
-        }
-
-        public void UnlockUI()
-        {
-            this.UILocked = false;
-            this.saveButton.IsEnabled = true;
-            this.clearButton.IsEnabled = true;
-
-            this.overlayCanvas.IsHitTestVisible = false;
-            this.overlayCanvas.Cursor = null;
-            this.overlayCanvas.ForceCursor = false;
-
-            //this.workBench.Visibility = System.Windows.Visibility.Visible;
         }
 
         public string LogText
@@ -165,9 +128,6 @@ namespace Dynamo.Controls
                 NotifyPropertyChanged("LogText");
             }
         }
-
-        public const int CANVAS_OFFSET_Y = 0;
-        public const int CANVAS_OFFSET_X = 0;
 
         public Point CurrentOffset
         {
@@ -182,16 +142,56 @@ namespace Dynamo.Controls
             }
         }
 
-        dynNodeUI draggedNode;
+        public bool UILocked { get; private set; }
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         /// <summary>
-        /// Updates an element and all its ports.
+        ///     Used by various properties to notify observers that a property has changed.
+        /// </summary>
+        /// <param name="info">What changed.</param>
+        private void NotifyPropertyChanged(String info)
+        {
+            if (PropertyChanged != null)
+            {
+                PropertyChanged(this, new PropertyChangedEventArgs(info));
+            }
+        }
+
+        public void LockUI()
+        {
+            UILocked = true;
+            saveButton.IsEnabled = false;
+            clearButton.IsEnabled = false;
+
+            overlayCanvas.IsHitTestVisible = true;
+            overlayCanvas.Cursor = Cursors.AppStarting;
+            overlayCanvas.ForceCursor = true;
+
+            //this.workBench.Visibility = System.Windows.Visibility.Hidden;
+        }
+
+        public void UnlockUI()
+        {
+            UILocked = false;
+            saveButton.IsEnabled = true;
+            clearButton.IsEnabled = true;
+
+            overlayCanvas.IsHitTestVisible = false;
+            overlayCanvas.Cursor = null;
+            overlayCanvas.ForceCursor = false;
+
+            //this.workBench.Visibility = System.Windows.Visibility.Visible;
+        }
+
+        /// <summary>
+        ///     Updates an element and all its ports.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        static void UpdateElement(object sender, MouseButtonEventArgs e)
+        private static void UpdateElement(object sender, MouseButtonEventArgs e)
         {
-            dynNodeUI el = sender as dynNodeUI;
+            var el = sender as dynNodeUI;
             foreach (dynPort p in el.InPorts)
             {
                 p.Update();
@@ -203,7 +203,7 @@ namespace Dynamo.Controls
             }
         }
 
-        void DrawGrid()
+        private void DrawGrid()
         {
             //clear the canvas's children
             //WorkBench.Children.Clear();
@@ -211,43 +211,46 @@ namespace Dynamo.Controls
 
             for (double i = 0.0; i < WorkBench.Width; i += gridSpacing)
             {
-                Line xLine = new Line();
-                xLine.Stroke = new SolidColorBrush(System.Windows.Media.Color.FromRgb(100,100,100));
+                var xLine = new Line();
+                xLine.Stroke = new SolidColorBrush(Color.FromRgb(100, 100, 100));
                 xLine.X1 = i;
                 xLine.Y1 = 0;
                 xLine.X2 = i;
                 xLine.Y2 = WorkBench.Height;
-                xLine.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
+                xLine.HorizontalAlignment = HorizontalAlignment.Left;
                 xLine.VerticalAlignment = VerticalAlignment.Center;
                 xLine.StrokeThickness = 1;
                 WorkBench.Children.Add(xLine);
-                Dynamo.Controls.DragCanvas.SetCanBeDragged(xLine, false);
+                DragCanvas.SetCanBeDragged(xLine, false);
                 xLine.IsHitTestVisible = false;
             }
             for (double i = 0.0; i < WorkBench.Height; i += gridSpacing)
             {
-                Line yLine = new Line();
-                yLine.Stroke = new SolidColorBrush(System.Windows.Media.Color.FromRgb(100, 100, 100));
+                var yLine = new Line();
+                yLine.Stroke = new SolidColorBrush(Color.FromRgb(100, 100, 100));
                 yLine.X1 = 0;
                 yLine.Y1 = i;
                 yLine.X2 = WorkBench.Width;
                 yLine.Y2 = i;
-                yLine.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
+                yLine.HorizontalAlignment = HorizontalAlignment.Left;
                 yLine.VerticalAlignment = VerticalAlignment.Center;
                 yLine.StrokeThickness = 1;
                 WorkBench.Children.Add(yLine);
-                Dynamo.Controls.DragCanvas.SetCanBeDragged(yLine, false);
+                DragCanvas.SetCanBeDragged(yLine, false);
                 yLine.IsHitTestVisible = false;
             }
         }
 
         /// <summary>
-        /// Called when the mouse has been moved.
+        ///     Called when the mouse has been moved.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        public void OnMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        public void OnMouseMove(object sender, MouseEventArgs e)
         {
+            //Canvas.SetLeft(debugPt, e.GetPosition(dynSettings.Workbench).X - debugPt.Width/2);
+            //Canvas.SetTop(debugPt, e.GetPosition(dynSettings.Workbench).Y - debugPt.Height / 2);
+
             //If we are currently connecting and there is an active connector,
             //redraw it to match the new mouse coordinates.
             if (WorkBench.IsConnecting && activeConnector != null)
@@ -259,16 +262,17 @@ namespace Dynamo.Controls
             //match the new mouse coordinates.
             if (WorkBench.isDragInProgress)
             {
+                IEnumerable<dynConnector> allConnectors = WorkBench.Selection
+                                                                   .Where(x => x is dynNodeUI)
+                                                                   .Select(x => x as dynNodeUI)
+                                                                   .SelectMany(
+                                                                       el => el.OutPorts
+                                                                               .SelectMany(x => x.Connectors)
+                                                                               .Concat(
+                                                                                   el.InPorts.SelectMany(
+                                                                                       x => x.Connectors))).Distinct();
 
-                var allConnectors = WorkBench.Selection
-                    .Where(x => x is dynNodeUI)
-                    .Select(x => x as dynNodeUI)
-                    .SelectMany(
-                        el => el.OutPorts
-                            .SelectMany(x => x.Connectors)
-                            .Concat(el.InPorts.SelectMany(x => x.Connectors)));
-
-                foreach (var connector in allConnectors)
+                foreach (dynConnector connector in allConnectors)
                 {
                     connector.Redraw();
                 }
@@ -299,35 +303,40 @@ namespace Dynamo.Controls
                 else
                 {
                     Canvas.SetTop(selectionBox, mousePos.Y);
+
                     selectionBox.Height = mouseDownPos.Y - mousePos.Y;
                 }
 
                 if (mousePos.X > mouseDownPos.X)
                 {
                     #region contain select
+
                     selectionBox.StrokeDashArray = null;
+
                     #endregion
                 }
                 else if (mousePos.X < mouseDownPos.X)
                 {
                     #region crossing select
-                    selectionBox.StrokeDashArray = new DoubleCollection() { 4 };
+
+                    selectionBox.StrokeDashArray = new DoubleCollection {4};
+
                     #endregion
                 }
             }
         }
 
         /// <summary>
-        /// Called when a mouse button is pressed.
+        ///     Called when a mouse button is pressed.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
-            this.Focus();
+            Focus();
         }
 
-        void OnMouseLeftButtonDown(object sender, System.Windows.Input.MouseEventArgs e)
+        private void OnMouseLeftButtonDown(object sender, MouseEventArgs e)
         {
             if (!WorkBench.IsConnecting)
             {
@@ -366,11 +375,10 @@ namespace Dynamo.Controls
             {
                 DisableEditNameBox();
             }
-
         }
 
         /// <summary>
-        /// Called when a mouse button is released.
+        ///     Called when a mouse button is released.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -380,11 +388,12 @@ namespace Dynamo.Controls
 
             if (e.ChangedButton == MouseButton.Left)
             {
-                this.beginNameEditClick = false;
+                beginNameEditClick = false;
 
                 if (isWindowSelecting)
                 {
                     #region release window selection
+
                     //DEBUG WINDOW SELECTION
                     // Release the mouse capture and stop tracking it.
                     isWindowSelecting = false;
@@ -398,16 +407,17 @@ namespace Dynamo.Controls
                     //clear the selected elements
                     WorkBench.ClearSelection();
 
-                    System.Windows.Rect rect =
-                                new System.Windows.Rect(
-                                    Canvas.GetLeft(selectionBox),
-                                    Canvas.GetTop(selectionBox),
-                                    selectionBox.Width,
-                                    selectionBox.Height);
+                    var rect =
+                        new Rect(
+                            Canvas.GetLeft(selectionBox),
+                            Canvas.GetTop(selectionBox),
+                            selectionBox.Width,
+                            selectionBox.Height);
 
                     if (mouseUpPos.X > mouseDownPos.X)
                     {
                         #region contain select
+
                         foreach (dynNodeUI n in Controller.Nodes.Select(node => node.NodeUI))
                         {
                             //check if the node is within the boundary
@@ -423,11 +433,13 @@ namespace Dynamo.Controls
                                     WorkBench.Selection.Add(n);
                             }
                         }
+
                         #endregion
                     }
                     else if (mouseUpPos.X < mouseDownPos.X)
                     {
                         #region crossing select
+
                         foreach (dynNodeUI n in Controller.Nodes.Select(node => node.NodeUI))
                         {
                             //check if the node is within the boundary
@@ -441,8 +453,10 @@ namespace Dynamo.Controls
                                     WorkBench.Selection.Add(n);
                             }
                         }
+
                         #endregion
                     }
+
                     #endregion
                 }
             }
@@ -450,26 +464,24 @@ namespace Dynamo.Controls
 
         public void Log(Exception e)
         {
-            Log(e.GetType().ToString() + ":");
+            Log(e.GetType() + ":");
             Log(e.Message);
             Log(e.StackTrace);
         }
 
-        
-
         internal void BeginDragElement(dynNodeUI nodeUI, string name, Point eleOffset)
         {
-            if (this.UILocked)
+            if (UILocked)
                 return;
 
             draggedElementMenuItem = nodeUI;
 
-            var pos = Mouse.GetPosition(overlayCanvas);
+            Point pos = Mouse.GetPosition(overlayCanvas);
 
             double x = pos.X;
             double y = pos.Y;
 
-            this.dragOffset = eleOffset;
+            dragOffset = eleOffset;
 
             dynNode newEl;
             try
@@ -496,54 +508,10 @@ namespace Dynamo.Controls
             Canvas.SetLeft(newEl.NodeUI, x);
             Canvas.SetTop(newEl.NodeUI, y);
 
-            this.draggedNode = newEl.NodeUI;
+            draggedNode = newEl.NodeUI;
 
-            this.overlayCanvas.IsHitTestVisible = true;
+            overlayCanvas.IsHitTestVisible = true;
         }
-
-
-
-        //private void Open_Click(object sender, RoutedEventArgs e)
-        //{
-        //    //string xmlPath = "C:\\test\\myWorkbench.xml";
-        //    string xmlPath = "";
-
-        //    System.Windows.Forms.OpenFileDialog openDialog = new OpenFileDialog()
-        //    {
-        //        Filter = "Dynamo Definitions (*.dyn; *.dyf)|*.dyn;*.dyf|All files (*.*)|*.*"
-        //    };
-
-        //    if (openDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-        //    {
-        //        xmlPath = openDialog.FileName;
-        //    }
-
-        //    if (!string.IsNullOrEmpty(xmlPath))
-        //    {
-        //        if (this.UILocked)
-        //        {
-        //            Controller.QueueLoad(xmlPath);
-        //            return;
-        //        }
-
-        //        LockUI();
-        //        if (!Controller.OpenDefinition(xmlPath))
-        //        {
-        //            //MessageBox.Show("Workbench could not be opened.");
-        //            Log("Workbench could not be opened.");
-
-        //            //dynSettings.Writer.WriteLine("Workbench could not be opened.");
-        //            //dynSettings.Writer.WriteLine(xmlPath);
-
-        //            if (DynamoCommands.WriteToLogCmd.CanExecute(null))
-        //            {
-        //                DynamoCommands.WriteToLogCmd.Execute("Workbench could not be opened.");
-        //                DynamoCommands.WriteToLogCmd.Execute(xmlPath);
-        //            }
-        //        }
-        //        UnlockUI();
-        //    }
-        //}
 
         private void WindowClosed(object sender, EventArgs e)
         {
@@ -552,9 +520,10 @@ namespace Dynamo.Controls
                 sw.Close();
                 if (DynamoCommands.WriteToLogCmd.CanExecute(null))
                 {
-                    DynamoCommands.WriteToLogCmd.Execute("Dynamo ended " + System.DateTime.Now.ToString());
+                    DynamoCommands.WriteToLogCmd.Execute("Dynamo ended " + DateTime.Now.ToString());
                 }
-                dynSettings.Writer.Close();
+
+                dynSettings.FinishLogging();
             }
 
             //end the transaction 
@@ -572,11 +541,11 @@ namespace Dynamo.Controls
             {
                 DynamoCommands.WriteToLogCmd.Execute(message);
             }
-
-            LogScroller.ScrollToBottom();
+            if (LogScroller != null)
+                LogScroller.ScrollToBottom();
         }
 
-        private void OnPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        private void OnPreviewKeyDown(object sender, KeyEventArgs e)
         {
             //handle key presses for the bench in the bubbling event
             //if no other element has already handled this event it will 
@@ -585,7 +554,7 @@ namespace Dynamo.Controls
 
             if (Keyboard.IsKeyDown(Key.LeftCtrl) && Keyboard.IsKeyDown(Key.N))
             {
-                Dictionary<string, object> paramDict = new Dictionary<string, object>();
+                var paramDict = new Dictionary<string, object>();
                 paramDict.Add("x", Mouse.GetPosition(dynSettings.Workbench).X);
                 paramDict.Add("y", Mouse.GetPosition(dynSettings.Workbench).Y);
                 paramDict.Add("workspace", Controller.CurrentSpace);
@@ -597,12 +566,12 @@ namespace Dynamo.Controls
 
             IInputElement focusElement = FocusManager.GetFocusedElement(this);
 
-            if (focusElement != null && 
-                focusElement.GetType() != typeof(System.Windows.Controls.TextBox) &&
-                focusElement.GetType() !=typeof(dynTextBox) && 
+            if (focusElement != null &&
+                focusElement.GetType() != typeof (TextBox) &&
+                focusElement.GetType() != typeof (dynTextBox) &&
                 !Keyboard.IsKeyDown(Key.LeftCtrl) &&
-                !Keyboard.IsKeyDown(Key.RightCtrl) && 
-                !Keyboard.IsKeyDown(Key.LeftShift) && 
+                !Keyboard.IsKeyDown(Key.RightCtrl) &&
+                !Keyboard.IsKeyDown(Key.LeftShift) &&
                 !Keyboard.IsKeyDown(Key.RightShift))
             {
                 double x = 0;
@@ -630,7 +599,6 @@ namespace Dynamo.Controls
                 }
 
                 zoomBorder.IncrementTranslateOrigin(x, y);
-                
             }
 
             if (editingName)
@@ -648,62 +616,11 @@ namespace Dynamo.Controls
                 }
             }
 
-            if ((Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)) && Keyboard.IsKeyDown(Key.F))
-            {
-                SearchBox.Focus();
-                SearchBox.SelectAll();
-            }
-        }
-
-        internal Dictionary<string, System.Windows.Controls.MenuItem> viewMenuItemsDict
-           = new Dictionary<string, System.Windows.Controls.MenuItem>();
-
-        internal Dictionary<string, Expander> addMenuCategoryDict
-           = new Dictionary<string, Expander>();
-
-        internal Dictionary<string, dynNodeUI> addMenuItemsDictNew
-           = new Dictionary<string, dynNodeUI>();
-
-        private void NewFunction_Click(object sender, RoutedEventArgs e)
-        {
-            //First, prompt the user to enter a name
-            string name, category;
-            string error = "";
-
-            do
-            {
-                var dialog = new FunctionNamePrompt(this.addMenuCategoryDict.Keys, error);
-                if (dialog.ShowDialog() != true)
-                {
-                    return;
-                }
-
-                name = dialog.Text;
-                category = dialog.Category;
-
-                if (Controller.FunctionDict.ContainsKey(name))
-                {
-                    error = "A function with this name already exists.";
-                }
-                else if (category.Equals(""))
-                {
-                    error = "Please enter a valid category.";
-                }
-                else
-                {
-                    error = "";
-                }
-            }
-            while (!error.Equals(""));
-
-            Controller.NewFunction(name, category, true);
-        }
-
-        internal void ChangeView_Click(object sender, RoutedEventArgs e)
-        {
-            System.Windows.Controls.MenuItem item = sender as System.Windows.Controls.MenuItem;
-
-            Controller.DisplayFunction(item.Header.ToString());
+            //if ((Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)) && Keyboard.IsKeyDown(Key.F))
+            //{
+            //    SearchBox.Focus();
+            //    SearchBox.SelectAll();
+            //}
         }
 
         internal void setFunctionBackground()
@@ -712,8 +629,8 @@ namespace Dynamo.Controls
             //bgBrush.GradientStops[0].Color = Color.FromArgb(0xFF, 0x6B, 0x6B, 0x6B); //Dark
             //bgBrush.GradientStops[1].Color = Color.FromArgb(0xFF, 0xBA, 0xBA, 0xBA); //Light
 
-            var bgBrush = (SolidColorBrush)this.outerCanvas.Background;
-            bgBrush.Color = Color.FromArgb(0xFF, 0xBA, 0xBA, 0xBA); //Light
+            var bgBrush = (SolidColorBrush) outerCanvas.Background;
+            bgBrush.Color = Color.FromArgb(0xFF, 0x8A, 0x8A, 0x8A); //Dark
         }
 
         internal void setHomeBackground()
@@ -722,7 +639,7 @@ namespace Dynamo.Controls
             //bgBrush.GradientStops[0].Color = Color.FromArgb(0xFF, 0x4B, 0x4B, 0x4B); //Dark
             //bgBrush.GradientStops[1].Color = Color.FromArgb(0xFF, 0x7A, 0x7A, 0x7A); //Light
 
-            var bgBrush = (SolidColorBrush)this.outerCanvas.Background;
+            var bgBrush = (SolidColorBrush) outerCanvas.Background;
             bgBrush.Color = Color.FromArgb(0xFF, 0x4B, 0x4B, 0x4B); //Dark
         }
 
@@ -733,19 +650,16 @@ namespace Dynamo.Controls
 
         internal void CenterViewOnElement(dynNodeUI e)
         {
-            var left = Canvas.GetLeft(e);
-            var top = Canvas.GetTop(e);
+            double left = Canvas.GetLeft(e);
+            double top = Canvas.GetTop(e);
 
-            var x = left + e.Width / 2 - this.outerCanvas.ActualWidth / 2;
-            var y = top + e.Height / 2 - (this.outerCanvas.ActualHeight / 2 - this.LogScroller.ActualHeight);
+            double x = left + e.Width/2 - outerCanvas.ActualWidth/2;
+            double y = top + e.Height/2 - (outerCanvas.ActualHeight/2 - LogScroller.ActualHeight);
 
             CurrentOffset = new Point(-x, -y);
         }
 
-        private bool beginNameEditClick;
-        private bool editingName;
-
-        private void image1_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        private void image1_MouseEnter(object sender, MouseEventArgs e)
         {
             //highlight
 
@@ -755,7 +669,7 @@ namespace Dynamo.Controls
             }
         }
 
-        private void image1_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        private void image1_MouseLeave(object sender, MouseEventArgs e)
         {
             //unhighlight
         }
@@ -782,54 +696,51 @@ namespace Dynamo.Controls
             beginNameEditClick = true;
         }
 
-        void EnableEditNameBox()
+        private void EnableEditNameBox()
         {
-            this.workspaceLabel.Visibility = System.Windows.Visibility.Collapsed;
+            workspaceLabel.Visibility = Visibility.Collapsed;
 
-            this.editNameBox.Visibility = System.Windows.Visibility.Visible;
-            this.editNameBox.IsEnabled = true;
-            this.editNameBox.IsHitTestVisible = true;
-            this.editNameBox.Focusable = true;
-            this.editNameBox.Focus();
-            this.editNameBox.Text = Controller.CurrentSpace.Name;
-            this.editNameBox.SelectAll();
+            editNameBox.Visibility = Visibility.Visible;
+            editNameBox.IsEnabled = true;
+            editNameBox.IsHitTestVisible = true;
+            editNameBox.Focusable = true;
+            editNameBox.Focus();
+            editNameBox.Text = Controller.CurrentSpace.Name;
+            editNameBox.SelectAll();
 
             editingName = true;
         }
 
-        void DisableEditNameBox()
+        private void DisableEditNameBox()
         {
-            this.editNameBox.Visibility = System.Windows.Visibility.Collapsed;
-            this.editNameBox.IsEnabled = false;
-            this.editNameBox.IsHitTestVisible = false;
-            this.editNameBox.Focusable = false;
+            editNameBox.Visibility = Visibility.Collapsed;
+            editNameBox.IsEnabled = false;
+            editNameBox.IsHitTestVisible = false;
+            editNameBox.Focusable = false;
 
-            this.workspaceLabel.Visibility = System.Windows.Visibility.Visible;
+            workspaceLabel.Visibility = Visibility.Visible;
 
             editingName = false;
         }
 
-        private bool hoveringEditBox = false;
-        private dynNodeUI draggedElementMenuItem;
-
-        private void editNameBox_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        private void editNameBox_MouseEnter(object sender, MouseEventArgs e)
         {
             hoveringEditBox = true;
         }
 
-        private void editNameBox_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        private void editNameBox_MouseLeave(object sender, MouseEventArgs e)
         {
             hoveringEditBox = false;
         }
 
-        private void OverlayCanvas_OnMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        private void OverlayCanvas_OnMouseMove(object sender, MouseEventArgs e)
         {
-            if (this.UILocked)
+            if (UILocked)
                 return;
 
-            var el = draggedNode;
+            dynNodeUI el = draggedNode;
 
-            var pos = e.GetPosition(overlayCanvas);
+            Point pos = e.GetPosition(overlayCanvas);
 
             Canvas.SetLeft(el, pos.X - dragOffset.X);
             Canvas.SetTop(el, pos.Y - dragOffset.Y);
@@ -837,25 +748,25 @@ namespace Dynamo.Controls
 
         private void OverlayCanvas_OnMouseUp(object sender, MouseButtonEventArgs e)
         {
-            if (this.UILocked)
+            if (UILocked)
                 return;
 
-            var el = draggedNode;
+            dynNodeUI el = draggedNode;
 
-            var pos = e.GetPosition(this.WorkBench);
+            Point pos = e.GetPosition(WorkBench);
 
-            this.overlayCanvas.Children.Clear();
-            this.overlayCanvas.IsHitTestVisible = false;
+            overlayCanvas.Children.Clear();
+            overlayCanvas.IsHitTestVisible = false;
 
-            draggedElementMenuItem.Visibility = System.Windows.Visibility.Visible;
+            draggedElementMenuItem.Visibility = Visibility.Visible;
             draggedElementMenuItem = null;
 
-            var outerPos = e.GetPosition(this.outerCanvas);
+            Point outerPos = e.GetPosition(outerCanvas);
 
-            if (outerPos.X >= 0 && outerPos.X <= this.overlayCanvas.ActualWidth
-                && outerPos.Y >= 0 && outerPos.Y <= this.overlayCanvas.ActualHeight)
+            if (outerPos.X >= 0 && outerPos.X <= overlayCanvas.ActualWidth
+                && outerPos.Y >= 0 && outerPos.Y <= overlayCanvas.ActualHeight)
             {
-                this.WorkBench.Children.Add(el);
+                WorkBench.Children.Add(el);
 
                 Controller.Nodes.Add(el.NodeLogic);
 
@@ -875,63 +786,31 @@ namespace Dynamo.Controls
             dragOffset = new Point();
         }
 
-        internal void FilterAddMenu(HashSet<dynNodeUI> elements)
-        {
-
-            foreach (FrameworkElement ex in this.SideStackPanel.Children)
-            {
-                if (ex.GetType() == typeof (StackPanel)) // if search results
-                {
-                    ex.Visibility = Visibility.Collapsed;
-                }
-                else if (ex.GetType() == typeof(Expander))
-                {
-                    ex.Visibility = Visibility.Visible;
-                    Controller.filterCategory(elements, (Expander) ex);
-                }
-            }
-        }
-
-        private void SearchBox_OnTextChanged(object sender, TextChangedEventArgs e)
-        {
-            Controller.UpdateSearch(this.SearchBox.Text.Trim());
-        }
-
-        private void searchBox_LostFocus(object sender, RoutedEventArgs e)
-        {
-            //if (this.searchBox.Text.Equals(""))
-            //   this.searchBox.Text = "Search";
-        }
 
         private static void SaveRTBAsPNG(RenderTargetBitmap bmp, string filename)
         {
-            var enc = new System.Windows.Media.Imaging.PngBitmapEncoder();
-            enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmp));
+            var enc = new PngBitmapEncoder();
+            enc.Frames.Add(BitmapFrame.Create(bmp));
 
-            using (var stm = System.IO.File.Create(filename))
+            using (FileStream stm = File.Create(filename))
             {
                 enc.Save(stm);
             }
         }
 
-        public bool UILocked { get; private set; }
-
         private void WorkBench_ContextMenuOpening(object sender, ContextMenuEventArgs e)
         {
-       
         }
 
         private void _this_Loaded(object sender, RoutedEventArgs e)
         {
             DrawGrid();
-            this.mainGrid.Focus();
+            mainGrid.Focus();
         }
-
     }
 
-    public class dynSelection : ObservableCollection<System.Windows.Controls.UserControl>
+    public class dynSelection : ObservableCollection<UserControl>
     {
-        public dynSelection() : base() { }
     }
 
     public class TypeLoadData
@@ -953,7 +832,7 @@ namespace Dynamo.Controls
         public CancelEvaluationException(bool force)
             : base("Run Cancelled")
         {
-            this.Force = force;
+            Force = force;
         }
     }
 }

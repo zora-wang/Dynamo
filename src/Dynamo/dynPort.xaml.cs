@@ -66,17 +66,17 @@ namespace Dynamo.Connectors
 
         #region private members
 
-        List<dynConnector> connectors;
+        List<dynConnector> connectors = new List<dynConnector>();
         Point center;
-
+        bool isConnected;
         dynNodeUI owner;
         int index;
         PortType portType;
         string name;
-
         #endregion
 
         #region public members
+
         public Point Center
         {
             get { return UpdateCenter(); }
@@ -89,11 +89,24 @@ namespace Dynamo.Connectors
             set { connectors = value; }
         }
 
-        //public bool IsInputPort
-        //{
-        //    get { return isInputPort; }
-        //    set { isInputPort = value; }
-        //}
+        public string ToolTipContent
+        {
+            get
+            {
+                if (Owner != null)
+                {
+                    if (PortType == Dynamo.Connectors.PortType.INPUT)
+                    {
+                        return Owner.NodeLogic.InPortData[index].ToolTipString;
+                    }
+                    else
+                    {
+                        return Owner.NodeLogic.OutPortData[index].ToolTipString;
+                    }
+                }
+                return "";
+            }
+        }
 
         public string PortName
         {
@@ -105,6 +118,7 @@ namespace Dynamo.Connectors
             }
                 
         }
+        
         public PortType PortType
         {
             get { return portType; }
@@ -114,7 +128,11 @@ namespace Dynamo.Connectors
         public dynNodeUI Owner
         {
             get { return owner; }
-            set { owner = value; }
+            set 
+            { 
+                owner = value;
+                NotifyPropertyChanged("Owner");
+            }
         }
 
         public int Index
@@ -122,21 +140,59 @@ namespace Dynamo.Connectors
             get { return index; }
             set { index = value; }
         }
+
+        public bool IsConnected
+        {
+            get
+            { return isConnected; }
+            set
+            {
+                isConnected = value;
+                NotifyPropertyChanged("IsConnected");
+            }
+        }
+
         #endregion
 
         #region constructors
 
-        public dynPort(int index)
+        public dynPort(int index, PortType portType, dynNodeUI owner, string name)
         {
-            connectors = new List<dynConnector>();
-            //this.workBench = workBench;
-            this.index = index;
             InitializeComponent();
+
+            Index = index;
 
             this.MouseEnter += delegate { foreach (var c in connectors) c.Highlight(); };
             this.MouseLeave += delegate { foreach (var c in connectors) c.Unhighlight(); };
 
+            IsConnected = false;
+
+            PortType = portType;
+            Owner = owner;
+            PortName = name;
+
+            portGrid.DataContext = this;
             portNameTb.DataContext = this;
+            toolTipText.DataContext = this;
+            ellipse1Dot.DataContext = this;
+            ellipse1.DataContext = Owner;
+
+            portGrid.Loaded += new RoutedEventHandler(portGrid_Loaded);
+        }
+
+        void portGrid_Loaded(object sender, RoutedEventArgs e)
+        {
+            //flip the output ports so they show up on the 
+            //right hand side of the node with text on the left
+            //do this after the port is loaded so we can get
+            //its ActualWidth
+            //if (PortType == Dynamo.Connectors.PortType.OUTPUT)
+            //{
+            //    ScaleTransform trans = new ScaleTransform(-1, 1, ActualWidth/2, Height / 2);
+            //    portGrid.RenderTransform = trans;
+            //    portNameTb.Margin = new Thickness(0, 0, 15, 0);
+            //    portNameTb.TextAlignment = TextAlignment.Right;
+            //}
         }
         #endregion constructors
 
@@ -145,11 +201,10 @@ namespace Dynamo.Connectors
         {
             connectors.Add(connector);
 
-            ellipse1Dot.Fill = System.Windows.Media.Brushes.Black;
-
             //throw the event for a connection
             OnPortConnected(EventArgs.Empty);
 
+            IsConnected = true;
         }
 
         public void Disconnect(dynConnector connector)
@@ -165,11 +220,14 @@ namespace Dynamo.Connectors
             //don't set back to white if
             //there are still connectors on this port
             if (connectors.Count == 0)
-                ellipse1Dot.Fill = System.Windows.Media.Brushes.White;
+            {
+                IsConnected = false;
+            }
 
             if (connectors.Count == 0)
                 Owner.State = ElementState.DEAD;
 
+            
         }
 
         public void Update()
@@ -186,33 +244,24 @@ namespace Dynamo.Connectors
         #region private methods
         Point UpdateCenter()
         {
-            GeneralTransform transform = ellipse1.TransformToAncestor(dynSettings.Workbench);
-            Point rootPoint = transform.Transform(new Point(0, 0));
 
-            double x = rootPoint.X;
-            double y = rootPoint.Y;
+            GeneralTransform transform = portCircle.TransformToAncestor(dynSettings.Workbench);
+            Point rootPoint = transform.Transform(new Point(portCircle.Width / 2, portCircle.Height / 2));
 
-            if (this.portType == Dynamo.Connectors.PortType.OUTPUT)
-            {
-                //x += this.Width / 2;
-            }
-            else
-            {
-                //x += this.Width / 2;
-                x += ellipse1.Width / 2;
-            }
-            //y += this.Height / 2;
-            y += ellipse1.Height / 2;
+            //double x = rootPoint.X;
+            //double y = rootPoint.Y;
 
-            return new Point(x, y);
+            //if(portType == Dynamo.Connectors.PortType.INPUT)
+            //{
+            //    x += ellipse1.Width / 2;
+            //}
+            //y += ellipse1.Height / 2;
+
+            //return new Point(x, y);
+            return new Point(rootPoint.X, rootPoint.Y);
 
         }
         #endregion
-
-        private void ellipse1_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            //show the contextual menu
-        }
 
         private void OnOpened(object sender, RoutedEventArgs e)
         {
