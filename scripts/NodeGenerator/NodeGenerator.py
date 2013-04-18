@@ -48,7 +48,8 @@ def main():
 	'Autodesk.Revit.DB.UV.Zero',
 	'Autodesk.Revit.DB.Form.GetProfileAndCurveLoopIndexFromReference',
 	'Autodesk.Revit.Creation.Document.NewFootPrintRoof',
-	'Autodesk.Revit.DB.Solid.getGeometry'
+	'Autodesk.Revit.DB.Solid.getGeometry',
+	'Autodesk.Revit.DB.Color.InvalidColorValue'
 	]
 
 	valid_namespaces = {
