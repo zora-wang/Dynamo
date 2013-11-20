@@ -151,4 +151,59 @@ namespace Dynamo.Nodes
         }
 
     }
+
+
+    [NodeName("UDP Broadcaster")]
+    [NodeCategory(BuiltinNodeCategories.IO_HARDWARE)]
+    [NodeDescription("Broadcasts a message to an IP Address using a UDP port")]
+    public class UdpBroadcaster : NodeWithOneOutput
+    {
+
+        public string UDPResponse = "";
+        int broadcastPort;
+        string broadcastIP;
+        string message;
+        string status = "";
+
+        public UdpBroadcaster()
+        {
+            InPortData.Add(new PortData("interval", "How often to publish (execution interval).", typeof(Value.Number)));
+            InPortData.Add(new PortData("port", "A UDP port to broadcast on .", typeof(object)));
+            InPortData.Add(new PortData("IP", "An IP address to broadcast to.", typeof(object)));//TODO - make this optional and set default to all IPs
+            InPortData.Add(new PortData("message", "the message to broadcast.", typeof(object)));
+            OutPortData.Add(new PortData("str", "The string returned from the web request.", typeof(Value.String)));
+
+            RegisterAllPorts();
+        }
+
+         public override Value Evaluate(FSharpList<Value> args)
+         {
+             broadcastPort = (int)((Value.Number)args[1]).Item; // udp port to broadcast on
+             broadcastIP = (string)((Value.String)args[2]).Item; // IP address broadcast to tODO - make this optional and set default to all IPs
+             message = (string)((Value.String)args[3]).Item; //the actual message to pump
+
+             try
+             {
+                 Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Dgram,
+                         ProtocolType.Udp);
+
+                 IPAddress broadcast = IPAddress.Parse(broadcastIP);
+
+                 byte[] sendbuf = Encoding.ASCII.GetBytes(message);
+                 IPEndPoint ep = new IPEndPoint(broadcast, broadcastPort);
+
+                 s.SendTo(sendbuf, ep);
+                 status = "sent UDP broadcast to " + broadcastIP + " on port " + broadcastPort;
+                 DynamoLogger.Instance.Log(status);
+             }
+             catch (Exception e)
+             {
+                 DynamoLogger.Instance.Log(e.ToString());
+                 status = "failed";
+             }
+
+
+             return Value.NewString(status);
+         }
+     }
 }
