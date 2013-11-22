@@ -152,10 +152,12 @@ namespace Dynamo.Nodes
 
     }
 
-
+    /// <summary>
+    /// addded in response to https://github.com/ikeough/Dynamo/issues/777
+    /// </summary>
     [NodeName("UDP Broadcaster")]
     [NodeCategory(BuiltinNodeCategories.IO_HARDWARE)]
-    [NodeDescription("Broadcasts a message to an IP Address using a UDP port")]
+    [NodeDescription("Broadcasts a message to an IP Address and port using UDP ")]
     public class UdpBroadcaster : NodeWithOneOutput
     {
 
@@ -168,7 +170,7 @@ namespace Dynamo.Nodes
         public UdpBroadcaster()
         {
             InPortData.Add(new PortData("interval", "How often to publish (execution interval).", typeof(Value.Number)));
-            InPortData.Add(new PortData("port", "A UDP port to broadcast on .", typeof(object)));
+            InPortData.Add(new PortData("port", "A port to broadcast UDP on .", typeof(object)));
             InPortData.Add(new PortData("IP", "An IP address to broadcast to.", typeof(object)));//TODO - make this optional and set default to all IPs
             InPortData.Add(new PortData("message", "the message to broadcast.", typeof(object)));
             OutPortData.Add(new PortData("str", "The string returned from the web request.", typeof(Value.String)));
@@ -178,12 +180,13 @@ namespace Dynamo.Nodes
 
          public override Value Evaluate(FSharpList<Value> args)
          {
-             broadcastPort = (int)((Value.Number)args[1]).Item; // udp port to broadcast on
-             broadcastIP = (string)((Value.String)args[2]).Item; // IP address broadcast to tODO - make this optional and set default to all IPs
+             broadcastPort = (int)((Value.Number)args[1]).Item; // port to broadcast udp on
+             broadcastIP = (string)((Value.String)args[2]).Item; // IP address to broadcast to. TODO - make this optional and set default to broadcast to all IPs if no specific IP given
              message = (string)((Value.String)args[3]).Item; //the actual message to pump
 
              try
              {
+                 // basic code from http://msdn.microsoft.com/en-us/library/tst0kwb1(v=vs.110).aspx
                  Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Dgram,
                          ProtocolType.Udp);
 
