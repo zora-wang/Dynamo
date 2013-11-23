@@ -171,7 +171,7 @@ namespace Dynamo.Nodes
         {
             InPortData.Add(new PortData("interval", "How often to publish (execution interval).", typeof(Value.Number)));
             InPortData.Add(new PortData("port", "A port to broadcast UDP on .", typeof(object)));
-            InPortData.Add(new PortData("IP", "An IP address to broadcast to.", typeof(object)));//TODO - make this optional and set default to all IPs
+            InPortData.Add(new PortData("IP", "An IP address to broadcast to.", typeof(FScheme.Value.String), FScheme.Value.NewString("255.255.255.255")));//if no explicit IP passed in, default to broadcasting to all nodes on local subnet
             InPortData.Add(new PortData("message", "the message to broadcast.", typeof(object)));
             OutPortData.Add(new PortData("str", "The string returned from the web request.", typeof(Value.String)));
 
@@ -181,7 +181,7 @@ namespace Dynamo.Nodes
          public override Value Evaluate(FSharpList<Value> args)
          {
              broadcastPort = (int)((Value.Number)args[1]).Item; // port to broadcast udp on
-             broadcastIP = (string)((Value.String)args[2]).Item; // IP address to broadcast to. TODO - make this optional and set default to broadcast to all IPs if no specific IP given
+             broadcastIP = (string)((Value.String)args[2]).Item; // IP address to broadcast to, if no explicit IP passed in above we default to broadcasting to all nodes on local subnet
              message = (string)((Value.String)args[3]).Item; //the actual message to pump
 
              try
@@ -194,6 +194,7 @@ namespace Dynamo.Nodes
 
                  byte[] sendbuf = Encoding.ASCII.GetBytes(message);
                  IPEndPoint ep = new IPEndPoint(broadcast, broadcastPort);
+
 
                  s.SendTo(sendbuf, ep);
                  status = "sent UDP broadcast to " + broadcastIP + " on port " + broadcastPort;
