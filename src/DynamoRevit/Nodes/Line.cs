@@ -271,5 +271,270 @@ namespace Dynamo.Nodes
             outPuts[_avgPort] = FScheme.Value.NewContainer(meanPt);
         }
     }
+    [NodeName("Line pattern along Line")]
+    [NodeCategory(BuiltinNodeCategories.GEOMETRY_CURVE_CREATE)]
+    [NodeDescription("Generate pattern of lines along given Line.")]
+    public class LinePattern : NodeWithOneOutput
+    {
+        static Line linePlacementDefault = null;
+        public LinePattern()
+        {
+            ArgumentLacing = LacingStrategy.Longest;
 
+            InPortData.Add(new PortData("Line", "The Line to pattern along.", typeof(FScheme.Value.Container)));
+            InPortData.Add(new PortData("Increments", "The pattern controls. Negative for intervals without line placed.", typeof(FScheme.Value.List)));
+            InPortData.Add(new PortData("Placement line", "Controls positioning of pattern ", typeof(FScheme.Value.Container), FScheme.Value.NewContainer(linePlacementDefault)));
+            OutPortData.Add(new PortData("Pattern Lines", "The lines pattern along the input line via pattern.", typeof(FScheme.Value.List)));
+
+            RegisterAllPorts();
+        }
+
+        public override FScheme.Value Evaluate(FSharpList<FScheme.Value> args)
+        {
+            var line = ((FScheme.Value.Container)args[0]).Item as Line;
+
+            List<double> increments = new List<double>();
+            var input = (args[1] as FScheme.Value.List).Item;
+
+            foreach (FScheme.Value v in input)
+            {
+                double oneInc = (double)((FScheme.Value.Number)v).Item;
+                increments.Add(oneInc);
+            }
+            
+            var startParam = line.get_EndParameter(0);
+            var endParam = line.get_EndParameter(1);
+            double patternParam = startParam;
+
+            var placementLine = (Line)((FScheme.Value.Container)args[2]).Item;
+            if (placementLine != null)
+            {
+                //count total pattern length
+                double patternPeriod = 0.0;
+                for (int ii = 0; ii < increments.Count; ii++)
+                {
+                    patternPeriod += Math.Abs(increments[ii]);
+                }
+                if (patternPeriod < 1.0e-9)
+                    throw new Exception("Cannot create line patterns with zero pattern length."); 
+                //intersect line with placement line
+                Line lineUnbound = (Line)line.Clone();
+                lineUnbound.MakeUnbound();
+
+                Line linePlacementUnbound = (Line)placementLine.Clone();
+                linePlacementUnbound.MakeUnbound();
+
+                //intersect
+                IntersectionResultArray intArray;
+                lineUnbound.Intersect(linePlacementUnbound, out intArray);
+                if (intArray == null || intArray.Size != 1)
+                    throw new Exception("Could not intersect placement line with pattern holding line");
+                XYZ patternPoint = intArray.get_Item(0).XYZPoint;
+                patternParam = lineUnbound.Project(patternPoint).Parameter;
+                while (patternParam > startParam + 1.0e-9)
+                    patternParam -= patternPeriod;
+            }
+
+            double shortCurve = dynRevitSettings.Revit.Application.ShortCurveTolerance;
+
+            List<Line> patternedLines = new List<Line>();
+            double sPar = patternParam;
+            double ePar = patternParam;
+            int indexPattern = 0;
+
+            for (; sPar < endParam - 1.0e-9; indexPattern = (indexPattern + 1) % (increments.Count), sPar = ePar)
+            {
+                ePar = sPar +  Math.Abs(increments[indexPattern]);
+                if (ePar > endParam)
+                    ePar = endParam;
+                if (increments[indexPattern] < 1.0e-9 || ePar < startParam + 1.0e-9)
+                    continue;
+                if (sPar < startParam)
+                    sPar = startParam;
+                XYZ startXYZ = line.Evaluate(sPar, false);
+                XYZ endXYZ = line.Evaluate(ePar, false);
+                if (startXYZ.DistanceTo(endXYZ) < shortCurve + 1.0e-9)
+                    continue;
+                Line line_ = Line.CreateBound(startXYZ, endXYZ);
+                patternedLines.Add(line_);
+            }
+            var result = FSharpList<FScheme.Value>.Empty;
+
+            for (int indexLine = patternedLines.Count - 1; indexLine > -1; indexLine--)
+            {
+                result = FSharpList<FScheme.Value>.Cons(FScheme.Value.NewContainer(patternedLines[indexLine]), result);
+            }
+
+            return FScheme.Value.NewList(result);
+        }
+    }
+
+    [NodeName("Line pattern along Face")]
+    [NodeCategory(BuiltinNodeCategories.GEOMETRY_CURVE_CREATE)]
+    [NodeDescription("Generate pattern of lines along given Line.")]
+    public class LinePatternAlongFace : NodeWithOneOutput
+    {
+        public LinePatternAlongFace()
+        {
+            ArgumentLacing = LacingStrategy.Longest;
+
+            InPortData.Add(new PortData("Line", "The Placement Line to pattern to match and be parallel.", typeof(FScheme.Value.Container)));
+            InPortData.Add(new PortData("Face", "The planar face to contain patterned lines.", typeof(FScheme.Value.Container)));
+            InPortData.Add(new PortData("Increments", "The pattern controls. Negative for intervals without line placed.", typeof(FScheme.Value.List)));
+            OutPortData.Add(new PortData("Pattern Lines", "The lines pattern along the input line via pattern.", typeof(FScheme.Value.List)));
+
+            RegisterAllPorts();
+        }
+
+        public override FScheme.Value Evaluate(FSharpList<FScheme.Value> args)
+        {
+            var lineIn = ((FScheme.Value.Container)args[0]).Item as Line;
+
+            List<double> increments = new List<double>();
+            var input = (args[2] as FScheme.Value.List).Item;
+
+            foreach (FScheme.Value v in input)
+            {
+                double oneInc = (double)((FScheme.Value.Number)v).Item;
+                increments.Add(oneInc);
+            }
+
+            var face = ((FScheme.Value.Container)args[1]).Item as Face;
+            if (!(face is PlanarFace))
+                throw new Exception("Cannot create line patterns on non-planar face.");
+
+            PlanarFace planarFace = face as PlanarFace;
+            XYZ norm = planarFace.Normal;
+
+            XYZ lineEnd0 = lineIn.get_EndPoint(0);
+            XYZ lineEnd1 = lineIn.get_EndPoint(1);
+
+            XYZ projectS = lineEnd0 - norm.Multiply((lineEnd0-planarFace.Origin).DotProduct(norm));
+            XYZ projectE = lineEnd1 - norm.Multiply((lineEnd1-planarFace.Origin).DotProduct(norm));
+
+            Line line = Line.CreateBound(projectS, projectE);
+
+            BoundingBoxUV box = face.GetBoundingBox();
+
+            XYZ incrementVec = norm.CrossProduct(line.Direction).Normalize();
+
+            UV uv_min = box.Min;
+            UV uv_max = box.Max;
+
+            double minPattern = 0.0;
+            double maxPattern = 0.0;
+
+            double minExt = 0.0;
+            double maxExt = 0.0;
+
+            for (int ii = 0; ii < 2; ii++)
+            {
+                for (int jj = 0; jj < 2; jj++)
+                {
+                    UV uvs = new UV(ii == 0 ? uv_min.U : uv_max.U, jj == 0 ? uv_min.V : uv_max.V);
+                    XYZ cornerXYZ = planarFace.Evaluate(uvs);
+                    double val = (cornerXYZ - line.Origin).DotProduct(incrementVec);
+                    if (ii == 0 && jj == 0)
+                    {
+                        minPattern = val;
+                        maxPattern = val;
+                        minExt = (cornerXYZ - line.Origin).DotProduct(line.Direction);
+                        maxExt = (cornerXYZ - line.Origin).DotProduct(line.Direction);
+                    }
+                    else 
+                    {
+                        if (minPattern > val)
+                            minPattern = val;
+                        if (maxPattern < val)
+                            maxPattern = val;
+                        if (minExt > (cornerXYZ - line.Origin).DotProduct(line.Direction))
+                            minExt = (cornerXYZ - line.Origin).DotProduct(line.Direction);
+                        if (maxExt < (cornerXYZ - line.Origin).DotProduct(line.Direction))
+                            maxExt = (cornerXYZ - line.Origin).DotProduct(line.Direction);
+                    }
+
+                }
+            }
+
+            double patternPeriod = 0.0;
+            for (int ii = 0; ii < increments.Count; ii++)
+            {
+                patternPeriod += Math.Abs(increments[ii]);
+            }
+            if (patternPeriod < 1.0e-9)
+                throw new Exception("Cannot create line patterns with zero pattern length.");
+
+            var locPointMin = line.Origin;
+
+            while ((locPointMin-line.Origin).DotProduct(incrementVec) > minPattern - 1.0e-9)
+                locPointMin = locPointMin - incrementVec.Multiply(patternPeriod);
+
+            var locPointMax = line.Origin;
+
+            while ((locPointMax-line.Origin).DotProduct(incrementVec) < maxPattern - 1.0e-9)
+                locPointMax = locPointMax + incrementVec.Multiply(patternPeriod);
+
+            //ready to make pattern!!
+
+            double startPar = (locPointMin - line.Origin).DotProduct(incrementVec);
+            double endPar = (locPointMax - line.Origin).DotProduct(incrementVec);
+     
+            List<Line> patternedLines = new List<Line>();
+
+            int indexPattern = 0;
+
+            double curPar = startPar;
+            double nextPar = startPar;
+
+            for (; curPar < endPar + 1.0e-9; indexPattern = (indexPattern + 1) % (increments.Count), curPar = nextPar)
+            {
+                nextPar = curPar + Math.Abs(increments[indexPattern]);
+                if (curPar > endPar + 1.0e-9)
+                    break;
+                else if (nextPar < endPar + 1.0e-9 && nextPar > endPar - 1.0e-9)
+                    nextPar = endPar;
+                if (increments[indexPattern] < 1.0e-9 || curPar < startPar - 1.0e-9)
+                    continue;
+                XYZ originLine = line.Origin + incrementVec.Multiply(curPar);
+                Line lineForInt = Line.CreateUnbound(originLine, line.Direction);
+                
+                lineForInt.MakeBound(minExt, maxExt);
+
+                Autodesk.Revit.DB.Plane plane = new Autodesk.Revit.DB.Plane(incrementVec, originLine);
+
+                Face faceForInt = CurveFaceIntersection.buildFaceOnPlaneByCurveExtensions(lineForInt, plane);
+
+                //IntersectionResultArray intResults = null;
+                Curve curveInt;
+                FaceIntersectionFaceResult result_ = face.Intersect(faceForInt, out curveInt);
+                if (curveInt == null || result_ == FaceIntersectionFaceResult.NonIntersecting)
+                    continue;
+                Line intLine = curveInt as Line;
+                //more checks
+                XYZ intEnd0 = intLine.get_EndPoint(0);
+                XYZ intEnd1 = intLine.get_EndPoint(1);
+
+                if (planarFace.Project(intEnd0) == null || planarFace.Project(intEnd1) == null)
+                    continue;
+ 
+                patternedLines.Add(curveInt as Line);
+                /*
+                for (int ii = 0; ii < intResults.Size - 1; ii += 2)
+                {
+
+                    Line line_ = Line.CreateBound(intResults.get_Item(ii).XYZPoint, intResults.get_Item(ii+1).XYZPoint);
+                    patternedLines.Add(line_);
+                }
+                */
+            }
+            var result = FSharpList<FScheme.Value>.Empty;
+
+            for (int indexLine = patternedLines.Count - 1; indexLine > -1; indexLine--)
+            {
+                result = FSharpList<FScheme.Value>.Cons(FScheme.Value.NewContainer(patternedLines[indexLine]), result);
+            }
+
+            return FScheme.Value.NewList(result);
+        }
+    }
 }
