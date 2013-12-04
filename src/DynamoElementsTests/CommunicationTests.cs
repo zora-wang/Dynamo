@@ -19,7 +19,7 @@ using DynCmd = Dynamo.ViewModels.DynamoViewModel;
 
 namespace Dynamo.Tests
 {
-    internal class CoreTests : DynamoUnitTest
+    internal class CommunicationTests : DynamoUnitTest
     {
         
         [Test]
