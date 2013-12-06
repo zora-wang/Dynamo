@@ -1019,10 +1019,11 @@ namespace Dynamo.Nodes
         {
 
             // create semicircular arc
-            var semicircle = dynRevitSettings.Doc.Application.Application.Create.NewArc(center, radius, 0, Circle.RevitPI, XYZ.BasisZ, XYZ.BasisX);
+            var semicircle = Arc.Create( // dynRevitSettings.Doc.Application.Application.Create.NewArc(
+                center, radius, 0, Circle.RevitPI, XYZ.BasisZ, XYZ.BasisX);
 
             // create axis curve of cylinder - running from north to south pole
-            var axisCurve = dynRevitSettings.Doc.Application.Application.Create.NewLineBound(new XYZ(0, 0, -radius),
+            var axisCurve = Line.CreateBound(new XYZ(0, 0, -radius),
                 new XYZ(0, 0, radius));
 
             var circleLoop = Autodesk.Revit.DB.CurveLoop.Create(new List<Curve>() { semicircle, axisCurve });
@@ -1143,10 +1144,10 @@ namespace Dynamo.Nodes
             var p3 = p2 - new XYZ(top.X - bottom.X, 0, 0);
 
             // form edges of base rect
-            var l1 = dynRevitSettings.Doc.Application.Application.Create.NewLineBound(p0, p1);
-            var l2 = dynRevitSettings.Doc.Application.Application.Create.NewLineBound(p1, p2);
-            var l3 = dynRevitSettings.Doc.Application.Application.Create.NewLineBound(p2, p3);
-            var l4 = dynRevitSettings.Doc.Application.Application.Create.NewLineBound(p3, p0);
+            var l1 = Line.CreateBound(p0, p1);
+            var l2 = Line.CreateBound(p1, p2);
+            var l3 = Line.CreateBound(p2, p3);
+            var l4 = Line.CreateBound(p3, p0);
 
             // form curve loop from lines of base rect
             var cl = new Autodesk.Revit.DB.CurveLoop();

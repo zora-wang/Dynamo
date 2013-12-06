@@ -2137,7 +2137,7 @@ namespace Dynamo.Nodes
     {
         public Repeat()
         {
-            InPortData.Add(new PortData("thing", "The thing to repeat. This can be a single object or a list.", typeof(Value)));
+            InPortData.Add(new PortData("thing", "The thing to repeat. This can be a single object or a list.", typeof(Value.List)));
             InPortData.Add(new PortData("length", "The number of times to repeat.", typeof(Value.Number)));
             OutPortData.Add(new PortData("list", "The list.", typeof(Value.List)));
 

@@ -133,7 +133,15 @@ namespace Dynamo.Nodes
                 bool needsRemake = false;
                 if (dynUtils.TryGetElement(this.Elements[0], out mc))
                 {
-                    ElementId idSpUnused = ModelCurve.resetSketchPlaneMethod(mc, c, plane, out needsRemake);
+                    if (!mc.GeometryCurve.IsBound && c.IsBound)
+                    {
+                        c = c.Clone();
+                        c.MakeUnbound();
+                    }
+
+                    bool doneWithCurveReset = false;
+                    ElementId idSpUnused = ModelCurve.resetSketchPlaneMethod(mc, c, plane, out needsRemake,
+                                           out doneWithCurveReset);
 
                     if (idSpUnused != ElementId.InvalidElementId)
                     {
@@ -142,12 +150,8 @@ namespace Dynamo.Nodes
                     //mc.SketchPlane = sp;
                     if (!needsRemake)
                     {
-                        if (!mc.GeometryCurve.IsBound && c.IsBound)
-                        {
-                            c = c.Clone();
-                            c.MakeUnbound();
-                        }
-                        ModelCurve.setCurveMethod(mc, c);  //mc.GeometryCurve = c;
+                        if (!doneWithCurveReset)
+                           ModelCurve.setCurveMethod(mc, c);  //mc.GeometryCurve = c;
                     }
                     else
                         this.DeleteElement(this.Elements[0]);

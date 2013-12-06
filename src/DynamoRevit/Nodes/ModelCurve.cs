@@ -58,7 +58,7 @@ namespace Dynamo.Nodes
                 }
 
                 Autodesk.Revit.DB.Plane p = new Autodesk.Revit.DB.Plane(norm, t.Origin);
-                Autodesk.Revit.DB.SketchPlane sp = this.UIDocument.Document.FamilyCreate.NewSketchPlane(p);
+                Autodesk.Revit.DB.SketchPlane sp = Autodesk.Revit.DB.SketchPlane.Create(this.UIDocument.Document, p);//this.UIDocument.Document.FamilyCreate.NewSketchPlane(p);
                 //sps.Add(sp);
 
                 c = UIDocument.Document.FamilyCreate.NewModelCurve(ns, sp) as ModelNurbSpline;
@@ -95,13 +95,24 @@ namespace Dynamo.Nodes
                 Type CurveElementType = typeof(Autodesk.Revit.DB.CurveElement);
                 MethodInfo[] curveElementMethods = CurveElementType.GetMethods(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
                 System.String nameOfMethodSetCurve = "SetGeometryCurveOverridingJoins";
+                System.String nameOfMethodSetCurveRevit20145 = "SetGeometryCurve";
 
                 foreach (MethodInfo m in curveElementMethods)
                 {
-                    if (m.Name == nameOfMethodSetCurve)
+                    if (m.Name == nameOfMethodSetCurve) 
                     {
                         object[] argsM = new object[1];
                         argsM[0] = c;
+
+                        foundMethod = true;
+                        m.Invoke(mc, argsM);
+                        break;
+                    }
+                    else if (m.Name == nameOfMethodSetCurveRevit20145)
+                    {
+                        object[] argsM = new object[2];
+                        argsM[0] = c;
+                        argsM[1] = true;
 
                         foundMethod = true;
                         m.Invoke(mc, argsM);
@@ -118,13 +129,15 @@ namespace Dynamo.Nodes
 
         static bool hasMethodResetSketchPlane = true;
         //returns unused sketch plane id
-        static public ElementId resetSketchPlaneMethod(Autodesk.Revit.DB.ModelCurve mc, Curve c, Autodesk.Revit.DB.Plane flattenedOnPlane, out bool needsSketchPlaneReset)
+        static public ElementId resetSketchPlaneMethod(Autodesk.Revit.DB.ModelCurve mc, Curve c, Autodesk.Revit.DB.Plane flattenedOnPlane, out bool needsSketchPlaneReset,
+                      out bool doneWithCurveReset)
         {
             //do we need to reset?
             needsSketchPlaneReset = false;
+            doneWithCurveReset = false;
             Autodesk.Revit.DB.Plane newPlane = flattenedOnPlane != null ? flattenedOnPlane : dynRevitUtils.GetPlaneFromCurve(c, false);
 
-            Autodesk.Revit.DB.Plane curPlane = mc.SketchPlane.Plane;
+            Autodesk.Revit.DB.Plane curPlane = mc.SketchPlane.GetPlane();
 
             bool resetPlane = false;
 
@@ -169,10 +182,11 @@ namespace Dynamo.Nodes
                         object[] argsM = new object[2];
                         sp = dynRevitUtils.GetSketchPlaneFromCurve(c);
                         argsM[0] = sp;
-                        argsM[1] = null;
+                        argsM[1] = c;
 
                         foundMethod = true;
                         m.Invoke(mc, argsM);
+                        doneWithCurveReset = true;
                         break;
                     }
                 }
@@ -182,6 +196,7 @@ namespace Dynamo.Nodes
                 //sp = dynRevitUtils.GetSketchPlaneFromCurve(c);
                 hasMethodResetSketchPlane = false;
                 needsSketchPlaneReset = true;
+                doneWithCurveReset = false;
                 //expect exception, so try to keep old plane?
                 //mc.SketchPlane = sp;
                 return ElementId.InvalidElementId;
@@ -211,7 +226,14 @@ namespace Dynamo.Nodes
                 bool needsRemake = false;
                 if (dynUtils.TryGetElement(this.Elements[0], out mc))
                 {
-                    ElementId idSpUnused = ModelCurve.resetSketchPlaneMethod(mc, c, plane, out needsRemake);
+                    bool doneWithCurveReset = false;
+                    if (!mc.GeometryCurve.IsBound && c.IsBound)
+                    {
+                        c = c.Clone();
+                        c.MakeUnbound();
+                    }
+
+                    ElementId idSpUnused = ModelCurve.resetSketchPlaneMethod(mc, c, plane, out needsRemake, out doneWithCurveReset);
 
                     if (idSpUnused != ElementId.InvalidElementId)
                     {
@@ -219,12 +241,8 @@ namespace Dynamo.Nodes
                     }
                     if (!needsRemake)
                     {
-                        if (!mc.GeometryCurve.IsBound && c.IsBound)
-                        {
-                            c = c.Clone();
-                            c.MakeUnbound();
-                        }
-                        ModelCurve.setCurveMethod(mc, c); // mc.GeometryCurve = c;
+                        if (!doneWithCurveReset)
+                           ModelCurve.setCurveMethod(mc, c); // mc.GeometryCurve = c;
                     }
                     else
                         this.DeleteElement(this.Elements[0]);

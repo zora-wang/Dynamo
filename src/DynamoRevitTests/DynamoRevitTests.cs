@@ -105,10 +105,10 @@ namespace Dynamo.Tests
                 Plane p1 = new Plane(XYZ.BasisZ, XYZ.Zero);
                 Plane p2 = new Plane(XYZ.BasisZ, new XYZ(0, 0, 5));
 
-                SketchPlane sp1 = dynRevitSettings.Doc.Document.FamilyCreate.NewSketchPlane(p1);
-                SketchPlane sp2 = dynRevitSettings.Doc.Document.FamilyCreate.NewSketchPlane(p2);
-                Curve c1 = dynRevitSettings.Revit.Application.Create.NewLineBound(XYZ.Zero, new XYZ(1, 0, 0));
-                Curve c2 = dynRevitSettings.Revit.Application.Create.NewLineBound(new XYZ(0, 0, 5), new XYZ(1, 0, 5));
+                SketchPlane sp1 = Autodesk.Revit.DB.SketchPlane.Create(dynRevitSettings.Doc.Document, p1); //dynRevitSettings.Doc.Document.FamilyCreate.NewSketchPlane(p1);
+                SketchPlane sp2 = Autodesk.Revit.DB.SketchPlane.Create(dynRevitSettings.Doc.Document, p2); //dynRevitSettings.Doc.Document.FamilyCreate.NewSketchPlane(p2);
+                Curve c1 = Line.CreateBound(XYZ.Zero, new XYZ(1, 0, 0));
+                Curve c2 = Line.CreateBound(new XYZ(0, 0, 5), new XYZ(1, 0, 5));
                 mc1 = dynRevitSettings.Doc.Document.FamilyCreate.NewModelCurve(c1, sp1);
                 mc2 = dynRevitSettings.Doc.Document.FamilyCreate.NewModelCurve(c2, sp2);
 
@@ -129,9 +129,9 @@ namespace Dynamo.Tests
 
                 Plane p1 = new Plane(XYZ.BasisZ, XYZ.Zero);
 
-                SketchPlane sp1 = dynRevitSettings.Doc.Document.FamilyCreate.NewSketchPlane(p1);
-                Curve c1 = dynRevitSettings.Revit.Application.Create.NewLineBound(XYZ.Zero, new XYZ(1, 0, 0));
-                mc1 = dynRevitSettings.Doc.Document.FamilyCreate.NewModelCurve(c1, sp1);
+                SketchPlane sp1 =  Autodesk.Revit.DB.SketchPlane.Create(dynRevitSettings.Doc.Document, p1); //FamilyCreate.NewSketchPlane(p1);
+                Curve c1 = Line.CreateBound(XYZ.Zero, new XYZ(1, 0, 0));
+                mc1 = dynRevitSettings.Doc.Document.Create.NewModelCurve(c1, sp1);
 
                 _trans.Commit();
             }

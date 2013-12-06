@@ -38,10 +38,10 @@ namespace Dynamo.Nodes
             p2 = t.OfPoint(p2);
             p3 = t.OfPoint(p3);
 
-            var l1 = dynRevitSettings.Doc.Application.Application.Create.NewLineBound(p0, p1);
-            var l2 = dynRevitSettings.Doc.Application.Application.Create.NewLineBound(p1, p2);
-            var l3 = dynRevitSettings.Doc.Application.Application.Create.NewLineBound(p2, p3);
-            var l4 = dynRevitSettings.Doc.Application.Application.Create.NewLineBound(p3, p0);
+            var l1 = Line.CreateBound(p0, p1);
+            var l2 = Line.CreateBound(p1, p2);
+            var l3 = Line.CreateBound(p2, p3);
+            var l4 = Line.CreateBound(p3, p0);
 
             var cl = new Autodesk.Revit.DB.CurveLoop();
             cl.Append(l1);

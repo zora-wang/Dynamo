@@ -73,7 +73,7 @@ namespace Dynamo.Nodes
 
                         if (start.DistanceTo(end) > 0.1)
                         {
-                            var l = this.UIDocument.Application.Application.Create.NewLineBound(start, end);
+                            var l = Line.CreateBound(start, end);
                             _tessellationLines.Add(l);
 
                             result = FSharpList<Value>.Cons(Value.NewContainer(l), result);
@@ -155,21 +155,21 @@ namespace Dynamo.Nodes
 
                         if (xyz1.DistanceTo(xyz2) > 0.1)
                         {
-                            var l1 = this.UIDocument.Application.Application.Create.NewLineBound(xyz1, xyz2);
+                            var l1 = Line.CreateBound(xyz1, xyz2);
                             _tessellationLines.Add(l1);
                             result = FSharpList<Value>.Cons(Value.NewContainer(l1), result);
                         }
 
                         if (xyz2.DistanceTo(xyz3) > 0.1)
                         {
-                            var l1 = this.UIDocument.Application.Application.Create.NewLineBound(xyz3, xyz2);
+                            var l1 = Line.CreateBound(xyz3, xyz2);
                             _tessellationLines.Add(l1);
                             result = FSharpList<Value>.Cons(Value.NewContainer(l1), result);
                         }
 
                         if (xyz3.DistanceTo(xyz1) > 0.1)
                         {
-                            var l1 = this.UIDocument.Application.Application.Create.NewLineBound(xyz1, xyz3);
+                            var l1 = Line.CreateBound(xyz1, xyz3);
                             _tessellationLines.Add(l1);
                             result = FSharpList<Value>.Cons(Value.NewContainer(l1), result);
                         }
@@ -249,21 +249,21 @@ namespace Dynamo.Nodes
 
                     if (start1.DistanceTo(end1) > 0.1)
                     {
-                        var l1 = this.UIDocument.Application.Application.Create.NewLineBound(start1, end1);
+                        var l1 = Line.CreateBound(start1, end1);
                         _tessellationLines.Add(l1);
                         result = FSharpList<Value>.Cons(Value.NewContainer(l1), result);
                     }
 
                     if (start2.DistanceTo(end2) > 0.1)
                     {
-                        var l1 = this.UIDocument.Application.Application.Create.NewLineBound(start2, end2);
+                        var l1 = Line.CreateBound(start2, end2);
                         _tessellationLines.Add(l1);
                         result = FSharpList<Value>.Cons(Value.NewContainer(l1), result);
                     }
 
                     if (start3.DistanceTo(end3) > 0.1)
                     {
-                        var l1 = this.UIDocument.Application.Application.Create.NewLineBound(start3, end3);
+                        var l1 = Line.CreateBound(start3, end3);
                         _tessellationLines.Add(l1);
                         result = FSharpList<Value>.Cons(Value.NewContainer(l1), result);
                     }
@@ -329,13 +329,13 @@ namespace Dynamo.Nodes
                         var start3 = cell.Vertices[face[2]].ToXYZ();
                         var end3 = cell.Vertices[face[0]].ToXYZ();
 
-                        var l1 = this.UIDocument.Application.Application.Create.NewLineBound(start1, end1);
+                        var l1 = Line.CreateBound(start1, end1);
                         _tessellationLines.Add(l1);
 
-                        var l2 = this.UIDocument.Application.Application.Create.NewLineBound(start2, end2);
+                        var l2 = Line.CreateBound(start2, end2);
                         _tessellationLines.Add(l2);
 
-                        var l3 = this.UIDocument.Application.Application.Create.NewLineBound(start3, end3);
+                        var l3 = Line.CreateBound(start3, end3);
                         _tessellationLines.Add(l3);
 
                         result = FSharpList<Value>.Cons(Value.NewContainer(l1), result);

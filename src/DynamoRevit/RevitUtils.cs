@@ -476,9 +476,10 @@ namespace Dynamo.Utilities
         {
             Plane plane = GetPlaneFromCurve(c, false);
             SketchPlane sp = null;
-            sp = dynRevitSettings.Doc.Document.IsFamilyDocument ? 
-                dynRevitSettings.Doc.Document.FamilyCreate.NewSketchPlane(plane) : 
-                dynRevitSettings.Doc.Document.Create.NewSketchPlane(plane);
+            sp = SketchPlane.Create(dynRevitSettings.Doc.Document, plane);
+                //dynRevitSettings.Doc.Document.IsFamilyDocument ? 
+                //dynRevitSettings.Doc.Document.FamilyCreate.NewSketchPlane(plane) : 
+                //dynRevitSettings.Doc.Document.Create.NewSketchPlane(plane);
 
             return sp;
         }

@@ -112,8 +112,8 @@ namespace Dynamo.Nodes
 
                 //flatten the beam line onto the XZ plane
                 //using the start's z coordinate
-                XYZ start = curve.get_EndPoint(0);
-                XYZ end = curve.get_EndPoint(1);
+                XYZ start = curve.GetEndPoint(0);
+                XYZ end = curve.GetEndPoint(1);
                 XYZ newEnd = new XYZ(end.X, end.Y, start.Z); //drop end point to plane
 
                 ////use the x axis of the curve's transform 

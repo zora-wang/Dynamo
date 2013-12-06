@@ -83,13 +83,13 @@ namespace Dynamo.Nodes
 
             //double altitude = sunSettings.Altitude;
             double altitude = sunSettings.GetFrameAltitude(sunSettings.ActiveFrame);
-            Autodesk.Revit.DB.Transform altitudeRotation = Autodesk.Revit.DB.Transform.get_Rotation(XYZ.Zero, XYZ.BasisX, altitude);
+            Autodesk.Revit.DB.Transform altitudeRotation = Autodesk.Revit.DB.Transform.CreateRotationAtPoint(XYZ.BasisX, altitude, XYZ.Zero);
             XYZ altitudeDirection = altitudeRotation.OfVector(initialDirection);
 
             //double azimuth = sunSettings.Azimuth;
             double azimuth = sunSettings.GetFrameAzimuth(sunSettings.ActiveFrame);
             double actualAzimuth = 2 * Math.PI - azimuth;
-            Autodesk.Revit.DB.Transform azimuthRotation = Autodesk.Revit.DB.Transform.get_Rotation(XYZ.Zero, XYZ.BasisZ, actualAzimuth);
+            Autodesk.Revit.DB.Transform azimuthRotation = Autodesk.Revit.DB.Transform.CreateRotationAtPoint(XYZ.BasisZ, actualAzimuth, XYZ.Zero);
             XYZ sunDirection = azimuthRotation.OfVector(altitudeDirection);
             XYZ scaledSunVector = sunDirection.Multiply(100);
 

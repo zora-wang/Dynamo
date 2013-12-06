@@ -116,7 +116,7 @@ namespace Dynamo.Nodes
             Particle fixedPart1 = ParticleSystem.makeParticleFromElementID(pt1.Id, mass, pt1.Position, true); // true means 'make fixed'
 
             XYZ partXYZ2 = partXYZ1 + new XYZ(10, 0, 0);
-            //Line tempLine = this.UIDocument.Application.Application.Create.NewLineBound(partXYZ1, partXYZ2);
+            //Line tempLine = Line.CreateBound(partXYZ1, partXYZ2);
             XYZ vector = partXYZ2 - partXYZ1;
             XYZ step = vector.Divide(numX);
 
@@ -193,8 +193,8 @@ namespace Dynamo.Nodes
             foreach (var crv in curves)
             {
                 var curve = (Curve) ((Value.Container) crv).Item;
-                XYZ start = curve.get_EndPoint(0);
-                XYZ end = curve.get_EndPoint(1);
+                XYZ start = curve.GetEndPoint(0);
+                XYZ end = curve.GetEndPoint(1);
 
                 //find an existing particle to use
                 Particle a = ParticleSystem.getParticleByXYZ(start);
@@ -505,7 +505,7 @@ namespace Dynamo.Nodes
 
                 XYZ springXYZ1 = springEnd1.getPosition();
                 XYZ springXYZ2 = springEnd2.getPosition();
-                Line springLine = dynRevitSettings.Doc.Application.Application.Create.NewLineBound(springXYZ1, springXYZ2);
+                Line springLine = Line.CreateBound(springXYZ1, springXYZ2);
 
                 result = FSharpList<Value>.Cons(Value.NewContainer(springLine), result);
             }

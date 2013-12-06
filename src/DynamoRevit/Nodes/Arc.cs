@@ -38,7 +38,7 @@ namespace Dynamo.Nodes
             if (ptA is XYZ)
             {
 
-                a = dynRevitSettings.Doc.Application.Application.Create.NewArc(
+                a = Arc.Create( //dynRevitSettings.Doc.Application.Application.Create.NewArc(
                    (XYZ)ptA, (XYZ)ptC, (XYZ)ptB //start, end, middle 
                 );
 
@@ -46,7 +46,7 @@ namespace Dynamo.Nodes
             }
             else if (ptA is ReferencePoint)
             {
-                a = dynRevitSettings.Doc.Application.Application.Create.NewArc(
+                a = Arc.Create( //dynRevitSettings.Doc.Application.Application.Create.NewArc(
                    (XYZ)((ReferencePoint)ptA).Position, (XYZ)((ReferencePoint)ptB).Position, (XYZ)((ReferencePoint)ptC).Position //start, end, middle 
                 );
 
@@ -84,13 +84,13 @@ namespace Dynamo.Nodes
 
             if (ptA is XYZ)
             {
-                a = dynRevitSettings.Doc.Application.Application.Create.NewArc(
+                a = Arc.Create(//dynRevitSettings.Doc.Application.Application.Create.NewArc(
                    (XYZ)ptA, radius, start, end, XYZ.BasisX, XYZ.BasisY
                 );
             }
             else if (ptA is ReferencePoint)
             {
-                a = dynRevitSettings.Doc.Application.Application.Create.NewArc(
+                a = Arc.Create(//dynRevitSettings.Doc.Application.Application.Create.NewArc(
                    (XYZ)((ReferencePoint)ptA).Position, radius, start, end, XYZ.BasisX, XYZ.BasisY
                 );
             }
@@ -98,7 +98,7 @@ namespace Dynamo.Nodes
             {
                 Transform trf = ptA as Transform;
                 XYZ center = trf.Origin;
-                a = dynRevitSettings.Doc.Application.Application.Create.NewArc(
+                a = Arc.Create( //dynRevitSettings.Doc.Application.Application.Create.NewArc(
                              center, radius, start, end, trf.BasisX, trf.BasisY
                 );
             }

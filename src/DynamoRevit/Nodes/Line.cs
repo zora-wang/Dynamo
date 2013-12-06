@@ -38,7 +38,7 @@ namespace Dynamo.Nodes
             if (ptA is XYZ)
             {
 
-                line = dynRevitSettings.Doc.Application.Application.Create.NewLineBound(
+                line = Line.CreateBound(
                   (XYZ)ptA, (XYZ)ptB
                   );
 
@@ -46,7 +46,7 @@ namespace Dynamo.Nodes
             }
             else if (ptA is ReferencePoint)
             {
-                line = dynRevitSettings.Doc.Application.Application.Create.NewLineBound(
+                line = Line.CreateBound(
                   (XYZ)((ReferencePoint)ptA).Position, (XYZ)((ReferencePoint)ptB).Position
                );
 
@@ -92,7 +92,7 @@ namespace Dynamo.Nodes
                 throw new Exception("The start point and end point are extremely close together. The line will be too short.");
             }
 
-            var line = dynRevitSettings.Doc.Application.Application.Create.NewLineBound(ptA, ptB);
+            var line = Line.CreateBound(ptA, ptB);
 
             return FScheme.Value.NewContainer(line);
         }
@@ -132,7 +132,7 @@ namespace Dynamo.Nodes
             double length = norm.GetLength();
             if (length == 0) norm = XYZ.BasisZ;
             Autodesk.Revit.DB.Plane plane = app.Create.NewPlane(norm, ptB);
-            Autodesk.Revit.DB.SketchPlane skplane = doc.FamilyCreate.NewSketchPlane(plane);
+            Autodesk.Revit.DB.SketchPlane skplane = Autodesk.Revit.DB.SketchPlane.Create(doc, plane); //doc.FamilyCreate.NewSketchPlane(plane);
             // Create line here
             Autodesk.Revit.DB.ModelCurve modelcurve = doc.FamilyCreate.NewModelCurve(line, skplane);
             return modelcurve;
@@ -301,9 +301,9 @@ namespace Dynamo.Nodes
                 double oneInc = (double)((FScheme.Value.Number)v).Item;
                 increments.Add(oneInc);
             }
-            
-            var startParam = line.get_EndParameter(0);
-            var endParam = line.get_EndParameter(1);
+
+            var startParam = line.GetEndParameter(0);
+            var endParam = line.GetEndParameter(1);
             double patternParam = startParam;
 
             var placementLine = (Line)((FScheme.Value.Container)args[2]).Item;
@@ -406,8 +406,8 @@ namespace Dynamo.Nodes
             PlanarFace planarFace = face as PlanarFace;
             XYZ norm = planarFace.Normal;
 
-            XYZ lineEnd0 = lineIn.get_EndPoint(0);
-            XYZ lineEnd1 = lineIn.get_EndPoint(1);
+            XYZ lineEnd0 = lineIn.GetEndPoint(0);
+            XYZ lineEnd1 = lineIn.GetEndPoint(1);
 
             XYZ projectS = lineEnd0 - norm.Multiply((lineEnd0-planarFace.Origin).DotProduct(norm));
             XYZ projectE = lineEnd1 - norm.Multiply((lineEnd1-planarFace.Origin).DotProduct(norm));
@@ -511,8 +511,8 @@ namespace Dynamo.Nodes
                     continue;
                 Line intLine = curveInt as Line;
                 //more checks
-                XYZ intEnd0 = intLine.get_EndPoint(0);
-                XYZ intEnd1 = intLine.get_EndPoint(1);
+                XYZ intEnd0 = intLine.GetEndPoint(0);
+                XYZ intEnd1 = intLine.GetEndPoint(1);
 
                 if (planarFace.Project(intEnd0) == null || planarFace.Project(intEnd1) == null)
                     continue;

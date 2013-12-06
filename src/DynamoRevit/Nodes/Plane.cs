@@ -160,16 +160,23 @@ namespace Dynamo.Nodes
                           //handle Plane, Reference or PlanarFace, also test for family or project doc. there probably is a cleaner way to test for all these conditions.
                           if (((FScheme.Value.Container)x).Item is Autodesk.Revit.DB.Plane) //TODO: ensure this is correctly casting and testing.
                           {
-                              sp = (this.UIDocument.Document.IsFamilyDocument)
+                              sp = Autodesk.Revit.DB.SketchPlane.Create(this.UIDocument.Document,
+                                             (Autodesk.Revit.DB.Plane)((FScheme.Value.Container)x).Item
+                              );
+                                  /*(this.UIDocument.Document.IsFamilyDocument)
                               ? this.UIDocument.Document.FamilyCreate.NewSketchPlane(
                                  (Autodesk.Revit.DB.Plane)((FScheme.Value.Container)x).Item
                               )
                               : this.UIDocument.Document.Create.NewSketchPlane(
                                  (Autodesk.Revit.DB.Plane)((FScheme.Value.Container)x).Item
-                              );
+                              );*/
                           }
                           else if (((FScheme.Value.Container)x).Item is Reference)
                           {
+                              sp = Autodesk.Revit.DB.SketchPlane.Create(this.UIDocument.Document,
+                                             (Reference)((FScheme.Value.Container)x).Item
+                              );
+                              /*
                               sp = (this.UIDocument.Document.IsFamilyDocument)
                               ? this.UIDocument.Document.FamilyCreate.NewSketchPlane(
                                  (Reference)((FScheme.Value.Container)x).Item
@@ -177,9 +184,14 @@ namespace Dynamo.Nodes
                               : this.UIDocument.Document.Create.NewSketchPlane(
                                  (Reference)((FScheme.Value.Container)x).Item
                               );
+                               */
                           }
                           else if (((FScheme.Value.Container)x).Item is PlanarFace)
                           {
+                              PlanarFace plFace = (PlanarFace)((FScheme.Value.Container)x).Item;
+                              Autodesk.Revit.DB.Plane p = new Autodesk.Revit.DB.Plane(plFace.Normal, plFace.Origin);
+                              sp = Autodesk.Revit.DB.SketchPlane.Create(this.UIDocument.Document, p);
+                              /*
                               sp = (this.UIDocument.Document.IsFamilyDocument)
                               ? this.UIDocument.Document.FamilyCreate.NewSketchPlane(
                                  (PlanarFace)((FScheme.Value.Container)x).Item
@@ -187,6 +199,7 @@ namespace Dynamo.Nodes
                               : this.UIDocument.Document.Create.NewSketchPlane(
                                  (PlanarFace)((FScheme.Value.Container)x).Item
                               );
+                               */
                           }
 
 

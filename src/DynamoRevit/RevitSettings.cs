@@ -100,7 +100,7 @@ namespace Dynamo.Utilities
             }
             Plane p = app.Application.Create.NewPlane(norm, pt1);
 
-            SketchPlane sp = doc.Document.Create.NewSketchPlane(p);
+            SketchPlane sp = SketchPlane.Create(doc.Document, p);
             return sp;
         }
     }

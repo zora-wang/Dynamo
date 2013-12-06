@@ -476,7 +476,7 @@ namespace Dynamo.Nodes
             profileLoop.Append(arc1);
             profileLoop.Append(arc2);
 
-            double curveDomain = curve.get_EndParameter(1) - curve.get_EndParameter(0);
+            double curveDomain = curve.GetEndParameter(1) - curve.GetEndParameter(0);
 
             int idx = -1;
             var s = GeometryCreationUtilities.CreateSweptGeometry(pathLoop, 0, 0, new List<Autodesk.Revit.DB.CurveLoop>{profileLoop});

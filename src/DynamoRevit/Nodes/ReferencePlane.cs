@@ -48,8 +48,8 @@ namespace Dynamo.Nodes
 
                     //then make a new one using new line and old name 
                     line = (Line)c;
-                    bubbleEnd = line.get_EndPoint(0);
-                    freeEnd = line.get_EndPoint(1);
+                    bubbleEnd = line.GetEndPoint(0);
+                    freeEnd = line.GetEndPoint(1);
 
                     XYZ midPoint = 0.5 * (bubbleEnd + freeEnd);
                     XYZ moveVec = XYZ.BasisZ.DotProduct(midPoint - midPointOld) * XYZ.BasisZ;
@@ -88,8 +88,8 @@ namespace Dynamo.Nodes
                 {
                     //then make a new one using new line and old name 
                     line = c;
-                    bubbleEnd = line.get_EndPoint(0);
-                    freeEnd = line.get_EndPoint(1);
+                    bubbleEnd = line.GetEndPoint(0);
+                    freeEnd = line.GetEndPoint(1);
 
                     refPlane = this.UIDocument.Document.IsFamilyDocument
                         ? this.UIDocument.Document.FamilyCreate.NewReferencePlane(
@@ -111,8 +111,8 @@ namespace Dynamo.Nodes
             {
                 //then make a new one using new line and old name 
                 line = c;
-                bubbleEnd = line.get_EndPoint(0);
-                freeEnd = line.get_EndPoint(1);
+                bubbleEnd = line.GetEndPoint(0);
+                freeEnd = line.GetEndPoint(1);
 
                 refPlane = this.UIDocument.Document.IsFamilyDocument
                     ? this.UIDocument.Document.FamilyCreate.NewReferencePlane(

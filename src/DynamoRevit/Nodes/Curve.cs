@@ -35,7 +35,7 @@ namespace Dynamo.Nodes
             var curve = (Curve)((Value.Container)args[0]).Item;
             var trans = (Transform)((Value.Container)args[1]).Item;
 
-            var crvTrans = curve.get_Transformed(trans);
+            var crvTrans = curve.CreateTransformed(trans);
 
             return Value.NewContainer(crvTrans);
         }
@@ -67,7 +67,7 @@ namespace Dynamo.Nodes
             var enumerable = pts as XYZ[] ?? pts.ToArray();
             for (var i = 1; i < enumerable.Count(); i++)
             {
-                var l = dynRevitSettings.Revit.Application.Create.NewLineBound(enumerable.ElementAt(i), enumerable.ElementAt(i - 1));
+                var l = Line.CreateBound(enumerable.ElementAt(i), enumerable.ElementAt(i - 1));
 
                 results = FSharpList<Value>.Cons(Value.NewContainer(l), results);
             }
@@ -161,8 +161,8 @@ namespace Dynamo.Nodes
             var input = args[0];
 
             Curve gc = (Curve)((Value.Container)args[0]).Item;
-            XYZ start = gc.get_EndPoint(0);
-            XYZ end = gc.get_EndPoint(1);
+            XYZ start = gc.GetEndPoint(0);
+            XYZ end = gc.GetEndPoint(1);
 
             //If we've made any elements previously...
             if (this.Elements.Any())
@@ -526,7 +526,7 @@ namespace Dynamo.Nodes
                     if (thisDist > tolMax &&  thisEnd.DistanceTo(prevEnd) < tolMin && (c is Line))
                     {
                         prevEnd = thisStart;
-                        Curve flippedCurve = /* Line.CreateBound */ dynRevitSettings.Revit.Application.Create.NewLineBound(thisEnd, thisStart);
+                        Curve flippedCurve = Line.CreateBound(thisEnd, thisStart);
                         curvesWithFlip.Add(flippedCurve);
                         continue;
                     }
@@ -549,7 +549,7 @@ namespace Dynamo.Nodes
                                 {
                                     if (c is Line)
                                     {
-                                        Curve flippedCurve = /* Line.CreateBound */ dynRevitSettings.Revit.Application.Create.NewLineBound(prevEnd, thisStart);
+                                        Curve flippedCurve = Line.CreateBound(prevEnd, thisStart);
                                         prevEnd = thisStart;
                                         curvesWithFlip.Add(flippedCurve);
                                         continue;
@@ -903,8 +903,8 @@ namespace Dynamo.Nodes
             }
 
 
-            var start = curve.get_EndParameter(0);
-            var end = curve.get_EndParameter(1);
+            var start = curve.GetEndParameter(0);
+            var end = curve.GetEndParameter(1);
 
             return Value.NewContainer(DSCoreNodes.Domain.ByMinimumAndMaximum(start, end));
         }

@@ -157,7 +157,7 @@ namespace Dynamo.Nodes
             var axis = (XYZ)((Value.Container)args[1]).Item;
             var angle = ((Value.Number)args[2]).Item;
 
-            Transform t = Transform.get_Rotation(origin, axis, angle);
+            Transform t = Transform.CreateRotationAtPoint(axis, angle, origin);
 
             return Value.NewContainer(t);
         }
