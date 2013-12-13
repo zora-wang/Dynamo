@@ -123,6 +123,9 @@ namespace Dynamo.Nodes
             }
             catch (Exception e)
             {
+                listener.Close();
+                listener = null;
+                messageReceived = false;
                 UDPResponse = "";
                 DynamoLogger.Instance.Log(e.ToString());
             }
