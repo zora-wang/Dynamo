@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using Autodesk.Revit.DB;
 using DSNodeServices;
 using DSRevitNodes.References;
 using RevitServices.Persistence;
 using RevitServices.Transactions;
-using Face = Autodesk.DesignScript.Geometry.Face;
 
 namespace DSRevitNodes.Elements
 {
