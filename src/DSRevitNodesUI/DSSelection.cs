@@ -6,6 +6,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Media;
 using Autodesk.Revit.DB;
 using DSRevitNodes.Interactivity;
 using Dynamo.Controls;
@@ -13,7 +14,6 @@ using Dynamo.Models;
 using ProtoCore.AST;
 using ProtoCore.AST.AssociativeAST;
 using RevitServices.Persistence;
-using Binding = System.Windows.Data.Binding;
 
 namespace Dynamo.Nodes
 {
@@ -23,6 +23,7 @@ namespace Dynamo.Nodes
         protected bool _canSelect;
         protected string _selectionText ="";
         protected string _selectionMessage;
+        protected string _selectButtonContent;
 
         /// <summary>
         /// The text that describes this selection.
@@ -53,32 +54,17 @@ namespace Dynamo.Nodes
             }
         }
 
-        public override void SetupCustomUIElements(object ui)
+        public string SelectButtonContent
         {
-            var nodeUI = ui as dynNodeView;
-
-            //add a button to the inputGrid on the dynElement
-            var selectButton = new dynNodeButton
+            get { return _selectButtonContent; }
+            set
             {
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            selectButton.Click += selectButton_Click;
-
-            nodeUI.inputGrid.RowDefinitions.Add(new RowDefinition());
-            nodeUI.inputGrid.Children.Add(selectButton);
-            System.Windows.Controls.Grid.SetRow(selectButton, 0);
-
-            selectButton.DataContext = this;
-
-            var buttonEnabledBinding = new Binding("CanSelect")
-            {
-                Mode = BindingMode.TwoWay
-            };
-            selectButton.SetBinding(UIElement.IsEnabledProperty, buttonEnabledBinding);
+                _selectButtonContent = value;
+                RaisePropertyChanged("SelectButtonContent");
+            }
         }
 
-        private void selectButton_Click(object sender, RoutedEventArgs e)
+        internal void selectButton_Click(object sender, RoutedEventArgs e)
         {
             //Disable the button once it's been clicked...
             CanSelect = false;
@@ -109,8 +95,30 @@ namespace Dynamo.Nodes
             get { return _selected; }
             set
             {
+                bool dirty;
+                if (_selected != null)
+                {
+                    if (value != null && value.Id.Equals(_selected.Id))
+                        return;
+
+                    dirty = true;
+                }
+                else
+                    dirty = value != null;
+
                 _selected = value;
-                RaisePropertyChanged("SelectedElement");
+                if (value != null)
+                {
+                    SelectButtonContent = "Change";
+                }
+                else
+                {
+                    SelectionText = "Nothing Selected";
+                    SelectButtonContent = "Select";
+                }
+
+                if (dirty)
+                    RequiresRecalc = true;
             }
         }
 
@@ -143,7 +151,66 @@ namespace Dynamo.Nodes
         #endregion
 
         #region public methods
-        
+
+        public override void SetupCustomUIElements(object ui)
+        {
+            var nodeUI = ui as dynNodeView;
+
+            //add a button to the inputGrid on the dynElement
+            var selectButton = new dynNodeButton
+            {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            selectButton.Click += selectButton_Click;
+
+            var tb = new TextBox
+            {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Center,
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(0, 0, 0, 0)),
+                BorderThickness = new Thickness(0),
+                IsReadOnly = true,
+                IsReadOnlyCaretVisible = false
+            };
+
+            if (SelectedElement == null || !SelectionText.Any() || !SelectButtonContent.Any())
+            {
+                SelectionText = "Nothing Selected";
+                SelectButtonContent = "Select Element";
+            }
+
+            nodeUI.inputGrid.RowDefinitions.Add(new RowDefinition());
+            nodeUI.inputGrid.RowDefinitions.Add(new RowDefinition());
+
+            nodeUI.inputGrid.Children.Add(tb);
+            nodeUI.inputGrid.Children.Add(selectButton);
+
+            System.Windows.Controls.Grid.SetRow(selectButton, 0);
+            System.Windows.Controls.Grid.SetRow(tb, 1);
+
+            tb.DataContext = this;
+            selectButton.DataContext = this;
+
+            var selectTextBinding = new System.Windows.Data.Binding("SelectionText")
+            {
+                Mode = BindingMode.TwoWay,
+            };
+            tb.SetBinding(TextBox.TextProperty, selectTextBinding);
+
+            var buttonTextBinding = new System.Windows.Data.Binding("SelectButtonContent")
+            {
+                Mode = BindingMode.TwoWay,
+            };
+            selectButton.SetBinding(ContentControl.ContentProperty, buttonTextBinding);
+
+            var buttonEnabledBinding = new System.Windows.Data.Binding("CanSelect")
+            {
+                Mode = BindingMode.TwoWay,
+            };
+            selectButton.SetBinding(Button.IsEnabledProperty, buttonEnabledBinding);
+        }
+
         public override Node BuildAst()
         {
             AssociativeNode node = null;
@@ -199,8 +266,30 @@ namespace Dynamo.Nodes
             get { return _selected; }
             set
             {
+                bool dirty;
+                if (_selected != null)
+                {
+                    if (value != null && value.ElementId.Equals(_selected.ElementId))
+                        return;
+
+                    dirty = true;
+                }
+                else
+                    dirty = value != null;
+
                 _selected = value;
-                RaisePropertyChanged("SelectedElement");
+                if (value != null)
+                {
+                    SelectButtonContent = "Change";
+                }
+                else
+                {
+                    SelectionText = "Nothing Selected";
+                    SelectButtonContent = "Select";
+                }
+
+                if (dirty)
+                    RequiresRecalc = true;
             }
         }
 
@@ -313,8 +402,21 @@ namespace Dynamo.Nodes
             get { return _selected; }
             set
             {
+                bool dirty = value != null;
+
                 _selected = value;
-                RaisePropertyChanged("SelectedElement");
+                if (value != null)
+                {
+                    SelectButtonContent = "Change";
+                }
+                else
+                {
+                    SelectionText = "Nothing Selected";
+                    SelectButtonContent = "Select";
+                }
+
+                if (dirty)
+                    RequiresRecalc = true;
             }
         }
 
