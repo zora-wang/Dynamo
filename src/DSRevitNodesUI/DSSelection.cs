@@ -20,7 +20,7 @@ namespace Dynamo.Nodes
     //TODO: DSSelection classes need to respond to document modification events
     public abstract class DSSelectionBase : NodeWithUI
     {
-        protected bool _canSelect;
+        protected bool _canSelect = true;
         protected string _selectionText ="";
         protected string _selectionMessage;
         protected string _selectButtonContent;
@@ -54,6 +54,9 @@ namespace Dynamo.Nodes
             }
         }
 
+        /// <summary>
+        /// The content of the selection button.
+        /// </summary>
         public string SelectButtonContent
         {
             get { return _selectButtonContent; }
@@ -64,6 +67,11 @@ namespace Dynamo.Nodes
             }
         }
 
+        /// <summary>
+        /// Handler for the selection button's Click event.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         internal void selectButton_Click(object sender, RoutedEventArgs e)
         {
             //Disable the button once it's been clicked...
