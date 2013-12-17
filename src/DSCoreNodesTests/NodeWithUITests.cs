@@ -1,4 +1,5 @@
 ﻿using DSCoreNodes;
+using Dynamo.Nodes;
 using NUnit.Framework;
 // NOTE: The following namespace has been updated. This test use to fail in unit 
 // test, the reason is that LibGNet.dll could not be loaded. That was because the

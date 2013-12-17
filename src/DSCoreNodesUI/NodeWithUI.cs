@@ -8,11 +8,10 @@ using System.Windows.Data;
 using System.Xml;
 using Dynamo.Controls;
 using Dynamo.Models;
-using Dynamo.Nodes;
 using ProtoCore.AST;
 using ProtoCore.AST.AssociativeAST;
 
-namespace DSCoreNodes
+namespace Dynamo.Nodes
 {
     /// <summary>
     /// All Custom-UI nodes inherit this.
