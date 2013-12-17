@@ -9,6 +9,7 @@ namespace Dynamo.Tests
     [TestFixture]
     class SelectionTests
     {
+        /*
         [Test]
         public void SelectElementASTGeneration()
         {
@@ -28,6 +29,6 @@ namespace Dynamo.Tests
             Assert.AreEqual(1, funCall.FormalArguments.Count);
             Assert.IsInstanceOf<IntNode>(funCall.FormalArguments[0]);
             Assert.AreEqual(element.InternalElement.Id.IntegerValue.ToString(), (funCall.FormalArguments[0] as IntNode).value);
-        }
+        }*/
     }
 }
