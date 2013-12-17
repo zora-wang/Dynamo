@@ -17,7 +17,7 @@ namespace Dynamo.Nodes
     /// All Custom-UI nodes inherit this.
     /// </summary>
     [Browsable(false)]
-    public abstract class NodeWithUI : DSFunction
+    public abstract class NodeWithUI : NodeModel
     {
         //We can remove this from NodeModel and only use it here.
         [Browsable(false)]
