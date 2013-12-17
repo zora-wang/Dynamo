@@ -53,8 +53,10 @@ namespace Dynamo.Nodes
             }
         }
 
-        public override void SetupCustomUIElements(dynNodeView nodeUI)
+        public override void SetupCustomUIElements(object ui)
         {
+            var nodeUI = ui as dynNodeView;
+
             //add a button to the inputGrid on the dynElement
             var selectButton = new dynNodeButton
             {
@@ -116,7 +118,9 @@ namespace Dynamo.Nodes
         {
             get
             {
-                return SelectedElement.Name;
+                return _selectionText = SelectedElement == null
+                                            ? "Nothing Selected"
+                                            : SelectedElement.Name;
             }
             set
             {
@@ -124,13 +128,16 @@ namespace Dynamo.Nodes
                 RaisePropertyChanged("SelectionText");
             }
         }
-        
-        #region internal constructors
+
+        #region protected constructors
 
         protected DSElementSelection(Func<string, Element> action, string message)
         {
             _selectionAction = action;
             _selectionMessage = message;
+
+            OutPortData.Add(new PortData("Element", "The selected element.", typeof(object)));
+            RegisterAllPorts();
         }
         
         #endregion
@@ -216,6 +223,9 @@ namespace Dynamo.Nodes
         {
             _selectionAction = action;
             _selectionMessage = message;
+
+            OutPortData.Add(new PortData("Reference", "The geometry reference.", typeof(object)));
+            RegisterAllPorts();
         }
 
         #endregion
@@ -325,12 +335,15 @@ namespace Dynamo.Nodes
             }
         }
 
-        #region internal constructors
+        #region protected constructors
 
-        internal DSElementsSelection(Func<string, List<Element>> action, string message)
+        protected DSElementsSelection(Func<string, List<Element>> action, string message)
         {
             _selectionAction = action;
             _selectionMessage = message;
+
+            OutPortData.Add(new PortData("Elements", "The selected elements.", typeof(object)));
+            RegisterAllPorts();
         }
 
         #endregion
@@ -409,6 +422,21 @@ namespace Dynamo.Nodes
     [IsDesignScriptCompatible]
     public class DSFamilyInstanceSelection : DSElementSelection
     {
+        public override string SelectionText
+        {
+            get
+            {
+                return _selectionText = SelectedElement == null
+                                            ? "Nothing Selected"
+                                            : SelectedElement.Name;
+            }
+            set
+            {
+                _selectionText = value;
+                RaisePropertyChanged("SelectionText");
+            }
+        }
+
         public DSFamilyInstanceSelection()
             :base (SelectionHelper.RequestFamilyInstanceSelection, "Select a family instance."){}
     }
@@ -419,6 +447,22 @@ namespace Dynamo.Nodes
     [IsDesignScriptCompatible]
     public class DSLevelSelection : DSElementSelection
     {
+        public override string SelectionText
+        {
+            get
+            {
+                return _selectionText = SelectedElement == null
+                                            ? "Nothing Selected"
+                                            : SelectedElement.Name + " ("
+                                              + SelectedElement.Id + ")";
+            }
+            set
+            {
+                _selectionText = value;
+                RaisePropertyChanged("SelectionText");
+            }
+        }
+
         public DSLevelSelection()
             :base(SelectionHelper.RequestLevelSelection,"Select a level."){}
     }
@@ -429,6 +473,21 @@ namespace Dynamo.Nodes
     [IsDesignScriptCompatible]
     public class DSCurveElementSelection : DSElementSelection
     {
+        public override string SelectionText
+        {
+            get
+            {
+                return _selectionText = SelectedElement == null
+                                            ? "Nothing Selected"
+                                            : "Curve ID: " + SelectedElement.Id;
+            }
+            set
+            {
+                _selectionText = value;
+                RaisePropertyChanged("SelectionText");
+            }
+        }
+
         public DSCurveElementSelection()
             :base(SelectionHelper.RequestCurveElementSelection, "Select a model or reference curve."){}
     }
@@ -449,6 +508,21 @@ namespace Dynamo.Nodes
     [IsDesignScriptCompatible]
     public class DSFaceSelection : DSReferenceSelection
     {
+        public override string SelectionText
+        {
+            get
+            {
+                return _selectionText = SelectedElement == null
+                                            ? "Nothing Selected"
+                                            : "Face ID: " + SelectedElement.ElementId;
+            }
+            set
+            {
+                _selectionText = value;
+                RaisePropertyChanged("SelectionText");
+            }
+        }
+
         public DSFaceSelection()
             : base(SelectionHelper.RequestFaceReferenceSelection, "Select a face."){}
     }
@@ -459,6 +533,21 @@ namespace Dynamo.Nodes
     [IsDesignScriptCompatible]
     public class DSEdgeSelection : DSReferenceSelection
     {
+        public override string SelectionText
+        {
+            get
+            {
+                return _selectionText = SelectedElement == null
+                                            ? "Nothing Selected"
+                                            : "Element of Edge  ID: " + SelectedElement.ElementId;
+            }
+            set
+            {
+                _selectionText = value;
+                RaisePropertyChanged("SelectionText");
+            }
+        }
+
         public DSEdgeSelection()
             : base(SelectionHelper.RequestEdgeReferenceSelection, "Select an edge."){}
     }
@@ -469,6 +558,21 @@ namespace Dynamo.Nodes
     [IsDesignScriptCompatible]
     public class DSPointOnElementSelection : DSReferenceSelection
     {
+        public override string SelectionText
+        {
+            get
+            {
+                return _selectionText = SelectedElement == null
+                                            ? "Nothing Selected"
+                                            : "Point on element" + " (" + SelectedElement.ElementId + ")";
+            }
+            set
+            {
+                _selectionText = value;
+                RaisePropertyChanged("SelectionText");
+            }
+        }
+
         DSPointOnElementSelection()
             : base(SelectionHelper.RequestReferenceXYZSelection, "Select a point on a face."){}
     }
@@ -489,6 +593,28 @@ namespace Dynamo.Nodes
     [IsDesignScriptCompatible]
     public class DSModelElementsSelection : DSElementsSelection
     {
+        private static string formatSelectionText(IEnumerable<Element> elements)
+        {
+            return elements.Any()
+                ? System.String.Join(" ", elements.Select(x => x.Id.ToString()))
+                : "Nothing Selected";
+        }
+
+        public override string SelectionText
+        {
+            get
+            {
+                return _selectionText = (SelectedElement != null && SelectedElement.Count > 0)
+                                            ? "Element IDs:" + formatSelectionText(SelectedElement.Where(x => x != null && x.Id != null))
+                                            : "Nothing Selected";
+            }
+            set
+            {
+                _selectionText = value;
+                RaisePropertyChanged("SelectionText");
+            }
+        }
+
         public DSModelElementsSelection()
             :base(SelectionHelper.RequestMultipleCurveElementsSelection, "Select elements."){}
     }
