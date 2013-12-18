@@ -83,13 +83,19 @@ namespace Dynamo.Controls
             this.Loaded += dynBench_Activated;
 
             //setup InfoBubble for library items tooltip
-            InfoBubbleView InfoBubble = new InfoBubbleView { DataContext = dynSettings.Controller.InfoBubbleViewModel };
-            InfoBubbleGrid.Children.Add(InfoBubble);
+            if (dynSettings.Controller != null)
+            {
+                InfoBubbleView InfoBubble = new InfoBubbleView { DataContext = dynSettings.Controller.InfoBubbleViewModel };
+                InfoBubbleGrid.Children.Add(InfoBubble);
+            }
         }
 
         void InitializeShortcutBar()
         {
-            ShortcutToolbar shortcutBar = new ShortcutToolbar();
+            var shortcutBar = new ShortcutToolbar();
+
+            if (dynSettings.Controller == null)
+                return;
 
             DynamoViewModel viewModel = dynSettings.Controller.DynamoViewModel;
 

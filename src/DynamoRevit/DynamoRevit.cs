@@ -96,7 +96,7 @@ namespace Dynamo.Applications
 
     [Transaction(Autodesk.Revit.Attributes.TransactionMode.Manual)]
     [Regeneration(RegenerationOption.Manual)]
-    internal class DynamoRevit : IExternalCommand
+    public class DynamoRevit : IExternalCommand
     {
         private static DynamoView dynamoView;
         private UIDocument m_doc;
@@ -109,14 +109,22 @@ namespace Dynamo.Applications
         public static double? dynamoViewHeight = null;
         private bool handledCrash = false;
 
+        public RevitServicesUpdater updater;
+        public ExecutionEnvironment env;
+        public bool ensureResources = false;
+
         public Result Execute(ExternalCommandData revit, ref string message, ElementSet elements)
         {
-            AppDomain.CurrentDomain.AssemblyResolve += Dynamo.Utilities.AssemblyHelper.CurrentDomain_AssemblyResolve;
+            AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.ResolveAssemblyDynamically;
 
             //Add an assembly load step for the System.Windows.Interactivity assembly
             //Revit owns a version of this as well. Adding our step here prevents a duplicative
             //load of the dll at a later time.
             var assLoc = Assembly.GetExecutingAssembly().Location;
+            if (string.IsNullOrEmpty(assLoc))
+            {
+                assLoc = @"C:\Program Files\Autodesk\Revit Architecture 2014\";
+            }
             var interactivityPath = Path.Combine(Path.GetDirectoryName(assLoc), "System.Windows.Interactivity.dll");
             var interactivityAss = Assembly.LoadFrom(interactivityPath);
 
@@ -153,7 +161,8 @@ namespace Dynamo.Applications
                 dynRevitSettings.DefaultLevel = defaultLevel;
 
                 //TODO: has to be changed when we handle multiple docs
-                DynamoRevitApp.Updater.DocumentToWatch = m_doc.Document;
+                //DynamoRevitApp.Updater.DocumentToWatch = m_doc.Document;
+                updater.DocumentToWatch = m_doc.Document;
                 
                 RevThread.IdlePromise.ExecuteOnIdleAsync(delegate
                 {
@@ -169,8 +178,9 @@ namespace Dynamo.Applications
                     if (context == "Vasari")
                         context = "Vasari 2014";
 
-                    dynamoController = new DynamoController_Revit(DynamoRevitApp.env, DynamoRevitApp.Updater, typeof(DynamoRevitViewModel), context);
-                        
+                    //dynamoController = new DynamoController_Revit(DynamoRevitApp.env, DynamoRevitApp.Updater, typeof(DynamoRevitViewModel), context);
+                    dynamoController = new DynamoController_Revit(env, updater, typeof(DynamoRevitViewModel), context);
+
                     dynamoView = new DynamoView { DataContext = dynamoController.DynamoViewModel };
                     dynamoController.UIDispatcher = dynamoView.Dispatcher;
 

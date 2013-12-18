@@ -51,7 +51,7 @@ namespace Dynamo.Tests
         private void StartDynamo()
         {
             //create a new instance of the ViewModel
-            Controller = new DynamoController(new ExecutionEnvironment(), typeof (DynamoViewModel), Context.NONE)
+            Controller = new DynamoController(new ExecutionEnvironment(), typeof (DynamoViewModel), Context.NONE, Assembly.GetExecutingAssembly().Location)
             {
                 Testing = true
             };

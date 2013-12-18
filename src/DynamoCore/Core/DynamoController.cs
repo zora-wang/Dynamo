@@ -247,7 +247,12 @@ namespace Dynamo
             EngineController = new EngineController(this, false);
 
             // custom node loader
-            string directory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string directory = "";
+            string assemblyLoc = Assembly.GetExecutingAssembly().Location;
+            directory = Path.GetDirectoryName(string.IsNullOrEmpty(assemblyLoc) ? 
+                new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath : 
+                Assembly.GetExecutingAssembly().Location);
+
             string pluginsPath = Path.Combine(directory, "definitions");
 
             CustomNodeManager = new CustomNodeManager(pluginsPath);
@@ -692,7 +697,12 @@ namespace Dynamo
         {
             try
             {
-                var assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                string assemblyPath = string.Empty;
+                assemblyPath = string.IsNullOrEmpty(Assembly.GetExecutingAssembly().Location)
+                    ? Path.GetDirectoryName(new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath)
+                    : Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
+                //var assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
                 Assembly ironPythonAssembly = null;
 

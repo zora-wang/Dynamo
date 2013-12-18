@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -27,7 +28,7 @@ namespace Dynamo.PackageManager
             this.RootPackagesDirectory = overridePackageDirectory;
             if (!Directory.Exists(this.RootPackagesDirectory))
             {
-                Directory.CreateDirectory(this.RootPackagesDirectory);
+                Directory.CreateDirectory(this.RootPackagesDirectory); 
             }
         }
 

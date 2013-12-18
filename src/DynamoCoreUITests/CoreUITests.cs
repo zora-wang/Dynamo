@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Windows.Threading;
 using Dynamo.Controls;
@@ -37,7 +38,7 @@ namespace Dynamo.Tests.UI
             // Setup Temp PreferenceSetting Location for testing
             PreferenceSettings.DYNAMO_TEST_PATH = Path.Combine(TempFolder, "UserPreferenceTest.xml");
 
-            Controller = DynamoController.MakeSandbox();
+            Controller = DynamoController.MakeSandbox(Assembly.GetExecutingAssembly().Location);
             Controller.Testing = true;
 
             //create the view
@@ -623,7 +624,7 @@ namespace Dynamo.Tests.UI
             // Setup Temp PreferenceSetting Location for testing
             PreferenceSettings.DYNAMO_TEST_PATH = Path.Combine(TempFolder, "UserPreferenceTest.xml");
 
-            Controller = DynamoController.MakeSandbox();
+            Controller = DynamoController.MakeSandbox(Assembly.GetExecutingAssembly().Location);
             Controller.Testing = true;
 
             //create the view

@@ -395,7 +395,10 @@ namespace Dynamo
         {
             try
             {
-                var assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                var assemblyPath = string.Empty;
+                assemblyPath = string.IsNullOrEmpty(Assembly.GetExecutingAssembly().Location)? 
+                    Path.GetDirectoryName(new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath) :
+                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
                 Assembly ironPythonAssembly = null;
 

@@ -39,7 +39,7 @@ namespace Dynamo.Services
         {
             get
             {
-                return dynSettings.Controller.PreferenceSettings.IsUsageReportingApproved;
+                return dynSettings.Controller != null && dynSettings.Controller.PreferenceSettings.IsUsageReportingApproved;
             }
             private set
             {

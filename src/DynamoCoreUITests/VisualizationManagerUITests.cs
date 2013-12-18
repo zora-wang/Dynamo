@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Windows.Media.Media3D;
 using Dynamo.Controls;
@@ -17,7 +18,7 @@ namespace Dynamo.Tests.UI
         {
             AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.CurrentDomain_AssemblyResolve;
 
-            Controller = DynamoController.MakeSandbox();
+            Controller = DynamoController.MakeSandbox(Assembly.GetExecutingAssembly().Location);
 
             //create the view
             Ui = new DynamoView();

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
@@ -21,7 +22,7 @@ namespace Dynamo.Tests.UI
         {
             AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.CurrentDomain_AssemblyResolve;
 
-            Controller = DynamoController.MakeSandbox();
+            Controller = DynamoController.MakeSandbox(Assembly.GetExecutingAssembly().Location);
 
             //create the view
             Ui = new DynamoView();

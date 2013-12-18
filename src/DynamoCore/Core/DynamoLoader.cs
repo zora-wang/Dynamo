@@ -25,8 +25,14 @@ namespace Dynamo.Utilities
             if (String.IsNullOrEmpty(_dynamoDirectory))
             {
                 var dynamoAssembly = Assembly.GetExecutingAssembly();
-                _dynamoDirectory = Path.GetDirectoryName(dynamoAssembly.Location);
-                
+                if (string.IsNullOrEmpty(dynamoAssembly.Location))
+                {
+                    _dynamoDirectory = new Uri(Path.GetDirectoryName(dynamoAssembly.CodeBase)).LocalPath;
+                }
+                else
+                {
+                    _dynamoDirectory = Path.GetDirectoryName(dynamoAssembly.Location);
+                }
             }
             return _dynamoDirectory;
         }
