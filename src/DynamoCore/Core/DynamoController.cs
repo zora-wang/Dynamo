@@ -230,7 +230,7 @@ namespace Dynamo
         public DynamoController(ExecutionEnvironment env,
             Type viewModelType, string context, string commandFilePath)
         {
-            DynamoLogger.Instance.StartLogging();
+            
 
             dynSettings.Controller = this;
 
@@ -269,6 +269,7 @@ namespace Dynamo
             DynamoViewModel.Model.CurrentWorkspace.X = 0;
             DynamoViewModel.Model.CurrentWorkspace.Y = 0;
 
+            DynamoLogger.Instance.StartLogging();
             DynamoLogger.Instance.Log(String.Format(
                 "Dynamo -- Build {0}",
                 Assembly.GetExecutingAssembly().GetName().Version));
