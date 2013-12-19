@@ -95,10 +95,13 @@
       <Project>{7858FA8C-475F-4B8E-B468-1F8200778CF8}</Project>
       <Name>DynamoCore</Name>
     </ProjectReference>
+    <ProjectReference Include="..\DynamoRevitStarter\DynamoRevitStarter.csproj">
+      <Project>{76bad8c6-f65d-4957-96e1-a9b2eb86713f}</Project>
+      <Name>DynamoRevitStarter</Name>
+    </ProjectReference>
     <ProjectReference Include="..\DynamoRevit\DynamoRevit.csproj">
-      <Project>{FD56AE51-739E-4893-8DE4-925D60C7097C}</Project>
+      <Project>{fd56ae51-739e-4893-8de4-925d60c7097c}</Project>
       <Name>DynamoRevit</Name>
-      <Private>False</Private>
     </ProjectReference>
     <ProjectReference Include="..\RevitServices\RevitServices.csproj">
       <Project>{E4701F9E-41AB-4044-8166-85D924FEB632}</Project>

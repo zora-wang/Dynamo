@@ -11,10 +11,10 @@ using System.Xml.Serialization;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using Dynamo.Applications;
 using Dynamo.Controls;
 using Dynamo.NUnit.Tests;
 using Dynamo.Utilities;
+using DynamoRevitStarter;
 using NUnit.Core;
 using NUnit.Core.Filters;
 using RevitServices.Persistence;
@@ -92,8 +92,6 @@ namespace Dynamo.Tests
                 // setup revit services
                 DocumentManager.GetInstance().CurrentDBDocument = RevitData.Document.Document;
                 DocumentManager.GetInstance().CurrentUIDocument = RevitData.Application.ActiveUIDocument;
-
-                TransactionManager.SetupManager(new DebugTransactionStrategy());
 
                 bool canReadData = (0 < dataMap.Count);
 
@@ -253,7 +251,7 @@ namespace Dynamo.Tests
             // create the transaction manager object
             TransactionManager.SetupManager(new DebugTransactionStrategy());
 
-            var dynamoController = new DynamoController_Revit(DynamoRevitApp.env, DynamoRevitApp.Updater, typeof(DynamoRevitViewModel), context)
+            var dynamoController = new DynamoController_Revit(DynamoRevitStarterApp.env, DynamoRevitStarterApp.updater, typeof(DynamoRevitViewModel), context)
                 {
                     Testing = true
                 };

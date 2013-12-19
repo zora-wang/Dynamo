@@ -1,27 +1,18 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.Reflection;
-using System.Resources;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Interop;
-using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Autodesk.Revit.UI.Events;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
-using Autodesk.Revit.DB.Analysis;
 using Autodesk.Revit.UI;
-
-using Dynamo.Applications.Properties;
 using Dynamo.Controls;
 using Dynamo.Utilities;
 using RevitServices.Elements;
-using RevitServices.Threading;
-using RevitServices.Transactions;
 using IWin32Window = System.Windows.Interop.IWin32Window;
 using MessageBox = System.Windows.Forms.MessageBox;
 using Rectangle = System.Drawing.Rectangle;
@@ -31,69 +22,6 @@ using System.IO;
 
 namespace Dynamo.Applications
 {
-    [Transaction(Autodesk.Revit.Attributes.TransactionMode.Automatic)]
-    [Regeneration(RegenerationOption.Manual)]
-    public class DynamoRevitApp : IExternalApplication
-    {
-        private static readonly string m_AssemblyName = Assembly.GetExecutingAssembly().Location;
-        public static RevitServicesUpdater Updater;
-        private static ResourceManager res;
-        public static ExecutionEnvironment env;
-
-        public Result OnStartup(UIControlledApplication application)
-        {
-            try
-            {
-                //TAF load english_us TODO add a way to localize
-                res = Resource_en_us.ResourceManager;
-                // Create new ribbon panel
-                RibbonPanel ribbonPanel = application.CreateRibbonPanel(res.GetString("App_Description"));
-
-                //Create a push button in the ribbon panel 
-                var pushButton = ribbonPanel.AddItem(new PushButtonData("DynamoDS",
-                                                                        res.GetString("App_Name"), m_AssemblyName,
-                                                                        "Dynamo.Applications.DynamoRevit")) as
-                                 PushButton;
-
-                Bitmap dynamoIcon = Resources.logo_square_32x32;
-
-                BitmapSource bitmapSource = Imaging.CreateBitmapSourceFromHBitmap(
-                    dynamoIcon.GetHbitmap(),
-                    IntPtr.Zero,
-                    Int32Rect.Empty,
-                    BitmapSizeOptions.FromEmptyOptions());
-
-                pushButton.LargeImage = bitmapSource;
-                pushButton.Image = bitmapSource;
-
-                RevThread.IdlePromise.RegisterIdle(application);
-
-                Updater = new RevitServicesUpdater(application.ControlledApplication);
-
-                TransactionManager.SetupManager(new DebugTransactionStrategy());
-
-                env = new ExecutionEnvironment();
-
-                return Result.Succeeded;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString());
-                return Result.Failed;
-            }
-        }
-
-        public Result OnShutdown(UIControlledApplication application)
-        {
-            //UpdaterRegistry.UnregisterUpdater(Updater.GetUpdaterId());
-
-            //if(Application.Current != null)
-            //    Application.Current.Shutdown();
-
-            return Result.Succeeded;
-        }
-    }
-
     [Transaction(Autodesk.Revit.Attributes.TransactionMode.Manual)]
     [Regeneration(RegenerationOption.Manual)]
     public class DynamoRevit : IExternalCommand
@@ -112,7 +40,7 @@ namespace Dynamo.Applications
         public RevitServicesUpdater updater;
         public ExecutionEnvironment env;
         public bool ensureResources = false;
-
+        
         public Result Execute(ExternalCommandData revit, ref string message, ElementSet elements)
         {
             AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.ResolveAssemblyDynamically;
@@ -312,6 +240,11 @@ namespace Dynamo.Applications
             dynamoViewHeight = dynamoView.ActualHeight;
             RevThread.IdlePromise.ClearPromises();
             RevThread.IdlePromise.Shutdown();
+            
+            updater.UnRegisterAllChangeHooks();
+            updater = null;
+
+            env = null;
         }
 
         /// <summary>
@@ -321,6 +254,7 @@ namespace Dynamo.Applications
         /// <param name="e"></param>
         private void dynamoView_Closed(object sender, EventArgs e)
         {
+            AppDomain.CurrentDomain.AssemblyResolve -= AssemblyHelper.ResolveAssemblyDynamically;
             dynamoView = null;
             isRunning = false;
         }
