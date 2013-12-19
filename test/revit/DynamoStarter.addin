@@ -2,9 +2,9 @@
 <RevitAddIns>
   <AddIn Type="Application">
     <Name>Dynamo For Revit</Name>
-    <Assembly>..\..\bin\AnyCPU\Debug\DynamoRevitDS.dll</Assembly>
-    <AddInId>188B9080-EEBE-40C3-865A-8FC31DEEC12F</AddInId>
-    <FullClassName>Dynamo.Applications.DynamoRevitApp</FullClassName>
+    <Assembly>..\..\bin\AnyCPU\Debug\DynamoRevitStarter.dll</Assembly>
+    <AddInId>f8c0184f-4f95-41ed-81f3-d27efea67c3c</AddInId>
+    <FullClassName>DynamoRevitStarter.DynamoRevitStarterApp</FullClassName>
     <VendorId>ADSK</VendorId>
     <VendorDescription>Autodesk, github.com/ikeough/dynamo</VendorDescription>
   </AddIn>
