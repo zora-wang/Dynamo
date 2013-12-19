@@ -327,6 +327,7 @@ namespace Dynamo.Applications
     }
 
     internal class WindowHandle : IWin32Window
+
     {
         private readonly IntPtr _hwnd;
 
