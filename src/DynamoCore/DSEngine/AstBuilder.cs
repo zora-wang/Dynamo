@@ -307,7 +307,8 @@ namespace Dynamo.DSEngine
                 AssociativeNode inputNode;
                 if (!node.TryGetInput(index, out inputTuple))
                 {
-                    inputNode = new NullNode();
+                    inputNode = new NullNode(); 
+                    //TODO: partial functions
                 }
                 else
                 {
