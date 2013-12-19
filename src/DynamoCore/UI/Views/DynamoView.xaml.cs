@@ -74,6 +74,12 @@ namespace Dynamo.Controls
             _timer = new Stopwatch();
             _timer.Start();
 
+            //System.Uri resourceLocater = new System.Uri("/DynamoCore;component/ui/views/dynamoview.xaml", System.UriKind.Relative);
+            //var resourceLocater = new Uri("pack://siteoforigin:,,,/resources/DynamoView.xaml", UriKind.RelativeOrAbsolute);
+            //var resourceLocater = new Uri("/resources/DynamoView.xaml", UriKind.Relative);
+            //var resourceLocater = new System.Uri("pack://application:,,,/DynamoCore;component/ui/views/dynamoview.xaml", System.UriKind.Absolute);
+            //System.Windows.Application.LoadComponent(this, resourceLocater);
+            AssemblyHelper.CountDynamoCoreInstances();
             InitializeComponent();
             InitializeShortcutBar();
 
@@ -568,7 +574,10 @@ namespace Dynamo.Controls
         /// <param name="bench">The bench where the UI will be loaded</param>
         private void LoadSamplesMenu()
         {
-            string directory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string directory = string.Empty;
+            directory = string.IsNullOrEmpty(Assembly.GetExecutingAssembly().Location)?
+                Path.GetDirectoryName(new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath):
+                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             string samplesPath = Path.Combine(directory, "samples");
 
             if (Directory.Exists(samplesPath))

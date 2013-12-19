@@ -81,16 +81,39 @@ namespace Dynamo.Utilities
 
             return obj;
         }
-    
+
+        public static void CountDynamoCoreInstances()
+        {
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            try
+            {
+                var cores = assemblies.Where(x => x.FullName.Contains("DynamoCore"));
+                Debug.WriteLine(string.Format("There are {0} DynamoCore assemblies loaded.", cores.Count()));
+            }
+            catch
+            {
+            }
+        }
+
         public static Assembly ResolveAssemblyDynamically(object sender, ResolveEventArgs args)
         {
-            Debug.WriteLine(string.Format("Attempting to resolve:{0}",args.Name));
+            Debug.WriteLine(string.Format("{0} requesting attempt to resolve:{1}", args.RequestingAssembly, args.Name));
 
             var name = args.Name.Split(',')[0];
 
             //find if the assembly is already loaded in the app domain
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            Assembly found = assemblies.FirstOrDefault(x => x.FullName == args.Name);
+            Assembly found = assemblies.FirstOrDefault(x => x.FullName.Split(',')[0] == name);
+
+            try
+            {
+                var cores = assemblies.Where(x => x.FullName.Contains("DynamoCore"));
+                Debug.WriteLine(string.Format("There are {0} DynamoCore assemblies loaded.", cores.Count()));
+            }
+            catch
+            {
+            }
+
 
             if (found != null)
             {
@@ -103,11 +126,18 @@ namespace Dynamo.Utilities
                 //get the folder to load dlls from
                 var folder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 var dllPath = Path.Combine(folder, name + ".dll");
+                var sideCarPath = Path.Combine(folder + @"\dll", name + ".dll");
 
-                if (!File.Exists(dllPath))
+                if (File.Exists(dllPath))
+                {
+                    assembly = LoadAssemblyFromStream(dllPath);
+                }
+                else if (File.Exists(sideCarPath))
+                {
+                    assembly = LoadAssemblyFromStream(sideCarPath);
+                }
+                else
                     return null;
-
-                assembly = LoadAssemblyFromStream(dllPath);
             }
             catch (Exception ex)
             {

@@ -80,7 +80,7 @@ namespace Dynamo
 
             dynSettings.Controller.DynamoViewModel.RequestAuthentication += RegisterSingleSignOn;
 
-            AddPythonBindings();
+            //AddPythonBindings();
             AddWatchNodeHandler();
 
             dynRevitSettings.Revit.Application.DocumentClosed += Application_DocumentClosed;

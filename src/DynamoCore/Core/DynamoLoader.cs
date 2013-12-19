@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Dynamo.Core;
 using Dynamo.Models;
@@ -83,7 +84,7 @@ namespace Dynamo.Utilities
                 return result;
             });
 
-            AppDomain.CurrentDomain.AssemblyResolve += resolver;
+            //AppDomain.CurrentDomain.AssemblyResolve += resolver;
 
             foreach (var assemblyPath in allDynamoAssemblyPaths)
             {
@@ -105,9 +106,10 @@ namespace Dynamo.Utilities
                 {
                     try
                     {
-                        var assembly = Assembly.LoadFrom(assemblyPath);
-                        allLoadedAssemblies[assembly.GetName().Name] = assembly;
-                        LoadNodesFromAssembly(assembly);
+                        Debug.WriteLine(string.Format("DynamoLoader loading:{0}", assemblyPath));
+                        //var assembly = Assembly.LoadFrom(assemblyPath);
+                        //allLoadedAssemblies[assembly.GetName().Name] = assembly;
+                        //LoadNodesFromAssembly(assembly);
                     }
                     catch (BadImageFormatException)
                     {
@@ -123,7 +125,7 @@ namespace Dynamo.Utilities
 #if USE_DSENGINE
             dynSettings.Controller.SearchViewModel.Add(dynSettings.Controller.EngineController.GetFunctionGroups());
 #endif
-            AppDomain.CurrentDomain.AssemblyResolve -= resolver;
+            //AppDomain.CurrentDomain.AssemblyResolve -= resolver;
 
             #endregion
 
