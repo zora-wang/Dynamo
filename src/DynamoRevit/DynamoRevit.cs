@@ -242,9 +242,6 @@ namespace Dynamo.Applications
             RevThread.IdlePromise.Shutdown();
             
             updater.UnRegisterAllChangeHooks();
-            updater = null;
-
-            env = null;
         }
 
         /// <summary>
