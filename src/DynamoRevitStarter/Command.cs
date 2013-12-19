@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Reflection;
@@ -79,6 +80,9 @@ namespace DynamoRevitStarter
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.ResolveAssemblyDynamically;
+
+            Debug.WriteLine("Creating Dynamo AppDomain.");
+            AssemblyHelper.DynamoDomain = AppDomain.CreateDomain("Dynamo");
 
             var basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             var assemblyPath = Path.Combine(basePath, "DynamoRevitDS.dll");

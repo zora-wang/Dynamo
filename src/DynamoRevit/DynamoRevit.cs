@@ -27,9 +27,7 @@ namespace Dynamo.Applications
     public class DynamoRevit : IExternalCommand
     {
         private static DynamoView dynamoView;
-        private UIDocument m_doc;
-        private UIApplication m_revit;
-        private DynamoController dynamoController;
+
         private static bool isRunning = false;
         public static double? dynamoViewX = null;
         public static double? dynamoViewY = null;
@@ -37,13 +35,15 @@ namespace Dynamo.Applications
         public static double? dynamoViewHeight = null;
         private bool handledCrash = false;
 
+        private ExternalCommandData internalRevitData;
         public RevitServicesUpdater updater;
         public ExecutionEnvironment env;
-        public bool ensureResources = false;
         
         public Result Execute(ExternalCommandData revit, ref string message, ElementSet elements)
         {
             AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.ResolveAssemblyDynamically;
+
+            internalRevitData = revit;
 
             //Add an assembly load step for the System.Windows.Interactivity assembly
             //Revit owns a version of this as well. Adding our step here prevents a duplicative
@@ -68,73 +68,9 @@ namespace Dynamo.Applications
                 return Result.Succeeded;
             }
 
-            isRunning = true;
-
             try
             {
-                m_revit = revit.Application;
-                m_doc = m_revit.ActiveUIDocument;
-
-                #region default level
-
-                Level defaultLevel = null;
-                var fecLevel = new FilteredElementCollector(m_doc.Document);
-                fecLevel.OfClass(typeof (Level));
-                defaultLevel = fecLevel.ToElements()[0] as Level;
-
-                #endregion
-
-                dynRevitSettings.Revit = m_revit;
-                dynRevitSettings.Doc = m_doc;
-                dynRevitSettings.DefaultLevel = defaultLevel;
-
-                //TODO: has to be changed when we handle multiple docs
-                //DynamoRevitApp.Updater.DocumentToWatch = m_doc.Document;
-                updater.DocumentToWatch = m_doc.Document;
-                
-                RevThread.IdlePromise.ExecuteOnIdleAsync(delegate
-                {
-                    //get window handle
-                    IntPtr mwHandle = Process.GetCurrentProcess().MainWindowHandle;
-
-                    var r = new Regex(@"\b(Autodesk |Structure |MEP |Architecture )\b");
-                    string context = r.Replace(m_revit.Application.VersionName, "");
-
-                    //they changed the application version name conventions for vasari
-                    //it no longer has a version year so we can't compare it to other versions
-                    //TODO:come up with a more stable way to test for Vasari beta 3
-                    if (context == "Vasari")
-                        context = "Vasari 2014";
-
-                    //dynamoController = new DynamoController_Revit(DynamoRevitApp.env, DynamoRevitApp.Updater, typeof(DynamoRevitViewModel), context);
-                    dynamoController = new DynamoController_Revit(env, updater, typeof(DynamoRevitViewModel), context);
-
-                    dynamoView = new DynamoView { DataContext = dynamoController.DynamoViewModel };
-                    dynamoController.UIDispatcher = dynamoView.Dispatcher;
-
-                    //set window handle and show dynamo
-                    new WindowInteropHelper(dynamoView).Owner = mwHandle;
-
-                    handledCrash = false;
-
-                    dynamoView.WindowStartupLocation = WindowStartupLocation.Manual;
-
-                    Rectangle bounds = Screen.PrimaryScreen.Bounds;
-                    dynamoView.Left = dynamoViewX ?? bounds.X;
-                    dynamoView.Top = dynamoViewY ?? bounds.Y;
-                    dynamoView.Width = dynamoViewWidth ?? 1000.0;
-                    dynamoView.Height = dynamoViewHeight ?? 800.0;
-
-                    dynamoView.Show();
-
-                    dynamoView.Dispatcher.UnhandledException -= DispatcherOnUnhandledException; 
-                    dynamoView.Dispatcher.UnhandledException += DispatcherOnUnhandledException; 
-                    dynamoView.Closing += dynamoView_Closing;
-                    dynamoView.Closed += dynamoView_Closed;
-
-                    //revit.Application.ViewActivated += new EventHandler<Autodesk.Revit.UI.Events.ViewActivatedEventArgs>(Application_ViewActivated);
-                    revit.Application.ViewActivating += Application_ViewActivating;
-                });
+                AssemblyHelper.DynamoDomain.DoCallBack(new CrossAppDomainDelegate(DoDynamo));
             }
             catch (Exception ex)
             {
@@ -149,6 +85,73 @@ namespace Dynamo.Applications
             }
 
             return Result.Succeeded;
+        }
+
+        private void DoDynamo()
+        {
+            isRunning = true;
+
+            #region default level
+
+            Level defaultLevel = null;
+            var fecLevel = new FilteredElementCollector(dynRevitSettings.Doc.Document);
+            fecLevel.OfClass(typeof (Level));
+            defaultLevel = fecLevel.ToElements()[0] as Level;
+
+            #endregion
+
+            dynRevitSettings.Revit = internalRevitData.Application;
+            dynRevitSettings.Doc = internalRevitData.Application.ActiveUIDocument;
+            dynRevitSettings.DefaultLevel = defaultLevel;
+
+            //TODO: has to be changed when we handle multiple docs
+            //DynamoRevitApp.Updater.DocumentToWatch = m_doc.Document;
+            updater.DocumentToWatch = dynRevitSettings.Doc.Document;
+
+            RevThread.IdlePromise.ExecuteOnIdleAsync(delegate
+            {
+                //get window handle
+                IntPtr mwHandle = Process.GetCurrentProcess().MainWindowHandle;
+
+                var r = new Regex(@"\b(Autodesk |Structure |MEP |Architecture )\b");
+                string context = r.Replace(internalRevitData.Application.Application.VersionName, "");
+
+                //they changed the application version name conventions for vasari
+                //it no longer has a version year so we can't compare it to other versions
+                //TODO:come up with a more stable way to test for Vasari beta 3
+                if (context == "Vasari")
+                    context = "Vasari 2014";
+
+
+                //dynamoController = new DynamoController_Revit(DynamoRevitApp.env, DynamoRevitApp.Updater, typeof(DynamoRevitViewModel), context);
+                var dynamoController = new DynamoController_Revit(env, updater, typeof (DynamoRevitViewModel), context);
+
+                var dynamoView = new DynamoView {DataContext = dynamoController.DynamoViewModel};
+                dynamoController.UIDispatcher = dynamoView.Dispatcher;
+
+                //set window handle and show dynamo
+                new WindowInteropHelper(dynamoView).Owner = mwHandle;
+
+                handledCrash = false;
+
+                dynamoView.WindowStartupLocation = WindowStartupLocation.Manual;
+
+                Rectangle bounds = Screen.PrimaryScreen.Bounds;
+                dynamoView.Left = dynamoViewX ?? bounds.X;
+                dynamoView.Top = dynamoViewY ?? bounds.Y;
+                dynamoView.Width = dynamoViewWidth ?? 1000.0;
+                dynamoView.Height = dynamoViewHeight ?? 800.0;
+
+                dynamoView.Show();
+
+                dynamoView.Dispatcher.UnhandledException -= DispatcherOnUnhandledException;
+                dynamoView.Dispatcher.UnhandledException += DispatcherOnUnhandledException;
+                dynamoView.Closing += dynamoView_Closing;
+                dynamoView.Closed += dynamoView_Closed;
+
+                //revit.Application.ViewActivated += new EventHandler<Autodesk.Revit.UI.Events.ViewActivatedEventArgs>(Application_ViewActivated);
+                internalRevitData.Application.ViewActivating += Application_ViewActivating;
+            });
         }
 
         /// <summary>
@@ -252,6 +255,8 @@ namespace Dynamo.Applications
         private void dynamoView_Closed(object sender, EventArgs e)
         {
             AppDomain.CurrentDomain.AssemblyResolve -= AssemblyHelper.ResolveAssemblyDynamically;
+            AppDomain.Unload(AssemblyHelper.DynamoDomain);
+
             dynamoView = null;
             isRunning = false;
         }

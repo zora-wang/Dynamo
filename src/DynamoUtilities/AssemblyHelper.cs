@@ -8,6 +8,8 @@ namespace Dynamo.Utilities
 {
     public static class AssemblyHelper
     {
+        public static AppDomain DynamoDomain { get; set; }
+
         /// <summary>
         /// Attempts to resolve an assembly from the dll directory.
         /// </summary>
@@ -62,11 +64,11 @@ namespace Dynamo.Utilities
             if (File.Exists(pdbPath))
             {
                 var pdbBytes = File.ReadAllBytes(pdbPath);
-                assembly = Assembly.Load(assemblyBytes, pdbBytes);
+                assembly = DynamoDomain.Load(assemblyBytes, pdbBytes);
             }
             else
             {
-                assembly = Assembly.Load(assemblyBytes);
+                assembly = DynamoDomain.Load(assemblyBytes);
             }
             return assembly;
         }
@@ -84,7 +86,7 @@ namespace Dynamo.Utilities
                 : Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
             var corePath = Path.Combine(basePath, "DynamoCore.dll");
-            var coreAssembly = AssemblyHelper.LoadAssemblyFromStream(corePath);
+            var coreAssembly = LoadAssemblyFromStream(corePath);
 
             var objType = coreAssembly.GetType(typeName);
             var obj = Activator.CreateInstance(objType);
@@ -162,7 +164,7 @@ namespace Dynamo.Utilities
             }
 
             DebugDynamoCoreInstances();
-            Debug.WriteLine("Resolved assembly:" + args.Name);
+            Debug.WriteLine(string.Format("Resolved assembly:{0} in {1}", args.Name, AppDomain.CurrentDomain.FriendlyName));
             return assembly;
         }
   
