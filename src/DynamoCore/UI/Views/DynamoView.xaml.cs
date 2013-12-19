@@ -74,12 +74,8 @@ namespace Dynamo.Controls
             _timer = new Stopwatch();
             _timer.Start();
 
-            //System.Uri resourceLocater = new System.Uri("/DynamoCore;component/ui/views/dynamoview.xaml", System.UriKind.Relative);
-            //var resourceLocater = new Uri("pack://siteoforigin:,,,/resources/DynamoView.xaml", UriKind.RelativeOrAbsolute);
-            //var resourceLocater = new Uri("/resources/DynamoView.xaml", UriKind.Relative);
-            //var resourceLocater = new System.Uri("pack://application:,,,/DynamoCore;component/ui/views/dynamoview.xaml", System.UriKind.Absolute);
-            //System.Windows.Application.LoadComponent(this, resourceLocater);
-            AssemblyHelper.CountDynamoCoreInstances();
+            AssemblyHelper.DebugDynamoCoreInstances();
+            
             InitializeComponent();
             InitializeShortcutBar();
 

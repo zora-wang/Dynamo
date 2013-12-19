@@ -46,6 +46,11 @@ namespace Dynamo.Utilities
             return libGPath;
         }
 
+        /// <summary>
+        /// Load an assembly from a byte array.
+        /// </summary>
+        /// <param name="assemblyPath"></param>
+        /// <returns></returns>
         public static Assembly LoadAssemblyFromStream(string assemblyPath)
         {
             var assemblyBytes = File.ReadAllBytes(assemblyPath);
@@ -66,6 +71,11 @@ namespace Dynamo.Utilities
             return assembly;
         }
 
+        /// <summary>
+        /// Create an instance of an object from DynamoCore.
+        /// </summary>
+        /// <param name="typeName"></param>
+        /// <returns></returns>
         public static object CreateInstanceByNameFromCore(string typeName)
         {
             string basePath = String.Empty;
@@ -82,7 +92,10 @@ namespace Dynamo.Utilities
             return obj;
         }
 
-        public static void CountDynamoCoreInstances()
+        /// <summary>
+        /// Count the number of DynamoCore assemblies that are loaded and write to debug.
+        /// </summary>
+        public static void DebugDynamoCoreInstances()
         {
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             try
@@ -95,46 +108,48 @@ namespace Dynamo.Utilities
             }
         }
 
+        /// <summary>
+        /// Assembly resolution callback. Resolves assemblies, by loading them from 
+        /// byte arrays. Allows dynamic reloading of assemblies.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
         public static Assembly ResolveAssemblyDynamically(object sender, ResolveEventArgs args)
         {
             Debug.WriteLine(string.Format("{0} requesting attempt to resolve:{1}", args.RequestingAssembly, args.Name));
 
             var name = args.Name.Split(',')[0];
 
-            //find if the assembly is already loaded in the app domain
+            //Find if the assembly is already loaded in the app domain.
+            //We find the assembly by name, disregarding the version number.
+            //This will have the effect of only loading the first version of an assembly 
+            //that is requested.
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             Assembly found = assemblies.FirstOrDefault(x => x.FullName.Split(',')[0] == name);
-
-            try
-            {
-                var cores = assemblies.Where(x => x.FullName.Contains("DynamoCore"));
-                Debug.WriteLine(string.Format("There are {0} DynamoCore assemblies loaded.", cores.Count()));
-            }
-            catch
-            {
-            }
-
 
             if (found != null)
             {
                 return found;
             }
 
+            //The assembly has not already been loaded. Attempt to load the assembly
+            //looking first in the executing assembly's directory, then in the /dll sub-directory.
             Assembly assembly = null;
             try
             {
                 //get the folder to load dlls from
                 var folder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 var dllPath = Path.Combine(folder, name + ".dll");
-                var sideCarPath = Path.Combine(folder + @"\dll", name + ".dll");
+                var dllSubPath = Path.Combine(folder + @"\dll", name + ".dll");
 
                 if (File.Exists(dllPath))
                 {
                     assembly = LoadAssemblyFromStream(dllPath);
                 }
-                else if (File.Exists(sideCarPath))
+                else if (File.Exists(dllSubPath))
                 {
-                    assembly = LoadAssemblyFromStream(sideCarPath);
+                    assembly = LoadAssemblyFromStream(dllSubPath);
                 }
                 else
                     return null;
@@ -146,6 +161,7 @@ namespace Dynamo.Utilities
                 return null;
             }
 
+            DebugDynamoCoreInstances();
             Debug.WriteLine("Resolved assembly:" + args.Name);
             return assembly;
         }
