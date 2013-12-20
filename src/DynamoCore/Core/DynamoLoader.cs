@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Dynamo.Core;
 using Dynamo.Models;
 using Dynamo.Controls;
 using System.Reflection;
@@ -10,8 +9,6 @@ using System.IO;
 using System.Windows.Controls;
 using System.Windows;
 using String = System.String;
-using ProtoCore.DSASM;
-using Dynamo.DSEngine;
 
 namespace Dynamo.Utilities
 {

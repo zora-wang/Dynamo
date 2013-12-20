@@ -33,13 +33,13 @@ namespace DynamoRevitWorker
         private bool handledCrash = false;
         private static DynamoView dynamoView;
 
+        /// <summary>
+        /// DoDynamo is called from the Revit plugin. It wraps the creation of a controller
+        /// and the view.
+        /// </summary>
         public void DoDynamo()
         {
-            //AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.ResolveAssemblyDynamically;
             dynRevitSettings.Doc = internalRevitData.Application.ActiveUIDocument;
-
-            //updater = DynamoRevitStarterApp.updater;
-            //env = DynamoRevitStarterApp.env;
 
             isRunning = true;
 
@@ -57,7 +57,6 @@ namespace DynamoRevitWorker
             dynRevitSettings.DefaultLevel = defaultLevel;
 
             //TODO: has to be changed when we handle multiple docs
-            //DynamoRevitApp.Updater.DocumentToWatch = m_doc.Document;
             updater.DocumentToWatch = dynRevitSettings.Doc.Document;
 
             RevitServices.Threading.IdlePromise.ExecuteOnIdleAsync(delegate
@@ -74,7 +73,6 @@ namespace DynamoRevitWorker
                 if (context == "Vasari")
                     context = "Vasari 2014";
 
-                //dynamoController = new DynamoController_Revit(DynamoRevitApp.env, DynamoRevitApp.Updater, typeof(DynamoRevitViewModel), context);
                 var dynamoController = new DynamoController_Revit(env, updater, typeof(DynamoRevitViewModel), context);
 
                 dynamoView = new DynamoView { DataContext = dynamoController.DynamoViewModel };
