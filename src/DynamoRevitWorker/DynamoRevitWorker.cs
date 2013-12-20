@@ -12,6 +12,7 @@ using Dynamo.Controls;
 using Dynamo.FSchemeInterop;
 using Dynamo.Utilities;
 using RevitServices.Elements;
+using RevitServices.Transactions;
 using String = System.String;
 using Rectangle = System.Drawing.Rectangle;
 
@@ -39,6 +40,7 @@ namespace DynamoRevitWorker
         /// </summary>
         public void DoDynamo()
         {
+            dynRevitSettings.Revit = internalRevitData.Application;
             dynRevitSettings.Doc = internalRevitData.Application.ActiveUIDocument;
 
             isRunning = true;
@@ -49,12 +51,9 @@ namespace DynamoRevitWorker
             var fecLevel = new FilteredElementCollector(dynRevitSettings.Doc.Document);
             fecLevel.OfClass(typeof(Level));
             defaultLevel = fecLevel.ToElements()[0] as Level;
+            dynRevitSettings.DefaultLevel = defaultLevel;
 
             #endregion
-
-            dynRevitSettings.Revit = internalRevitData.Application;
-            dynRevitSettings.Doc = internalRevitData.Application.ActiveUIDocument;
-            dynRevitSettings.DefaultLevel = defaultLevel;
 
             //TODO: has to be changed when we handle multiple docs
             updater.DocumentToWatch = dynRevitSettings.Doc.Document;

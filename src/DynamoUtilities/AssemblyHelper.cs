@@ -8,8 +8,6 @@ namespace Dynamo.Utilities
 {
     public static class AssemblyHelper
     {
-        public static AppDomain DynamoDomain { get; set; }
-
         /// <summary>
         /// Attempts to resolve an assembly from the dll directory.
         /// </summary>
