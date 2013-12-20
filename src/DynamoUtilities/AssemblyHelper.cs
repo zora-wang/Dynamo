@@ -64,11 +64,11 @@ namespace Dynamo.Utilities
             if (File.Exists(pdbPath))
             {
                 var pdbBytes = File.ReadAllBytes(pdbPath);
-                assembly = DynamoDomain.Load(assemblyBytes, pdbBytes);
+                assembly = AppDomain.CurrentDomain.Load(assemblyBytes, pdbBytes);
             }
             else
             {
-                assembly = DynamoDomain.Load(assemblyBytes);
+                assembly = AppDomain.CurrentDomain.Load(assemblyBytes);
             }
             return assembly;
         }
