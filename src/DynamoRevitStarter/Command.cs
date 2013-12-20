@@ -115,27 +115,27 @@ namespace DynamoRevitStarter
                 domainSetup.ApplicationBase = domainSetup.PrivateBinPath;
                 domainSetup.ShadowCopyFiles = "true";
                 domainSetup.ShadowCopyDirectories = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                domainSetup.ApplicationName = "DynamoRevit";
+                domainSetup.CachePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "shadow_copies");
 
                 var dynamoDomain = AppDomain.CreateDomain("Dynamo", null, domainSetup);
-                dynamoDomain.AssemblyResolve += AssemblyHelper.ResolveAssemblyDynamically;
 
-                var remoteWorker = (Worker)dynamoDomain.CreateInstanceAndUnwrap(
+                var remoteWorker = dynamoDomain.CreateInstanceAndUnwrap(
                     "DynamoRevitWorker, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null",
                     "DynamoRevitWorker.Worker");
-                remoteWorker.internalRevitData = revit;
-                remoteWorker.env = DynamoRevitStarterApp.env;
-                remoteWorker.updater = DynamoRevitStarterApp.updater;
-
-                remoteWorker.DoDynamo();
+                remoteWorker.GetType().GetField("internalRevitData").SetValue(remoteWorker, revit);
+                remoteWorker.GetType().GetField("env").SetValue(remoteWorker, DynamoRevitStarterApp.env);
+                remoteWorker.GetType().GetField("updater").SetValue(remoteWorker, DynamoRevitStarterApp.updater);
+                remoteWorker.GetType().GetMethod("DoDynamo").Invoke(remoteWorker, new object[]{});
             }
             catch (Exception ex)
             {
                 Worker.isRunning = false;
                 MessageBox.Show(ex.ToString());
 
-                DynamoLogger.Instance.Log(ex.Message);
-                DynamoLogger.Instance.Log(ex.StackTrace);
-                DynamoLogger.Instance.Log("Dynamo log ended " + DateTime.Now.ToString(CultureInfo.InvariantCulture));
+                //DynamoLogger.Instance.Log(ex.Message);
+                //DynamoLogger.Instance.Log(ex.StackTrace);
+                //DynamoLogger.Instance.Log("Dynamo log ended " + DateTime.Now.ToString(CultureInfo.InvariantCulture));
 
                 return Result.Failed;
             }
