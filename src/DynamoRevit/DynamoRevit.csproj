@@ -126,7 +126,6 @@
     <Compile Include="RevitTransactionNode.cs" />
     <Compile Include="RevitUtils.cs" />
     <Compile Include="ElementsContainer.cs" />
-    <Compile Include="DynamoRevit.cs" />
     <Compile Include="Nodes\AdaptiveComponents.cs" />
     <Compile Include="Nodes\Arc.cs" />
     <Compile Include="Nodes\Element.cs" />
