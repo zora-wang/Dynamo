@@ -100,7 +100,7 @@ namespace Dynamo.Utilities
 
                 if (allLoadedAssembliesByPath.ContainsKey(assemblyPath))
                 {
-                    LoadNodesFromAssembly(allLoadedAssembliesByPath[assemblyPath]);
+                    //LoadNodesFromAssembly(allLoadedAssembliesByPath[assemblyPath]);
                 }
                 else
                 {

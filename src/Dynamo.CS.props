@@ -5,7 +5,7 @@
 	<NunitPath Condition=" '$(NunitPath)' == '' ">$(SolutionDir)..\extern\NUnit</NunitPath>
 	<REVITAPI  Condition=" '$(REVITAPI)' == '' ">C:\Program Files\Autodesk\Revit Architecture 2014</REVITAPI>
 	<REVITAPI Condition=" !Exists('$(REVITAPI)') ">C:\Program Files\Autodesk\Vasari Beta 3</REVITAPI>
-	<BaseIntermediateOutputPath>$(OutputPath)\int\</BaseIntermediateOutputPath>
+	<BaseIntermediateOutputPath>$(OutputPath)\int</BaseIntermediateOutputPath>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -18,7 +18,7 @@
 	<NunitPath Condition=" '$(NunitPath)' == '' ">$(SolutionDir)..\extern\NUnit</NunitPath>
 	<REVITAPI  Condition=" '$(REVITAPI)' == '' ">C:\Program Files\Autodesk\Revit Architecture 2014</REVITAPI>
 	<REVITAPI Condition=" !Exists('$(REVITAPI)') ">C:\Program Files\Autodesk\Vasari Beta 3</REVITAPI>
-	<BaseIntermediateOutputPath>$(OutputPath)\int\</BaseIntermediateOutputPath>
+	<BaseIntermediateOutputPath>$(OutputPath)\int</BaseIntermediateOutputPath>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <DefineConstants>TRACE</DefineConstants>

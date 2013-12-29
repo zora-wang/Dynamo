@@ -75,7 +75,17 @@ namespace Dynamo.Controls
             _timer.Start();
 
             AssemblyHelper.DebugDynamoCoreInstances();
-            
+
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+            Debug.WriteLine("This is a test.");
+            _contentLoaded = true;
+            var assemblyName = GetType().Assembly.GetName();
+            var uri =
+                new Uri(
+                    string.Format("/{0};v{1};component/ui/views/{2}.xaml", assemblyName.Name, assemblyName.Version,
+                        GetType().Name), UriKind.Relative);
+            System.Windows.Application.LoadComponent(this, uri);
             InitializeComponent();
             InitializeShortcutBar();
 
