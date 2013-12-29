@@ -100,7 +100,7 @@ namespace Dynamo.Utilities
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             try
             {
-                var cores = assemblies.Where(x => x.FullName.Contains("DynamoCore"));
+                var cores = assemblies.Where(x => x.FullName.Split(',')[0] == "DynamoCore");
                 Debug.WriteLine(string.Format("There are {0} DynamoCore assemblies loaded.", cores.Count()));
             }
             catch
@@ -117,20 +117,18 @@ namespace Dynamo.Utilities
         /// <returns></returns>
         public static Assembly ResolveAssemblyDynamically(object sender, ResolveEventArgs args)
         {
-            Debug.WriteLine(string.Format("{0} requesting attempt to resolve:{1}", args.RequestingAssembly, args.Name));
-
             var name = args.Name.Split(',')[0];
 
-            //Find if the assembly is already loaded in the app domain.
-            //We find the assembly by name, disregarding the version number.
-            //This will have the effect of only loading the first version of an assembly 
-            //that is requested.
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             Assembly found = assemblies.FirstOrDefault(x => x.FullName.Split(',')[0] == name);
 
             if (found != null)
             {
-                return found;
+                var version = new Version(args.Name.Split(',')[1].Split('=')[1]);
+                if (found.GetName().Version >= version)
+                {
+                    return found;
+                }
             }
 
             //The assembly has not already been loaded. Attempt to load the assembly
@@ -165,6 +163,50 @@ namespace Dynamo.Utilities
             Debug.WriteLine("Resolved assembly:" + args.Name);
             return assembly;
         }
-  
+
+        public static void LoadAssembliesInDirectoryIfNewer(string path)
+        {
+            if (!Directory.Exists(path))
+            {
+                throw new Exception("The specified directory does not exist.");
+            }
+
+            var di = new DirectoryInfo(path);
+            var dlls = di.GetFiles("*.dll");
+
+            foreach (var dll in dlls)
+            {
+                try
+                {
+                    var fileName = Path.GetFileNameWithoutExtension(dll.FullName);
+
+                    var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+                    Assembly found = assemblies.FirstOrDefault(x => x.FullName.Split(',')[0] == fileName);
+
+                    if (found != null)
+                    {
+                        var foundVersion = found.GetName().Version;
+
+                        var dllVersion = FileVersionInfo.GetVersionInfo(dll.FullName).FileVersion == null?
+                            new Version() : 
+                            new Version(FileVersionInfo.GetVersionInfo(dll.FullName).FileVersion);
+
+                        if (dllVersion > foundVersion)
+                        {
+                            LoadAssemblyFromStream(dll.FullName);
+                        }
+                    }
+                    else
+                    {
+                        LoadAssemblyFromStream(dll.FullName);
+                    }
+                }
+                catch
+                {
+                    continue;
+                }
+                
+            }
+        }
     }
 }

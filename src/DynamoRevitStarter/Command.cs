@@ -78,8 +78,10 @@ namespace DynamoRevitStarter
         //https://code.google.com/p/revitpythonshell/wiki/FeaturedScriptLoadplugin
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
-            AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.ResolveAssemblyDynamically;
+            AssemblyHelper.LoadAssembliesInDirectoryIfNewer(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
 
+            AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.ResolveAssemblyDynamically;
+            
             var basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             var assemblyPath = Path.Combine(basePath, "DynamoRevitDS.dll");
             var assembly = AssemblyHelper.LoadAssemblyFromStream(assemblyPath);

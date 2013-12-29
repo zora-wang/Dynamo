@@ -78,7 +78,6 @@ namespace Dynamo.Controls
 
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
-            Debug.WriteLine("This is a test.");
             _contentLoaded = true;
             var assemblyName = GetType().Assembly.GetName();
             var uri =

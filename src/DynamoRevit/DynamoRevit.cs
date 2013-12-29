@@ -43,7 +43,7 @@ namespace Dynamo.Applications
         
         public Result Execute(ExternalCommandData revit, ref string message, ElementSet elements)
         {
-            AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.ResolveAssemblyDynamically;
+            //AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.ResolveAssemblyDynamically;
 
             //Add an assembly load step for the System.Windows.Interactivity assembly
             //Revit owns a version of this as well. Adding our step here prevents a duplicative
@@ -251,7 +251,7 @@ namespace Dynamo.Applications
         /// <param name="e"></param>
         private void dynamoView_Closed(object sender, EventArgs e)
         {
-            AppDomain.CurrentDomain.AssemblyResolve -= AssemblyHelper.ResolveAssemblyDynamically;
+            //AppDomain.CurrentDomain.AssemblyResolve -= AssemblyHelper.ResolveAssemblyDynamically;
             dynamoView = null;
             isRunning = false;
         }
