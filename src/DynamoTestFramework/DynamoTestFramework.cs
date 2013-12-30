@@ -12,11 +12,13 @@ using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using Dynamo.Controls;
+using Dynamo.FSchemeInterop;
 using Dynamo.NUnit.Tests;
 using Dynamo.Utilities;
 using DynamoRevitStarter;
 using NUnit.Core;
 using NUnit.Core.Filters;
+using RevitServices.Elements;
 using RevitServices.Persistence;
 using RevitServices.Transactions;
 
@@ -251,7 +253,7 @@ namespace Dynamo.Tests
             // create the transaction manager object
             TransactionManager.SetupManager(new DebugTransactionStrategy());
 
-            var dynamoController = new DynamoController_Revit(DynamoRevitStarterApp.env, DynamoRevitStarterApp.updater, typeof(DynamoRevitViewModel), context)
+            var dynamoController = new DynamoController_Revit((ExecutionEnvironment)DynamoRevitStarterApp.env, (RevitServicesUpdater)DynamoRevitStarterApp.updater, typeof(DynamoRevitViewModel), context)
                 {
                     Testing = true
                 };

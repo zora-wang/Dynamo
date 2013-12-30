@@ -9,29 +9,48 @@ using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using Dynamo.Applications;
-using Dynamo.FSchemeInterop;
 using DynamoRevitStarter.Properties;
-using RevitServices.Elements;
-using RevitServices.Transactions;
 using Dynamo.Utilities;
 
 namespace DynamoRevitStarter
 {
-    [Transaction(Autodesk.Revit.Attributes.TransactionMode.Automatic)]
+    [Transaction(TransactionMode.Automatic)]
     [Regeneration(RegenerationOption.Manual)]
     public class DynamoRevitStarterApp : IExternalApplication
     {
-        public static RevitServicesUpdater updater;
-        public static ExecutionEnvironment env;
+        public static object updater;
+        public static object env;
 
         public Result OnStartup(UIControlledApplication application)
         {
+            AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.ResolveAssemblyDynamically;
+
             SetupDynamoButton(application);
 
-            RevitServices.Threading.IdlePromise.RegisterIdle(application);
-            updater = new RevitServicesUpdater(application.ControlledApplication);
-            TransactionManager.SetupManager(new DebugTransactionStrategy());
-            env = new ExecutionEnvironment();
+            var basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            var servicesPath = Path.Combine(basePath, "RevitServices.dll");
+            var interopPath = Path.Combine(basePath, "FSchemeInterop.dll");
+
+            var servicesAssembly = AssemblyHelper.LoadAssemblyFromStream(servicesPath);
+            var interopAssembly = AssemblyHelper.LoadAssemblyFromStream(interopPath);
+
+            var idlePromiseType = servicesAssembly.GetType("RevitServices.Threading.IdlePromise");
+            idlePromiseType.GetMethod("RegisterIdle").Invoke(null, new object[] {application});
+            //RevitServices.Threading.IdlePromise.RegisterIdle(application);
+
+            var updaterType = servicesAssembly.GetType("RevitServices.Elements.RevitServicesUpdater");
+            updater = Activator.CreateInstance(updaterType, new object[] {application.ControlledApplication});
+            //updater = new RevitServicesUpdater(application.ControlledApplication);
+
+            var managerType = servicesAssembly.GetType("RevitServices.Transactions.TransactionManager");
+            var strategyType = servicesAssembly.GetType("RevitServices.Transactions.DebugTransactionStrategy");
+            var strategy = Activator.CreateInstance(strategyType);
+            managerType.GetMethod("SetupManager", new [] { strategyType }).Invoke(null, new object[] { strategy });
+            //TransactionManager.SetupManager(new DebugTransactionStrategy());
+
+            Type envType = interopAssembly.GetType("Dynamo.FSchemeInterop.ExecutionEnvironment");
+            env = Activator.CreateInstance(envType);
+            //env = new ExecutionEnvironment();
 
             return Result.Succeeded;
         }
@@ -78,18 +97,11 @@ namespace DynamoRevitStarter
         //https://code.google.com/p/revitpythonshell/wiki/FeaturedScriptLoadplugin
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
-            AssemblyHelper.LoadAssembliesInDirectoryIfNewer(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
+            AssemblyHelper.LoadCoreAssembliesIfNewer();
 
             AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.ResolveAssemblyDynamically;
             
-            var basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            var assemblyPath = Path.Combine(basePath, "DynamoRevitDS.dll");
-            var assembly = AssemblyHelper.LoadAssemblyFromStream(assemblyPath);
-
-            if (assembly == null)
-            {
-                return Result.Failed;
-            }
+            var assembly = AssemblyHelper.FindNewestVersionOfAssemblyByName("DynamoRevitDS");
 
             //create an instance of the DynamoRevit external command object
             //using reflection

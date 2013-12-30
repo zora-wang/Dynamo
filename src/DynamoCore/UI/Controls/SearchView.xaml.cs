@@ -27,6 +27,8 @@ namespace Dynamo.Search
 
         public SearchView()
         {
+            LoadSpecificVersionComponent();
+
             InitializeComponent();
             this.Loaded += SearchView_Loaded;
 

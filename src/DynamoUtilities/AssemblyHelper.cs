@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -164,49 +165,65 @@ namespace Dynamo.Utilities
             return assembly;
         }
 
-        public static void LoadAssembliesInDirectoryIfNewer(string path)
+        public static void LoadCoreAssembliesIfNewer()
         {
-            if (!Directory.Exists(path))
+            var dir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
+            var dlls = new List<string>
             {
-                throw new Exception("The specified directory does not exist.");
-            }
+                "DynamoCore.dll",
+                "DynamoPython.dll",
+                "DynamoRevitDS.dll",
+                "DynamoWatch3D.dll",
+                "DynamoUtilities.dll",
+                //"FScheme.dll",
+                //"FSchemeInterop.dll",
+                "Greg.dll",
+                //"RevitServices.dll"
+            };
 
-            var di = new DirectoryInfo(path);
-            var dlls = di.GetFiles("*.dll");
-
-            foreach (var dll in dlls)
+            foreach (var fileName in dlls)
             {
                 try
                 {
-                    var fileName = Path.GetFileNameWithoutExtension(dll.FullName);
+                    var fullName = Path.Combine(dir, fileName);
 
                     var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-                    Assembly found = assemblies.FirstOrDefault(x => x.FullName.Split(',')[0] == fileName);
+                    Assembly found = assemblies.FirstOrDefault(x => x.FullName.Split(',')[0] == Path.GetFileNameWithoutExtension(fileName));
 
                     if (found != null)
                     {
                         var foundVersion = found.GetName().Version;
 
-                        var dllVersion = FileVersionInfo.GetVersionInfo(dll.FullName).FileVersion == null?
-                            new Version() : 
-                            new Version(FileVersionInfo.GetVersionInfo(dll.FullName).FileVersion);
+                        var dllVersion = FileVersionInfo.GetVersionInfo(fullName).FileVersion == null?
+                            new Version() :
+                            new Version(FileVersionInfo.GetVersionInfo(fullName).FileVersion);
 
                         if (dllVersion > foundVersion)
                         {
-                            LoadAssemblyFromStream(dll.FullName);
+                            Debug.WriteLine(string.Format("Loading updated version {1} for {0}", dllVersion, found.FullName));
+                            LoadAssemblyFromStream(fullName);
                         }
                     }
                     else
                     {
-                        LoadAssemblyFromStream(dll.FullName);
+                        Debug.WriteLine(string.Format("Loading first version of {0}", fullName));
+                        LoadAssemblyFromStream(fullName);
                     }
                 }
                 catch
                 {
                     continue;
                 }
-                
             }
+        }
+
+        public static Assembly FindNewestVersionOfAssemblyByName(string name)
+        {
+            return AppDomain.CurrentDomain.GetAssemblies().
+                Where(x => x.FullName.Split(',')[0] == name).
+                OrderByDescending(x=>new Version(x.FullName.Split(',')[1].Split('=')[1])).
+                First();
         }
     }
 }

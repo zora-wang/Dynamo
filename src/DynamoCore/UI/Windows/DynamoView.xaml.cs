@@ -76,7 +76,9 @@ namespace Dynamo.Controls
             _timer.Start();
 
             AssemblyHelper.DebugDynamoCoreInstances();
-            Debug.WriteLine("hello.");
+
+            //MessageBox.Show(string.Format("Loaded UI from assembly {0}", GetType().Assembly.FullName));
+
             LoadSpecificVersionComponent();
 
             InitializeComponent();
