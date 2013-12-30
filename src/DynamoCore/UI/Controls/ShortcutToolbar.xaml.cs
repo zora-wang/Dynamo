@@ -1,27 +1,16 @@
 ﻿using Dynamo.UI.Commands;
-using Dynamo.Utilities;
-using Dynamo.ViewModels;
+using Dynamo.UI.Views;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace Dynamo.UI.Controls
 {
     /// <summary>
     /// Interaction logic for ShortcutToolbar.xaml
     /// </summary>
-    public partial class ShortcutToolbar : UserControl
+    public partial class ShortcutToolbar : UserControl, ISpecificVersionComponent
     {
         private ObservableCollection<ShortcutBarItem> shortcutBarItems;
         public ObservableCollection<ShortcutBarItem> ShortcutBarItems
@@ -37,9 +26,22 @@ namespace Dynamo.UI.Controls
         public ShortcutToolbar()
         {
             shortcutBarItems = new ObservableCollection<ShortcutBarItem>();
-            shortcutBarRightSideItems = new ObservableCollection<ShortcutBarItem>();    
+            shortcutBarRightSideItems = new ObservableCollection<ShortcutBarItem>();
+
+            LoadSpecificVersionComponent();
 
             InitializeComponent();
+        }
+
+        public void LoadSpecificVersionComponent()
+        {
+            _contentLoaded = true;
+            var assemblyName = GetType().Assembly.GetName();
+            var uri =
+                new Uri(
+                    string.Format("/{0};v{1};component/ui/controls/{2}.xaml", assemblyName.Name, assemblyName.Version,
+                        GetType().Name), UriKind.Relative);
+            Application.LoadComponent(this, uri);
         }
     }
 

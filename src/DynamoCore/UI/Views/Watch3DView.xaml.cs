@@ -12,6 +12,7 @@ using System.Windows.Media.Media3D;
 using System.Linq;
 using System.Windows.Threading;
 using Dynamo.UI.Commands;
+using Dynamo.UI.Views;
 using Dynamo.Utilities;
 using Dynamo.ViewModels;
 using HelixToolkit.Wpf;
@@ -21,7 +22,7 @@ namespace Dynamo.Controls
     /// <summary>
     /// Interaction logic for WatchControl.xaml
     /// </summary>
-    public partial class Watch3DView : UserControl, INotifyPropertyChanged
+    public partial class Watch3DView : UserControl, INotifyPropertyChanged, ISpecificVersionComponent
     {
         public event PropertyChangedEventHandler PropertyChanged;
         private void NotifyPropertyChanged(string propertyName)
@@ -173,6 +174,8 @@ namespace Dynamo.Controls
 
         public Watch3DView()
         {
+            LoadSpecificVersionComponent();
+
             InitializeComponent();
             watch_view.DataContext = this;
             Loaded += WatchViewFullscreen_Loaded;
@@ -180,6 +183,8 @@ namespace Dynamo.Controls
 
         public Watch3DView(string id)
         {
+            LoadSpecificVersionComponent();
+
             InitializeComponent();
             watch_view.DataContext = this;
             Loaded += WatchViewFullscreen_Loaded;
@@ -442,6 +447,17 @@ namespace Dynamo.Controls
             {
                 Height = yAdjust;
             }
+        }
+
+        public void LoadSpecificVersionComponent()
+        {
+            _contentLoaded = true;
+            var assemblyName = GetType().Assembly.GetName();
+            var uri =
+                new Uri(
+                    string.Format("/{0};v{1};component/ui/views/{2}.xaml", assemblyName.Name, assemblyName.Version,
+                        GetType().Name), UriKind.Relative);
+            Application.LoadComponent(this, uri);
         }
     }
 }

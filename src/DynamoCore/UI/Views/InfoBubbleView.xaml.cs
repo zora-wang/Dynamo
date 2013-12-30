@@ -1,22 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Windows.Controls.Primitives;
 using System.Windows.Media.Animation;
+using Dynamo.UI.Views;
 using InfoBubbleViewModel = Dynamo.ViewModels.InfoBubbleViewModel;
 using Dynamo.ViewModels;
 using Dynamo.Utilities;
-using System.Diagnostics;
 using Dynamo.Core;
 
 namespace Dynamo.Controls
@@ -24,7 +14,7 @@ namespace Dynamo.Controls
     /// <summary>
     /// Interaction logic for PreviewInfoBubble.xaml
     /// </summary>
-    public partial class InfoBubbleView : UserControl
+    public partial class InfoBubbleView : UserControl, ISpecificVersionComponent
     {
         #region Properties
 
@@ -63,6 +53,8 @@ namespace Dynamo.Controls
         /// </summary>
         public InfoBubbleView()
         {
+            LoadSpecificVersionComponent();
+
             InitializeComponent();
 
             // Setup storyboard used for animating fading in and fading out of info bubble
@@ -417,6 +409,17 @@ namespace Dynamo.Controls
                 this.Cursor = CursorLibrary.GetCursor(CursorSet.Condense);
             else
                 this.Cursor = null;
+        }
+
+        public void LoadSpecificVersionComponent()
+        {
+            _contentLoaded = true;
+            var assemblyName = GetType().Assembly.GetName();
+            var uri =
+                new Uri(
+                    string.Format("/{0};v{1};component/ui/views/{2}.xaml", assemblyName.Name, assemblyName.Version,
+                        GetType().Name), UriKind.Relative);
+            System.Windows.Application.LoadComponent(this, uri);
         }
     }
 }

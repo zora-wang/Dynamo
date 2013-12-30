@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Shapes;
-using System.Windows.Data;
 using Dynamo.Controls;
 using Dynamo.Models;
 using Dynamo.Selection;
+using Dynamo.UI.Views;
 using Dynamo.Utilities;
 using Dynamo.ViewModels;
 using Dynamo.UI;
@@ -21,7 +19,7 @@ namespace Dynamo.Views
     /// Interaction logic for dynWorkspaceView.xaml
     /// </summary>
     /// 
-    public partial class dynWorkspaceView : UserControl
+    public partial class dynWorkspaceView : UserControl, ISpecificVersionComponent
     {
         public enum CursorState
         {
@@ -75,6 +73,8 @@ namespace Dynamo.Views
             this.Resources.MergedDictionaries.Add(SharedDictionaryManager.DataTemplatesDictionary);
             this.Resources.MergedDictionaries.Add(SharedDictionaryManager.DynamoConvertersDictionary);
             this.Resources.MergedDictionaries.Add(SharedDictionaryManager.ConnectorsDictionary);
+
+            LoadSpecificVersionComponent();
 
             InitializeComponent();
 
@@ -706,6 +706,17 @@ namespace Dynamo.Views
             }
 
             return HitTestResultBehavior.Continue;
+        }
+
+        public void LoadSpecificVersionComponent()
+        {
+            _contentLoaded = true;
+            var assemblyName = GetType().Assembly.GetName();
+            var uri =
+                new Uri(
+                    string.Format("/{0};v{1};component/ui/views/{2}.xaml", assemblyName.Name, assemblyName.Version,
+                        GetType().Name), UriKind.Relative);
+            System.Windows.Application.LoadComponent(this, uri);
         }
     }
 }

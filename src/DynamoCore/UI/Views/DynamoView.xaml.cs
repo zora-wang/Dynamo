@@ -16,6 +16,7 @@ using Dynamo.PackageManager;
 using Dynamo.PackageManager.UI;
 using Dynamo.Search;
 using Dynamo.Selection;
+using Dynamo.UI.Views;
 using Dynamo.Utilities;
 using Dynamo.ViewModels;
 using String = System.String;
@@ -33,7 +34,7 @@ namespace Dynamo.Controls
     /// <summary>
     ///     Interaction logic for DynamoForm.xaml
     /// </summary>
-    public partial class DynamoView : Window
+    public partial class DynamoView : Window, ISpecificVersionComponent
     {
         public const int CANVAS_OFFSET_Y = 0;
         public const int CANVAS_OFFSET_X = 0;
@@ -75,16 +76,9 @@ namespace Dynamo.Controls
             _timer.Start();
 
             AssemblyHelper.DebugDynamoCoreInstances();
+            Debug.WriteLine("hello.");
+            LoadSpecificVersionComponent();
 
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-
-            _contentLoaded = true;
-            var assemblyName = GetType().Assembly.GetName();
-            var uri =
-                new Uri(
-                    string.Format("/{0};v{1};component/ui/views/{2}.xaml", assemblyName.Name, assemblyName.Version,
-                        GetType().Name), UriKind.Relative);
-            System.Windows.Application.LoadComponent(this, uri);
             InitializeComponent();
             InitializeShortcutBar();
 
@@ -99,6 +93,17 @@ namespace Dynamo.Controls
                 InfoBubbleView InfoBubble = new InfoBubbleView { DataContext = dynSettings.Controller.InfoBubbleViewModel };
                 InfoBubbleGrid.Children.Add(InfoBubble);
             }
+        }
+
+        public void LoadSpecificVersionComponent()
+        {
+            _contentLoaded = true;
+            var assemblyName = GetType().Assembly.GetName();
+            var uri =
+                new Uri(
+                    string.Format("/{0};v{1};component/ui/views/{2}.xaml", assemblyName.Name, assemblyName.Version,
+                        GetType().Name), UriKind.Relative);
+            System.Windows.Application.LoadComponent(this, uri);
         }
 
         void InitializeShortcutBar()

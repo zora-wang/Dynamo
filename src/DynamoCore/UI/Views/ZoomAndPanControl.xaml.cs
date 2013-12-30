@@ -1,17 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using Dynamo.Controls;
+using Dynamo.UI.Views;
 using Dynamo.ViewModels;
 
 namespace Dynamo.Controls
@@ -19,12 +8,25 @@ namespace Dynamo.Controls
     /// <summary>
     /// Interaction logic for ZoomAndPanControl.xaml
     /// </summary>
-    public partial class ZoomAndPanControl : UserControl
+    public partial class ZoomAndPanControl : UserControl, ISpecificVersionComponent
     {
         public ZoomAndPanControl(WorkspaceViewModel workspaceViewModel)
         {
+            LoadSpecificVersionComponent();
+
             InitializeComponent();
             this.DataContext = workspaceViewModel;
+        }
+
+        public void LoadSpecificVersionComponent()
+        {
+            _contentLoaded = true;
+            var assemblyName = GetType().Assembly.GetName();
+            var uri =
+                new Uri(
+                    string.Format("/{0};v{1};component/ui/views/{2}.xaml", assemblyName.Name, assemblyName.Version,
+                        GetType().Name), UriKind.Relative);
+            System.Windows.Application.LoadComponent(this, uri);
         }
     }
 }
