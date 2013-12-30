@@ -414,12 +414,7 @@ namespace Dynamo.Controls
         public void LoadSpecificVersionComponent()
         {
             _contentLoaded = true;
-            var assemblyName = GetType().Assembly.GetName();
-            var uri =
-                new Uri(
-                    string.Format("/{0};v{1};component/ui/views/{2}.xaml", assemblyName.Name, assemblyName.Version,
-                        GetType().Name), UriKind.Relative);
-            System.Windows.Application.LoadComponent(this, uri);
+            SpecificVersionLoader.LoadSpecificVersionUserControl(this);
         }
     }
 }

@@ -5,6 +5,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using Dynamo.Selection;
 using Dynamo.UI.Prompts;
+using Dynamo.UI.Views;
 using Dynamo.Utilities;
 using Dynamo.ViewModels;
 using DynCmd = Dynamo.ViewModels.DynamoViewModel;
@@ -14,12 +15,14 @@ namespace Dynamo.Nodes
     /// <summary>
     /// Interaction logic for dynNoteView.xaml
     /// </summary>
-    public partial class dynNoteView : UserControl, IViewModelView<NoteViewModel>
+    public partial class dynNoteView : UserControl, IViewModelView<NoteViewModel>, ISpecificVersionComponent
     {
         public NoteViewModel ViewModel { get; private set; }
 
         public dynNoteView()
         {
+            LoadSpecificVersionComponent();
+
             InitializeComponent();
 
             // for debugging purposes
@@ -113,6 +116,12 @@ namespace Dynamo.Nodes
                 editItem_Click(this, null);
                 e.Handled = true;
             }
+        }
+
+        public void LoadSpecificVersionComponent()
+        {
+            _contentLoaded = true;
+            SpecificVersionLoader.LoadSpecificVersionUserControl(this);
         }
     }
 }

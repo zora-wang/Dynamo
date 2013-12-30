@@ -1,8 +1,6 @@
 ﻿using Dynamo.UI.Commands;
 using Dynamo.UI.Views;
-using System;
 using System.Collections.ObjectModel;
-using System.Windows;
 using System.Windows.Controls;
 
 namespace Dynamo.UI.Controls
@@ -36,12 +34,7 @@ namespace Dynamo.UI.Controls
         public void LoadSpecificVersionComponent()
         {
             _contentLoaded = true;
-            var assemblyName = GetType().Assembly.GetName();
-            var uri =
-                new Uri(
-                    string.Format("/{0};v{1};component/ui/controls/{2}.xaml", assemblyName.Name, assemblyName.Version,
-                        GetType().Name), UriKind.Relative);
-            Application.LoadComponent(this, uri);
+            SpecificVersionLoader.LoadSpecificVersionUserControl(this);
         }
     }
 

@@ -9,6 +9,7 @@ using System.Windows.Media.Imaging;
 using Dynamo.Controls;
 using Dynamo.Search.SearchElements;
 using Dynamo.Selection;
+using Dynamo.UI.Views;
 using Dynamo.Utilities;
 using Dynamo.ViewModels;
 using DynamoCommands = Dynamo.UI.Commands.DynamoCommands;
@@ -20,7 +21,7 @@ namespace Dynamo.Search
     /// <summary>
     ///     Interaction logic for SearchView.xaml
     /// </summary>
-    public partial class SearchView : UserControl
+    public partial class SearchView : UserControl, ISpecificVersionComponent
     {
         private SearchViewModel _viewModel;
 
@@ -288,6 +289,12 @@ namespace Dynamo.Search
         {
             SearchTextBox.Text = "";
             Keyboard.Focus(SearchTextBox);
+        }
+
+        public void LoadSpecificVersionComponent()
+        {
+            _contentLoaded = true;
+            SpecificVersionLoader.LoadSpecificVersionUserControl(this);
         }
     }
 }

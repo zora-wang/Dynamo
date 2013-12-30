@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows;
-using System.Windows.Controls;
 using Dynamo.Controls;
+using Dynamo.UI.Views;
 using Dynamo.Utilities;
 
 namespace Dynamo.PackageManager
@@ -9,7 +9,7 @@ namespace Dynamo.PackageManager
     /// <summary>
     /// Interaction logic for PackageManagerPublishView.xaml
     /// </summary>
-    public partial class PackageManagerPublishView : Window
+    public partial class PackageManagerPublishView : Window, ISpecificVersionComponent
     {
         public PackageManagerPublishView(PublishPackageViewModel packageViewModel)
         {
@@ -17,9 +17,10 @@ namespace Dynamo.PackageManager
             this.DataContext = packageViewModel;
             packageViewModel.PublishSuccess += PackageViewModelOnPublishSuccess;
 
-            //this.Owner = dynSettings.Bench;
             this.Owner = WPF.FindUpVisualTree<DynamoView>(this);
             this.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+
+            LoadSpecificVersionComponent();
 
             InitializeComponent();
         }
@@ -27,6 +28,12 @@ namespace Dynamo.PackageManager
         private void PackageViewModelOnPublishSuccess(PublishPackageViewModel sender)
         {
             this.Dispatcher.BeginInvoke((Action) (Close));
+        }
+
+        public void LoadSpecificVersionComponent()
+        {
+            _contentLoaded = true;
+            SpecificVersionLoader.LoadSpecificVersionWindow(this);
         }
     }
 

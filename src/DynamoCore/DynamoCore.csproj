@@ -191,18 +191,18 @@ limitations under the License.
     </Compile>
     <Compile Include="UI\SharedResourceDictionary.cs" />
     <Compile Include="UI\HandlingEventTrigger.cs" />
-    <Compile Include="UI\Prompts\UsageReportingAgreementPrompt.xaml.cs">
+    <Compile Include="UI\Windows\UsageReportingAgreementPrompt.xaml.cs">
       <DependentUpon>UsageReportingAgreementPrompt.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UI\Views\InfoBubbleView.xaml.cs">
+    <Compile Include="UI\Controls\InfoBubbleView.xaml.cs">
       <DependentUpon>InfoBubbleView.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Commands\DynamoCommands.cs" />
     <Compile Include="UI\Commands\RecordableCommands.cs" />
     <Compile Include="UI\DynamoTextBox.cs" />
     <Compile Include="UI\StateMachine.cs" />
-    <Compile Include="UI\Views\ISpecificVersionComponent.cs" />
-    <Compile Include="UI\Views\ZoomAndPanControl.xaml.cs">
+    <Compile Include="UI\ISpecificVersionComponent.cs" />
+    <Compile Include="UI\Controls\ZoomAndPanControl.xaml.cs">
       <DependentUpon>ZoomAndPanControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Utilities\CursorLibrary.cs" />
@@ -230,61 +230,61 @@ limitations under the License.
     <Compile Include="PackageManager\PackageDownloadHandle.cs" />
     <Compile Include="PackageManager\PackageLoader.cs" />
     <Compile Include="PackageManager\PackageManagerSearchViewModel.cs" />
-    <Compile Include="UI\Views\InstalledPackagesView.xaml.cs">
+    <Compile Include="UI\Windows\InstalledPackagesView.xaml.cs">
       <DependentUpon>InstalledPackagesView.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\PackageItemInternalViewModel.cs" />
     <Compile Include="ViewModels\PackageItemViewModel.cs" />
     <Compile Include="ViewModels\PackageItemLeafViewModel.cs" />
     <Compile Include="ViewModels\PackageItemRootViewModel.cs" />
-    <Compile Include="UI\Views\PackageManagerPublishView.xaml.cs">
+    <Compile Include="UI\Windows\PackageManagerPublishView.xaml.cs">
       <DependentUpon>PackageManagerPublishView.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\PublishPackageViewModel.cs" />
-    <Compile Include="UI\Views\PackageManagerSearchView.xaml.cs">
+    <Compile Include="UI\Windows\PackageManagerSearchView.xaml.cs">
       <DependentUpon>PackageManagerSearchView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UI\Prompts\CrashPrompt.xaml.cs" />
-    <Compile Include="UI\Prompts\EditWindow.xaml.cs">
+    <Compile Include="UI\Windows\CrashPrompt.xaml.cs" />
+    <Compile Include="UI\Windows\EditWindow.xaml.cs">
       <DependentUpon>EditWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="UI\Prompts\FunctionNamePrompt.xaml.cs">
+    <Compile Include="UI\Windows\FunctionNamePrompt.xaml.cs">
       <DependentUpon>FunctionNamePrompt.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="UI\Prompts\NodeHelpPrompt.xaml.cs">
+    <Compile Include="UI\Windows\NodeHelpPrompt.xaml.cs">
       <DependentUpon>NodeHelpPrompt.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="UI\UIPartials.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="UI\Views\DynamoView.xaml.cs">
+    <Compile Include="UI\Windows\DynamoView.xaml.cs">
       <DependentUpon>DynamoView.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="UI\Views\dynNodeView.xaml.cs">
+    <Compile Include="UI\Controls\dynNodeView.xaml.cs">
       <DependentUpon>dynNodeView.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="UI\Views\dynNoteView.xaml.cs">
+    <Compile Include="UI\Controls\dynNoteView.xaml.cs">
       <DependentUpon>dynNoteView.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="UI\Views\dynWorkspaceView.xaml.cs">
+    <Compile Include="UI\Controls\dynWorkspaceView.xaml.cs">
       <DependentUpon>dynWorkspaceView.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="UI\Views\SearchView.xaml.cs">
+    <Compile Include="UI\Controls\SearchView.xaml.cs">
       <DependentUpon>SearchView.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="UI\Views\WatchTree.xaml.cs">
+    <Compile Include="UI\Controls\WatchTree.xaml.cs">
       <DependentUpon>WatchTree.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="UI\Views\Watch3DView.xaml.cs">
+    <Compile Include="UI\Controls\Watch3DView.xaml.cs">
       <DependentUpon>Watch3DView.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
@@ -462,7 +462,7 @@ limitations under the License.
     </Page>
     <Page Include="UI\Themes\Ports.xaml">
     </Page>
-    <Page Include="UI\Prompts\UsageReportingAgreementPrompt.xaml">
+    <Page Include="UI\Windows\UsageReportingAgreementPrompt.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -470,37 +470,37 @@ limitations under the License.
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UI\Prompts\CrashPrompt.xaml">
+    <Page Include="UI\Windows\CrashPrompt.xaml">
     </Page>
-    <Page Include="UI\Views\InstalledPackagesView.xaml">
+    <Page Include="UI\Windows\InstalledPackagesView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UI\Views\PackageManagerPublishView.xaml">
+    <Page Include="UI\Windows\PackageManagerPublishView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="UI\Views\PackageManagerSearchView.xaml">
+    <Page Include="UI\Windows\PackageManagerSearchView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UI\Prompts\EditWindow.xaml">
+    <Page Include="UI\Windows\EditWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UI\Prompts\FunctionNamePrompt.xaml">
+    <Page Include="UI\Windows\FunctionNamePrompt.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UI\Prompts\NodeHelpPrompt.xaml">
+    <Page Include="UI\Windows\NodeHelpPrompt.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UI\Views\InfoBubbleView.xaml">
+    <Page Include="UI\Controls\InfoBubbleView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="UI\Views\ZoomAndPanControl.xaml">
+    <Page Include="UI\Controls\ZoomAndPanControl.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -520,29 +520,29 @@ limitations under the License.
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UI\Views\DynamoView.xaml">
+    <Page Include="UI\Windows\DynamoView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UI\Views\dynNodeView.xaml">
+    <Page Include="UI\Controls\dynNodeView.xaml">
     </Page>
-    <Page Include="UI\Views\dynNoteView.xaml">
+    <Page Include="UI\Controls\dynNoteView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UI\Views\dynWorkspaceView.xaml">
+    <Page Include="UI\Controls\dynWorkspaceView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UI\Views\SearchView.xaml">
+    <Page Include="UI\Controls\SearchView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UI\Views\WatchTree.xaml">
+    <Page Include="UI\Controls\WatchTree.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UI\Views\Watch3DView.xaml">
+    <Page Include="UI\Controls\Watch3DView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -663,7 +663,10 @@ limitations under the License.
   <ItemGroup>
     <Resource Include="UI\Images\crash_pic.png" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="UI\Prompts\" />
+    <Folder Include="UI\Views\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy /Y "$(SolutionDir)..\extern\DesignScript\*" "$(OutputPath)"</PostBuildEvent>

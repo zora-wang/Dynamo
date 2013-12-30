@@ -1,24 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.ComponentModel;
-using System.Collections.ObjectModel;
-using System.Globalization;
-using Dynamo.Nodes;
-using Dynamo.Utilities;
+using Dynamo.UI.Views;
 using Dynamo.ViewModels;
-
-//using Autodesk.Revit.DB;
 
 namespace Dynamo.Controls
 {
@@ -27,7 +10,7 @@ namespace Dynamo.Controls
     /// <summary>
     /// Interaction logic for WatchTree.xaml
     /// </summary>
-    public partial class WatchTree : UserControl
+    public partial class WatchTree : UserControl, ISpecificVersionComponent
     {
         public WatchTree()
         {
@@ -47,6 +30,12 @@ namespace Dynamo.Controls
 
             if (node != null)
                 node.Click();
+        }
+
+        public void LoadSpecificVersionComponent()
+        {
+            _contentLoaded = true;
+            SpecificVersionLoader.LoadSpecificVersionUserControl(this);
         }
     }
 }

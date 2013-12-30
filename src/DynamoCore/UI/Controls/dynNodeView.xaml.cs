@@ -11,14 +11,14 @@ using Dynamo.Prompts;
 using Dynamo.Selection;
 using Dynamo.UI;
 using Dynamo.UI.Prompts;
+using Dynamo.UI.Views;
 using Dynamo.Utilities;
 using Dynamo.ViewModels;
-using System.Windows.Media;
 using DynCmd = Dynamo.ViewModels.DynamoViewModel;
 
 namespace Dynamo.Controls
 {
-    public partial class dynNodeView : IViewModelView<NodeViewModel>
+    public partial class dynNodeView : IViewModelView<NodeViewModel>, ISpecificVersionComponent
     {
         public delegate void SetToolTipDelegate(string message);
         public delegate void UpdateLayoutDelegate(FrameworkElement el);
@@ -50,6 +50,8 @@ namespace Dynamo.Controls
             this.Resources.MergedDictionaries.Add(SharedDictionaryManager.DataTemplatesDictionary);
             this.Resources.MergedDictionaries.Add(SharedDictionaryManager.DynamoConvertersDictionary);
             this.Resources.MergedDictionaries.Add(SharedDictionaryManager.PortsDictionary);
+
+            LoadSpecificVersionComponent();
 
             InitializeComponent();
 
@@ -374,6 +376,12 @@ namespace Dynamo.Controls
             UIElement uiElement = sender as UIElement;
             if (uiElement.Visibility == System.Windows.Visibility.Visible)
                 ViewModel.ShowPreviewCommand.Execute(null);
+        }
+
+        public void LoadSpecificVersionComponent()
+        {
+            _contentLoaded = true;
+            SpecificVersionLoader.LoadSpecificVersionUserControl(this);
         }
     }
 }
