@@ -160,7 +160,7 @@ namespace Dynamo.Utilities
                 return null;
             }
 
-            DebugDynamoCoreInstances();
+            //DebugDynamoCoreInstances();
             Debug.WriteLine("Resolved assembly:" + args.Name);
             return assembly;
         }
@@ -171,15 +171,25 @@ namespace Dynamo.Utilities
 
             var dlls = new List<string>
             {
+                "Microsoft.Practices.Prism.dll",
                 "DynamoCore.dll",
                 "DynamoPython.dll",
                 "DynamoRevitDS.dll",
                 "DynamoWatch3D.dll",
                 "DynamoUtilities.dll",
-                //"FScheme.dll",
-                //"FSchemeInterop.dll",
+                "FScheme.dll",
+                "FSchemeInterop.dll",
                 "Greg.dll",
-                //"RevitServices.dll"
+                "RevitServices.dll",
+                "GraphToDSCompiler.dll",
+                "ProtoCore.dll",
+                "ProtoAssociative.dll",
+                "ProtoImperative.dll",
+                "ProtoInterface.dll",
+                "ProtoScript.dll",
+                "MIConvexHullPlugin.dll",
+                "Newtonsoft.Json.dll",
+                "RestSharp.dll"
             };
 
             foreach (var fileName in dlls)
@@ -187,6 +197,11 @@ namespace Dynamo.Utilities
                 try
                 {
                     var fullName = Path.Combine(dir, fileName);
+
+                    if (!File.Exists(fullName))
+                    {
+                        continue;
+                    }
 
                     var assemblies = AppDomain.CurrentDomain.GetAssemblies();
                     Assembly found = assemblies.FirstOrDefault(x => x.FullName.Split(',')[0] == Path.GetFileNameWithoutExtension(fileName));
@@ -201,8 +216,13 @@ namespace Dynamo.Utilities
 
                         if (dllVersion > foundVersion)
                         {
-                            Debug.WriteLine(string.Format("Loading updated version {1} for {0}", dllVersion, found.FullName));
+                            Debug.WriteLine(string.Format("Loading updated version {1} for {0}", dllVersion,
+                                found.FullName));
                             LoadAssemblyFromStream(fullName);
+                        }
+                        else
+                        {
+                            Debug.WriteLine(string.Format("Existing version of {0} already loaded.", found.FullName));
                         }
                     }
                     else

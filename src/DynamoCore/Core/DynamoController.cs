@@ -703,35 +703,35 @@ namespace Dynamo
                     ? Path.GetDirectoryName(new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath)
                     : Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
-                //var assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-
                 Assembly ironPythonAssembly = null;
 
                 string path;
 
                 if (File.Exists(path = Path.Combine(assemblyPath, "DynamoPython.dll")))
                 {
-                    ironPythonAssembly = Assembly.LoadFrom(path);
+                    //ironPythonAssembly = Assembly.LoadFrom(path);
+                    ironPythonAssembly = AssemblyHelper.LoadAssemblyFromStream(path);
                 }
                 else if (File.Exists(path = Path.Combine(assemblyPath, "Packages", "IronPython", "DynamoPython.dll")))
                 {
-                    ironPythonAssembly = Assembly.LoadFrom(path);
+                    //ironPythonAssembly = Assembly.LoadFrom(path);
+                    ironPythonAssembly = AssemblyHelper.LoadAssemblyFromStream(path);
                 }
 
                 if (ironPythonAssembly == null)
                     throw new Exception();
 
-                var pythonEngine = ironPythonAssembly.GetType("DynamoPython.PythonEngine");
+                //var pythonEngine = ironPythonAssembly.GetType("DynamoPython.PythonEngine");
 
-                var drawingField = pythonEngine.GetField("Drawing");
-                var drawDelegateType = ironPythonAssembly.GetType("DynamoPython.PythonEngine+DrawDelegate");
-                Delegate draw = Delegate.CreateDelegate(
-                    drawDelegateType,
-                    this,
-                    typeof(DynamoController)
-                        .GetMethod("DrawPython", BindingFlags.NonPublic | BindingFlags.Instance));
+                //var drawingField = pythonEngine.GetField("Drawing");
+                //var drawDelegateType = ironPythonAssembly.GetType("DynamoPython.PythonEngine+DrawDelegate");
+                //Delegate draw = Delegate.CreateDelegate(
+                //    drawDelegateType,
+                //    this,
+                //    typeof(DynamoController)
+                //        .GetMethod("DrawPython", BindingFlags.NonPublic | BindingFlags.Instance));
 
-                drawingField.SetValue(null, draw);
+                //drawingField.SetValue(null, draw);
 
             }
             catch (Exception e)
