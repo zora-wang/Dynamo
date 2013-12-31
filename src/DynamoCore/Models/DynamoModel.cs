@@ -1296,8 +1296,10 @@ namespace Dynamo.Models
             {
                 TypeLoadData tld = dynSettings.Controller.BuiltInTypesByName[name];
 
-                ObjectHandle obj = Activator.CreateInstanceFrom(tld.Assembly.Location, tld.Type.FullName);
-                var newEl = (NodeModel)obj.Unwrap();
+                //ObjectHandle obj = Activator.CreateInstanceFrom(tld.Assembly.Location, tld.Type.FullName);
+                //var newEl = (NodeModel)obj.Unwrap();
+                object obj = Activator.CreateInstance(tld.Type);
+                var newEl = (NodeModel)obj;
                 newEl.DisableInteraction();
                 result = newEl;
             }
@@ -1336,6 +1338,7 @@ namespace Dynamo.Models
                     return null;
                 }
             }
+
 
             return result;
         }
