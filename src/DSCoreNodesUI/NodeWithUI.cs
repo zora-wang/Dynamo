@@ -19,8 +19,8 @@ namespace Dynamo.Nodes
     [Browsable(false)]
     public abstract class NodeWithUI : NodeModel
     {
-        [Browsable(false)]
-        public new abstract void SetupCustomUIElements(dynNodeView nodeUI);
+        //[Browsable(false)]
+        //public new abstract void SetupCustomUIElements(dynNodeView nodeUI);
 
         [Browsable(false)]
         public abstract Node BuildAst();
