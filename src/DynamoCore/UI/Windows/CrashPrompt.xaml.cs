@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using Dynamo.UI.Views;
 using Dynamo.Utilities;
 using System.Windows.Controls;
 using System.IO;
@@ -19,18 +20,24 @@ namespace Dynamo.Nodes.Prompts
 
         public CrashPrompt(string details)
         {
+            SpecificVersionLoader.LoadSpecificVersionWindow(this);
+
             InitializeComponent();
             this.CrashDetailsContent.Text = details;
         }
         
         public CrashPrompt()
         {
+            SpecificVersionLoader.LoadSpecificVersionWindow(this);
+
             InitializeComponent();
             this.CrashDetailsContent.Text = "Unknown error";
         }
 
         public CrashPrompt(CrashPromptArgs args)
         {
+            SpecificVersionLoader.LoadSpecificVersionWindow(this);
+
             InitializeComponent();
 
             if (args.HasDetails())
