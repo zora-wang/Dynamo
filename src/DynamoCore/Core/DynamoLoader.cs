@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Dynamo.Core;
 using Dynamo.Models;
 using Dynamo.Controls;
 using System.Reflection;
@@ -10,8 +9,6 @@ using System.IO;
 using System.Windows.Controls;
 using System.Windows;
 using String = System.String;
-using ProtoCore.DSASM;
-using Dynamo.DSEngine;
 
 namespace Dynamo.Utilities
 {
@@ -26,14 +23,9 @@ namespace Dynamo.Utilities
             if (String.IsNullOrEmpty(_dynamoDirectory))
             {
                 var dynamoAssembly = Assembly.GetExecutingAssembly();
-                if (string.IsNullOrEmpty(dynamoAssembly.Location))
-                {
-                    _dynamoDirectory = new Uri(Path.GetDirectoryName(dynamoAssembly.CodeBase)).LocalPath;
-                }
-                else
-                {
-                    _dynamoDirectory = Path.GetDirectoryName(dynamoAssembly.Location);
-                }
+                _dynamoDirectory = string.IsNullOrEmpty(dynamoAssembly.Location) ? 
+                    new Uri(Path.GetDirectoryName(dynamoAssembly.CodeBase)).LocalPath : 
+                    Path.GetDirectoryName(dynamoAssembly.Location);
             }
             return _dynamoDirectory;
         }
@@ -61,11 +53,25 @@ namespace Dynamo.Utilities
             var allLoadedAssembliesByPath = new Dictionary<string, Assembly>();
             var allLoadedAssemblies = new Dictionary<string, Assembly>();
 
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            //foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            foreach(var assembly in AssemblyHelper.GetLatestAssembliesInCurrentAppDomain())
             {
                 try
                 {
-                    allLoadedAssembliesByPath[assembly.Location] = assembly;
+                    var loc = assembly.Location;
+
+                    if (string.IsNullOrEmpty(loc))
+                    {
+                        //the assembly might have been loaded from a byte array
+                        //try to find it's associated file in the Dynamo directory
+                        loc = Path.Combine(GetDynamoDirectory(), assembly.GetName().Name + ".dll");
+                        if (!File.Exists(loc))
+                        {
+                            throw new Exception(string.Format("Could not find a file location for {0}", assembly));
+                        }
+                    }
+
+                    allLoadedAssembliesByPath[loc] = assembly;
                     allLoadedAssemblies[assembly.FullName] = assembly;
                 }
                 catch { }
@@ -77,15 +83,15 @@ namespace Dynamo.Utilities
                                 Directory.GetFiles(location, "*.dll") as IEnumerable<string>, 
                                 Enumerable.Concat);
 
-            var resolver = new ResolveEventHandler(delegate(object sender, ResolveEventArgs args)
-            {
-                Assembly result;
-                allLoadedAssemblies.TryGetValue(args.Name, out result);
-                return result;
-            });
+            //var resolver = new ResolveEventHandler(delegate(object sender, ResolveEventArgs args)
+            //{
+            //    Assembly result;
+            //    allLoadedAssemblies.TryGetValue(args.Name, out result);
+            //    return result;
+            //});
 
             //AppDomain.CurrentDomain.AssemblyResolve += resolver;
-
+            
             foreach (var assemblyPath in allDynamoAssemblyPaths)
             {
                 var fn = Path.GetFileName(assemblyPath);
@@ -100,7 +106,7 @@ namespace Dynamo.Utilities
 
                 if (allLoadedAssembliesByPath.ContainsKey(assemblyPath))
                 {
-                    //LoadNodesFromAssembly(allLoadedAssembliesByPath[assemblyPath]);
+                    LoadNodesFromAssembly(allLoadedAssembliesByPath[assemblyPath]);
                 }
                 else
                 {
@@ -108,8 +114,9 @@ namespace Dynamo.Utilities
                     {
                         Debug.WriteLine(string.Format("DynamoLoader loading:{0}", assemblyPath));
                         //var assembly = Assembly.LoadFrom(assemblyPath);
-                        //allLoadedAssemblies[assembly.GetName().Name] = assembly;
-                        //LoadNodesFromAssembly(assembly);
+                        var assembly = AssemblyHelper.LoadAssemblyFromStream(assemblyPath);
+                        allLoadedAssemblies[assembly.GetName().Name] = assembly;
+                        LoadNodesFromAssembly(assembly);
                     }
                     catch (BadImageFormatException)
                     {
@@ -158,7 +165,11 @@ namespace Dynamo.Utilities
             var controller = dynSettings.Controller;
             var searchViewModel = dynSettings.Controller.SearchViewModel;
 
-            AssemblyPathToTypesLoaded.Add(assembly.Location, new List<Type>());
+            //does not work for assemblies loaded from stream
+            //var loc =  assembly.Location;
+            var loc = Path.Combine(GetDynamoDirectory(), assembly.GetName().Name + ".dll");
+
+            AssemblyPathToTypesLoaded.Add(loc, new List<Type>());
 
             try
             {
@@ -237,7 +248,7 @@ namespace Dynamo.Utilities
                             typeName = t.Name;
                         }
 
-                        AssemblyPathToTypesLoaded[assembly.Location].Add(t);
+                        AssemblyPathToTypesLoaded[loc].Add(t);
 
                         var data = new TypeLoadData(assembly, t);
 
@@ -287,7 +298,7 @@ namespace Dynamo.Utilities
                 }
             }
 
-            return AssemblyPathToTypesLoaded[assembly.Location];
+            return AssemblyPathToTypesLoaded[loc];
         }
 
 

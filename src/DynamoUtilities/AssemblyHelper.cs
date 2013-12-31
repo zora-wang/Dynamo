@@ -245,5 +245,29 @@ namespace Dynamo.Utilities
                 OrderByDescending(x=>new Version(x.FullName.Split(',')[1].Split('=')[1])).
                 First();
         }
+
+        public static IEnumerable<Assembly> GetLatestAssembliesInCurrentAppDomain()
+        {
+            var latest = from a in AppDomain.CurrentDomain.GetAssemblies()
+                group a by a.FullName.Split(',')[0]
+                into grp
+                select grp.OrderByDescending(a => a.FullName.Split(',')[1].Split('=')[1]).FirstOrDefault();
+
+            return latest;
+        }
+
+        public static string GetAssemblyLocation(Assembly assembly)
+        {
+            if (!string.IsNullOrEmpty(assembly.Location))
+            {
+                return assembly.Location;
+            }
+
+            //look in the Dynamo Directory
+            var dir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            var loc = Path.Combine(dir, assembly.GetName().Name + ".dll");
+
+            return loc;
+        }
     }
 }
