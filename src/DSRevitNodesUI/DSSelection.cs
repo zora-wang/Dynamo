@@ -504,6 +504,7 @@ namespace Dynamo.Nodes
 
         protected DSElementsSelection(Func<string, List<Element>> action, string message)
         {
+            _selected = new List<Element>();
             _selectionAction = action;
             _selectionMessage = message;
 

@@ -13,6 +13,7 @@ using Autodesk.Revit.UI;
 using Dynamo.Controls;
 using Dynamo.Utilities;
 using RevitServices.Elements;
+using RevitServices.Persistence;
 using IWin32Window = System.Windows.Interop.IWin32Window;
 using MessageBox = System.Windows.Forms.MessageBox;
 using Rectangle = System.Drawing.Rectangle;
@@ -74,6 +75,9 @@ namespace Dynamo.Applications
                 dynRevitSettings.Revit = m_revit;
                 dynRevitSettings.Doc = m_doc;
                 dynRevitSettings.DefaultLevel = defaultLevel;
+
+                DocumentManager.GetInstance().CurrentDBDocument = m_doc.Document;
+                DocumentManager.GetInstance().CurrentUIDocument = m_revit.ActiveUIDocument;
 
                 //TODO: has to be changed when we handle multiple docs
                 //DynamoRevitApp.Updater.DocumentToWatch = m_doc.Document;
