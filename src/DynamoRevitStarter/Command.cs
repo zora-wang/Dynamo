@@ -97,7 +97,7 @@ namespace DynamoRevitStarter
         //https://code.google.com/p/revitpythonshell/wiki/FeaturedScriptLoadplugin
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
-            AssemblyHelper.LoadCoreAssembliesIfNewer();
+            AssemblyHelper.LoadCoreAssembliesForRevitIfNewer();
 
             AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.ResolveAssemblyDynamically;
             

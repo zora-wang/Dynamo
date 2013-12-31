@@ -165,7 +165,7 @@ namespace Dynamo.Utilities
             return assembly;
         }
 
-        public static void LoadCoreAssembliesIfNewer()
+        public static void LoadCoreAssembliesForRevitIfNewer()
         {
             var dir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
@@ -193,6 +193,40 @@ namespace Dynamo.Utilities
                 "RestSharp.dll"
             };
 
+            LoadListOfDlls(dlls, dir);
+        }
+
+        public static void LoadCoreAssembliesIfNewer()
+        {
+            var dir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
+            var dlls = new List<string>
+            {
+                "System.Windows.Interactivity.dll",
+                "Microsoft.Practices.Prism.dll",
+                "DynamoCore.dll",
+                "DynamoPython.dll",
+                "DynamoWatch3D.dll",
+                "DynamoUtilities.dll",
+                "FScheme.dll",
+                "FSchemeInterop.dll",
+                "Greg.dll",
+                "GraphToDSCompiler.dll",
+                "ProtoCore.dll",
+                "ProtoAssociative.dll",
+                "ProtoImperative.dll",
+                "ProtoInterface.dll",
+                "ProtoScript.dll",
+                "MIConvexHullPlugin.dll",
+                "Newtonsoft.Json.dll",
+                "RestSharp.dll"
+            };
+
+            LoadListOfDlls(dlls, dir);
+        }
+
+        private static void LoadListOfDlls(List<string> dlls, string dir)
+        {
             foreach (var fileName in dlls)
             {
                 try
@@ -205,15 +239,16 @@ namespace Dynamo.Utilities
                     }
 
                     var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-                    Assembly found = assemblies.FirstOrDefault(x => x.FullName.Split(',')[0] == Path.GetFileNameWithoutExtension(fileName));
+                    Assembly found =
+                        assemblies.FirstOrDefault(x => x.FullName.Split(',')[0] == Path.GetFileNameWithoutExtension(fileName));
 
                     if (found != null)
                     {
                         var foundVersion = found.GetName().Version;
 
-                        var dllVersion = FileVersionInfo.GetVersionInfo(fullName).FileVersion == null?
-                            new Version() :
-                            new Version(FileVersionInfo.GetVersionInfo(fullName).FileVersion);
+                        var dllVersion = FileVersionInfo.GetVersionInfo(fullName).FileVersion == null
+                            ? new Version()
+                            : new Version(FileVersionInfo.GetVersionInfo(fullName).FileVersion);
 
                         if (dllVersion > foundVersion)
                         {

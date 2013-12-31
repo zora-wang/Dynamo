@@ -32,6 +32,9 @@ namespace DynamoSandbox
                     }
                 }
 
+                AssemblyHelper.LoadCoreAssembliesIfNewer();
+                AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.ResolveAssemblyDynamically;
+
                 DynamoView.MakeSandboxAndRun(commandFilePath);
             }
             catch (Exception e)
