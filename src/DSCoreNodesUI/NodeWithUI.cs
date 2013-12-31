@@ -19,9 +19,8 @@ namespace Dynamo.Nodes
     [Browsable(false)]
     public abstract class NodeWithUI : NodeModel
     {
-        //We can remove this from NodeModel and only use it here.
-        //[Browsable(false)]
-        //public abstract void SetupCustomUIElements(dynNodeView nodeUI);
+        [Browsable(false)]
+        public new abstract void SetupCustomUIElements(dynNodeView nodeUI);
 
         [Browsable(false)]
         public abstract Node BuildAst();
@@ -52,10 +51,8 @@ namespace Dynamo.Nodes
         /// </summary>
         /// <param name="nodeUI">UI view that we can customize the UI of.</param>
         [Browsable(false)]
-        public override void SetupCustomUIElements(object ui)
+        public override void SetupCustomUIElements(dynNodeView nodeUI)
         {
-            var nodeUI = ui as dynNodeView;
-
             //add a slider control to the input grid of the control
             var slider = new DynamoSlider(this)
             {

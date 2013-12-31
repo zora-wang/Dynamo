@@ -160,12 +160,10 @@ namespace Dynamo.Nodes
 
         #region public methods
 
-        public override void SetupCustomUIElements(object ui)
+        public override void SetupCustomUIElements(dynNodeView nodeUI)
         {
-            var nodeUI = ui as dynNodeView;
-
             //add a button to the inputGrid on the dynElement
-            var selectButton = new dynNodeButton
+            var selectButton = new NodeButton
             {
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Center
@@ -329,6 +327,63 @@ namespace Dynamo.Nodes
 
         #region public methods
 
+        public override void SetupCustomUIElements(dynNodeView nodeUI)
+        {
+            //add a button to the inputGrid on the dynElement
+            var selectButton = new NodeButton
+            {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            selectButton.Click += selectButton_Click;
+
+            var tb = new TextBox
+            {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Center,
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(0, 0, 0, 0)),
+                BorderThickness = new Thickness(0),
+                IsReadOnly = true,
+                IsReadOnlyCaretVisible = false
+            };
+
+            if (SelectedElement == null || !SelectionText.Any() || !SelectButtonContent.Any())
+            {
+                SelectionText = "Nothing Selected";
+                SelectButtonContent = "Select Element";
+            }
+
+            nodeUI.inputGrid.RowDefinitions.Add(new RowDefinition());
+            nodeUI.inputGrid.RowDefinitions.Add(new RowDefinition());
+
+            nodeUI.inputGrid.Children.Add(tb);
+            nodeUI.inputGrid.Children.Add(selectButton);
+
+            System.Windows.Controls.Grid.SetRow(selectButton, 0);
+            System.Windows.Controls.Grid.SetRow(tb, 1);
+
+            tb.DataContext = this;
+            selectButton.DataContext = this;
+
+            var selectTextBinding = new System.Windows.Data.Binding("SelectionText")
+            {
+                Mode = BindingMode.TwoWay,
+            };
+            tb.SetBinding(TextBox.TextProperty, selectTextBinding);
+
+            var buttonTextBinding = new System.Windows.Data.Binding("SelectButtonContent")
+            {
+                Mode = BindingMode.TwoWay,
+            };
+            selectButton.SetBinding(ContentControl.ContentProperty, buttonTextBinding);
+
+            var buttonEnabledBinding = new System.Windows.Data.Binding("CanSelect")
+            {
+                Mode = BindingMode.TwoWay,
+            };
+            selectButton.SetBinding(Button.IsEnabledProperty, buttonEnabledBinding);
+        }
+
         public override Node BuildAst()
         {
             AssociativeNode node = null;
@@ -459,6 +514,63 @@ namespace Dynamo.Nodes
         #endregion
 
         #region public methods
+
+        public override void SetupCustomUIElements(dynNodeView nodeUI)
+        {
+            //add a button to the inputGrid on the dynElement
+            var selectButton = new NodeButton
+            {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            selectButton.Click += selectButton_Click;
+
+            var tb = new TextBox
+            {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Center,
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(0, 0, 0, 0)),
+                BorderThickness = new Thickness(0),
+                IsReadOnly = true,
+                IsReadOnlyCaretVisible = false
+            };
+
+            if (SelectedElement.Count == 0 || !SelectionText.Any() || !SelectButtonContent.Any())
+            {
+                SelectionText = "Nothing Selected";
+                SelectButtonContent = "Select Elements";
+            }
+
+            nodeUI.inputGrid.RowDefinitions.Add(new RowDefinition());
+            nodeUI.inputGrid.RowDefinitions.Add(new RowDefinition());
+
+            nodeUI.inputGrid.Children.Add(tb);
+            nodeUI.inputGrid.Children.Add(selectButton);
+
+            System.Windows.Controls.Grid.SetRow(selectButton, 0);
+            System.Windows.Controls.Grid.SetRow(tb, 1);
+
+            tb.DataContext = this;
+            selectButton.DataContext = this;
+
+            var selectTextBinding = new System.Windows.Data.Binding("SelectionText")
+            {
+                Mode = BindingMode.TwoWay,
+            };
+            tb.SetBinding(TextBox.TextProperty, selectTextBinding);
+
+            var buttonTextBinding = new System.Windows.Data.Binding("SelectButtonContent")
+            {
+                Mode = BindingMode.TwoWay,
+            };
+            selectButton.SetBinding(ContentControl.ContentProperty, buttonTextBinding);
+
+            var buttonEnabledBinding = new System.Windows.Data.Binding("CanSelect")
+            {
+                Mode = BindingMode.TwoWay,
+            };
+            selectButton.SetBinding(Button.IsEnabledProperty, buttonEnabledBinding);
+        }
 
         public override Node BuildAst()
         {
