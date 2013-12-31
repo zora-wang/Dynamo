@@ -796,7 +796,7 @@ namespace Dynamo.Nodes
             }
         }
 
-        DSPointOnElementSelection()
+        public DSPointOnElementSelection()
             : base(SelectionHelper.RequestReferenceXYZSelection, "Select a point on a face."){}
     }
 
