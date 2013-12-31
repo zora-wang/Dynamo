@@ -53,8 +53,8 @@ namespace Dynamo.Applications
             {
                 assLoc = @"C:\Program Files\Autodesk\Revit Architecture 2014\";
             }
-            var interactivityPath = Path.Combine(Path.GetDirectoryName(assLoc), "System.Windows.Interactivity.dll");
-            var interactivityAss = Assembly.LoadFrom(interactivityPath);
+            //var interactivityPath = Path.Combine(Path.GetDirectoryName(assLoc), "System.Windows.Interactivity.dll");
+            //var interactivityAss = Assembly.LoadFrom(interactivityPath);
 
             //When a user double-clicks the Dynamo icon, we need to make
             //sure that we don't create another instance of Dynamo.

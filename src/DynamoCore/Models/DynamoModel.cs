@@ -1308,8 +1308,10 @@ namespace Dynamo.Models
                 {
                     var loc = AssemblyHelper.GetAssemblyLocation(tld.Assembly);
 
-                    ObjectHandle obj = Activator.CreateInstanceFrom(loc, tld.Type.FullName);
-                    var newEl = (NodeModel)obj.Unwrap();
+                    //ObjectHandle obj = Activator.CreateInstanceFrom(loc, tld.Type.FullName);
+                    //var newEl = (NodeModel)obj.Unwrap();
+                    object obj = Activator.CreateInstance(tld.Type);
+                    var newEl = (NodeModel) obj;
                     newEl.DisableInteraction();
                     result = newEl;
                 }

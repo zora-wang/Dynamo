@@ -171,6 +171,7 @@ namespace Dynamo.Utilities
 
             var dlls = new List<string>
             {
+                "System.Windows.Interactivity.dll",
                 "Microsoft.Practices.Prism.dll",
                 "DynamoCore.dll",
                 "DynamoPython.dll",
