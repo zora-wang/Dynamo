@@ -43,19 +43,6 @@ namespace Dynamo.Applications
         
         public Result Execute(ExternalCommandData revit, ref string message, ElementSet elements)
         {
-            //AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.ResolveAssemblyDynamically;
-
-            //Add an assembly load step for the System.Windows.Interactivity assembly
-            //Revit owns a version of this as well. Adding our step here prevents a duplicative
-            //load of the dll at a later time.
-            var assLoc = Assembly.GetExecutingAssembly().Location;
-            if (string.IsNullOrEmpty(assLoc))
-            {
-                assLoc = @"C:\Program Files\Autodesk\Revit Architecture 2014\";
-            }
-            //var interactivityPath = Path.Combine(Path.GetDirectoryName(assLoc), "System.Windows.Interactivity.dll");
-            //var interactivityAss = Assembly.LoadFrom(interactivityPath);
-
             //When a user double-clicks the Dynamo icon, we need to make
             //sure that we don't create another instance of Dynamo.
             if (isRunning)
@@ -132,7 +119,6 @@ namespace Dynamo.Applications
                     dynamoView.Closing += dynamoView_Closing;
                     dynamoView.Closed += dynamoView_Closed;
 
-                    //revit.Application.ViewActivated += new EventHandler<Autodesk.Revit.UI.Events.ViewActivatedEventArgs>(Application_ViewActivated);
                     revit.Application.ViewActivating += Application_ViewActivating;
                 });
             }
@@ -251,7 +237,6 @@ namespace Dynamo.Applications
         /// <param name="e"></param>
         private void dynamoView_Closed(object sender, EventArgs e)
         {
-            //AppDomain.CurrentDomain.AssemblyResolve -= AssemblyHelper.ResolveAssemblyDynamically;
             dynamoView = null;
             isRunning = false;
         }

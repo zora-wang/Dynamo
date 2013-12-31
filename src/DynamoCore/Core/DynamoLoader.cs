@@ -301,7 +301,6 @@ namespace Dynamo.Utilities
             return AssemblyPathToTypesLoaded[loc];
         }
 
-
         /// <summary>
         ///     Setup the "Samples" sub-menu with contents of samples directory.
         /// </summary>
