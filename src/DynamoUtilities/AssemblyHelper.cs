@@ -48,31 +48,6 @@ namespace Dynamo.Utilities
         }
 
         /// <summary>
-        /// Load an assembly from a byte array.
-        /// </summary>
-        /// <param name="assemblyPath"></param>
-        /// <returns></returns>
-        public static Assembly LoadAssemblyFromStream(string assemblyPath)
-        {
-            var assemblyBytes = File.ReadAllBytes(assemblyPath);
-            var pdbPath = Path.Combine(Path.GetDirectoryName(assemblyPath),
-                Path.GetFileNameWithoutExtension(assemblyPath) + ".pdb");
-
-            Assembly assembly = null;
-
-            if (File.Exists(pdbPath))
-            {
-                var pdbBytes = File.ReadAllBytes(pdbPath);
-                assembly = Assembly.Load(assemblyBytes, pdbBytes);
-            }
-            else
-            {
-                assembly = Assembly.Load(assemblyBytes);
-            }
-            return assembly;
-        }
-
-        /// <summary>
         /// Create an instance of an object from DynamoCore.
         /// </summary>
         /// <param name="typeName"></param>
@@ -162,6 +137,31 @@ namespace Dynamo.Utilities
 
             //DebugDynamoCoreInstances();
             Debug.WriteLine("Resolved assembly:" + args.Name);
+            return assembly;
+        }
+
+        /// <summary>
+        /// Load an assembly from a byte array.
+        /// </summary>
+        /// <param name="assemblyPath"></param>
+        /// <returns></returns>
+        public static Assembly LoadAssemblyFromStream(string assemblyPath)
+        {
+            var assemblyBytes = File.ReadAllBytes(assemblyPath);
+            var pdbPath = Path.Combine(Path.GetDirectoryName(assemblyPath),
+                Path.GetFileNameWithoutExtension(assemblyPath) + ".pdb");
+
+            Assembly assembly = null;
+
+            if (File.Exists(pdbPath))
+            {
+                var pdbBytes = File.ReadAllBytes(pdbPath);
+                assembly = Assembly.Load(assemblyBytes, pdbBytes);
+            }
+            else
+            {
+                assembly = Assembly.Load(assemblyBytes);
+            }
             return assembly;
         }
 
