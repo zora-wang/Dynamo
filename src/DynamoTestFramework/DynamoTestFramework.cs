@@ -71,7 +71,7 @@ namespace Dynamo.Tests
 
         public Result Execute(ExternalCommandData revit, ref string message, ElementSet elements)
         {
-            AppDomain.CurrentDomain.AssemblyResolve += Dynamo.Utilities.AssemblyHelper.CurrentDomain_AssemblyResolve;
+            AppDomain.CurrentDomain.AssemblyResolve += Dynamo.Utilities.AssemblyHelper.ResolveAssemblyDynamically;
 
             //Get the data map from the running journal file.
             IDictionary<string, string> dataMap = revit.JournalData;

@@ -15,7 +15,7 @@ namespace Dynamo.Utilities
         /// <param name="sender"></param>
         /// <param name="args"></param>
         /// <returns></returns>
-        public static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
+        /*public static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
         {
             string folderPath = String.Empty;
             folderPath = String.IsNullOrEmpty(Assembly.GetExecutingAssembly().Location)?
@@ -26,7 +26,7 @@ namespace Dynamo.Utilities
                 return null;
             Assembly assembly = Assembly.LoadFrom(assemblyPath);
             return assembly;
-        }
+        }*/
 
         public static Version GetDynamoVersion()
         {
@@ -121,7 +121,7 @@ namespace Dynamo.Utilities
             var name = args.Name.Split(',')[0];
 
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            Assembly found = assemblies.FirstOrDefault(x => x.FullName.Split(',')[0] == name);
+            Assembly found = assemblies.FirstOrDefault(x => x.GetName().Name == name);
 
             if (found != null)
             {

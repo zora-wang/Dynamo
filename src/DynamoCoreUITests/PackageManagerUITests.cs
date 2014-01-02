@@ -20,7 +20,7 @@ namespace Dynamo.Tests.UI
         [SetUp]
         public void Start()
         {
-            AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.CurrentDomain_AssemblyResolve;
+            AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.ResolveAssemblyDynamically;
 
             Controller = DynamoController.MakeSandbox(Assembly.GetExecutingAssembly().Location);
 

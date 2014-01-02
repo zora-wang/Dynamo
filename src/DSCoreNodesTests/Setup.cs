@@ -10,7 +10,7 @@ namespace DSCoreNodesTests
         [SetUp]
         public void RunBeforeAnyTests()
         {
-            AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.CurrentDomain_AssemblyResolve;
+            AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.ResolveAssemblyDynamically;
         }
 
         [TearDown]

@@ -21,7 +21,7 @@ namespace Dynamo.Tests.UI
         [SetUp]
         public void Start()
         {
-            AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.CurrentDomain_AssemblyResolve;
+            AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.ResolveAssemblyDynamically;
 
             string tempPath = Path.GetTempPath();
             TempFolder = Path.Combine(tempPath, "dynamoTmp");

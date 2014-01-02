@@ -1,9 +1,7 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Threading;
-using System.Windows.Media.Media3D;
 using Dynamo.Controls;
 using Dynamo.Utilities;
 using NUnit.Framework;
@@ -16,7 +14,7 @@ namespace Dynamo.Tests.UI
         [SetUp]
         public void Start()
         {
-            AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.CurrentDomain_AssemblyResolve;
+            AppDomain.CurrentDomain.AssemblyResolve += AssemblyHelper.ResolveAssemblyDynamically;
 
             Controller = DynamoController.MakeSandbox(Assembly.GetExecutingAssembly().Location);
 
