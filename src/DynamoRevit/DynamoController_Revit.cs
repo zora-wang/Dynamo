@@ -82,9 +82,9 @@ namespace Dynamo
             //AddPythonBindings();
             AddWatchNodeHandler();
 
-            dynRevitSettings.Revit.Application.DocumentClosed += Application_DocumentClosed;
-            dynRevitSettings.Revit.Application.DocumentOpened += Application_DocumentOpened;
-            dynRevitSettings.Revit.ViewActivated += Revit_ViewActivated;
+            DocumentManager.GetInstance().CurrentUIApplication.Application.DocumentClosed += Application_DocumentClosed;
+            DocumentManager.GetInstance().CurrentUIApplication.Application.DocumentOpened += Application_DocumentOpened;
+            DocumentManager.GetInstance().CurrentUIApplication.ViewActivated += Revit_ViewActivated;
 
             //allow the showing of elements in context
             dynSettings.Controller.DynamoViewModel.CurrentSpaceViewModel.CanFindNodesFromElements = true;
@@ -324,7 +324,7 @@ namespace Dynamo
             //when a document is opened 
             if (dynRevitSettings.Doc == null)
             {
-                dynRevitSettings.Doc = dynRevitSettings.Revit.ActiveUIDocument;
+                dynRevitSettings.Doc = DocumentManager.GetInstance().CurrentUIApplication.ActiveUIDocument;
                 DynamoViewModel.RunEnabled = true;
 
                 ResetForNewDocument();
@@ -334,7 +334,7 @@ namespace Dynamo
         private void Application_DocumentClosed(object sender, DocumentClosedEventArgs e)
         {
             //Disable running against revit without a document
-            if (dynRevitSettings.Revit.ActiveUIDocument == null)
+            if (DocumentManager.GetInstance().CurrentUIApplication.ActiveUIDocument == null)
             {
                 dynRevitSettings.Doc = null;
                 DynamoViewModel.RunEnabled = false;
@@ -342,7 +342,7 @@ namespace Dynamo
             }
             else
             {
-                dynRevitSettings.Doc = dynRevitSettings.Revit.ActiveUIDocument;
+                dynRevitSettings.Doc = DocumentManager.GetInstance().CurrentUIApplication.ActiveUIDocument;
                 DynamoViewModel.RunEnabled = true;
                 DynamoLogger.Instance.LogWarning(string.Format("Dynamo is now pointing at document: {0}", dynRevitSettings.Doc.Document.PathName), WarningLevel.Moderate);
             }
@@ -355,7 +355,7 @@ namespace Dynamo
             //if Dynamo doesn't have a view, then latch onto this one
             if (dynRevitSettings.Doc == null)
             {
-                dynRevitSettings.Doc = dynRevitSettings.Revit.ActiveUIDocument;
+                dynRevitSettings.Doc = DocumentManager.GetInstance().CurrentUIApplication.ActiveUIDocument;
                 DynamoLogger.Instance.LogWarning(string.Format("Dynamo is now pointing at document: {0}", dynRevitSettings.Doc.Document.PathName), WarningLevel.Moderate);
 
                 ResetForNewDocument();

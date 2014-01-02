@@ -28,8 +28,6 @@ namespace Dynamo.Applications
     public class DynamoRevit : IExternalCommand
     {
         private static DynamoView dynamoView;
-        private UIDocument m_doc;
-        private UIApplication m_revit;
         private DynamoController dynamoController;
         private static bool isRunning = false;
         public static double? dynamoViewX = null;
@@ -60,28 +58,26 @@ namespace Dynamo.Applications
 
             try
             {
-                m_revit = revit.Application;
-                m_doc = m_revit.ActiveUIDocument;
 
                 #region default level
 
                 Level defaultLevel = null;
-                var fecLevel = new FilteredElementCollector(m_doc.Document);
+                var fecLevel = new FilteredElementCollector(revit.Application.ActiveUIDocument.Document);
                 fecLevel.OfClass(typeof (Level));
                 defaultLevel = fecLevel.ToElements()[0] as Level;
 
                 #endregion
 
-                dynRevitSettings.Revit = m_revit;
-                dynRevitSettings.Doc = m_doc;
+                DocumentManager.GetInstance().CurrentDBDocument = revit.Application.ActiveUIDocument.Document;
+                DocumentManager.GetInstance().CurrentUIDocument = revit.Application.ActiveUIDocument;
+                DocumentManager.GetInstance().CurrentUIApplication = revit.Application;
+                
+                dynRevitSettings.Doc = revit.Application.ActiveUIDocument;
+
                 dynRevitSettings.DefaultLevel = defaultLevel;
 
-                DocumentManager.GetInstance().CurrentDBDocument = m_doc.Document;
-                DocumentManager.GetInstance().CurrentUIDocument = m_revit.ActiveUIDocument;
-
                 //TODO: has to be changed when we handle multiple docs
-                //DynamoRevitApp.Updater.DocumentToWatch = m_doc.Document;
-                updater.DocumentToWatch = m_doc.Document;
+                updater.DocumentToWatch = revit.Application.ActiveUIDocument.Document;
                 
                 RevThread.IdlePromise.ExecuteOnIdleAsync(delegate
                 {
@@ -89,7 +85,7 @@ namespace Dynamo.Applications
                     IntPtr mwHandle = Process.GetCurrentProcess().MainWindowHandle;
 
                     var r = new Regex(@"\b(Autodesk |Structure |MEP |Architecture )\b");
-                    string context = r.Replace(m_revit.Application.VersionName, "");
+                    string context = r.Replace(revit.Application.Application.VersionName, "");
 
                     //they changed the application version name conventions for vasari
                     //it no longer has a version year so we can't compare it to other versions
