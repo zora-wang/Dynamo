@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using DSRevitNodes.Elements;
+using Autodesk.Revit.DB;
 using Dynamo.Nodes;
 using NUnit.Framework;
 using ProtoCore.AST.AssociativeAST;
+using RevitServices.Persistence;
 
 namespace Dynamo.Tests
 {
@@ -13,10 +14,22 @@ namespace Dynamo.Tests
         [Test]
         public void SelectElementASTGeneration()
         {
-            //create an element in revit
-            var sphere = DSSolid.Sphere(Autodesk.DesignScript.Geometry.Point.ByCoordinates(0, 0, 0), 5);
-            var element = DSFreeForm.BySolid(sphere);
-            var sel = new DSModelElementSelection {SelectedElement = element.InternalElement};
+            ReferencePoint refPoint = null;
+
+            using (var trans = new Transaction(DocumentManager.GetInstance().CurrentDBDocument, "CreateAndDeleteAreReferencePoint"))
+            {
+                trans.Start();
+
+                FailureHandlingOptions fails = trans.GetFailureHandlingOptions();
+                fails.SetClearAfterRollback(true);
+                trans.SetFailureHandlingOptions(fails);
+
+                refPoint = DocumentManager.GetInstance().CurrentDBDocument.FamilyCreate.NewReferencePoint(new XYZ());
+
+                trans.Commit();
+            }
+
+            var sel = new DSModelElementSelection {SelectedElement = refPoint};
 
             var buildOutput = sel.BuildOutputAst(new List<AssociativeNode>());
 
@@ -26,7 +39,7 @@ namespace Dynamo.Tests
             Assert.AreEqual(1, funCall.FormalArguments.Count);
             Assert.IsInstanceOf<IntNode>(funCall.FormalArguments[0]);
 
-            Assert.AreEqual(element.InternalElement.Id.IntegerValue.ToString(), ((IntNode)funCall.FormalArguments[0]).value);
+            Assert.AreEqual(refPoint.Id.IntegerValue.ToString(), ((IntNode)funCall.FormalArguments[0]).value);
         }
     }
 }
