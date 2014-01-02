@@ -53,7 +53,6 @@ namespace Dynamo.Utilities
             var allLoadedAssembliesByPath = new Dictionary<string, Assembly>();
             var allLoadedAssemblies = new Dictionary<string, Assembly>();
 
-            //foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
             foreach(var assembly in AssemblyHelper.GetLatestAssembliesInCurrentAppDomain())
             {
                 try
@@ -83,15 +82,6 @@ namespace Dynamo.Utilities
                                 Directory.GetFiles(location, "*.dll") as IEnumerable<string>, 
                                 Enumerable.Concat);
 
-            //var resolver = new ResolveEventHandler(delegate(object sender, ResolveEventArgs args)
-            //{
-            //    Assembly result;
-            //    allLoadedAssemblies.TryGetValue(args.Name, out result);
-            //    return result;
-            //});
-
-            //AppDomain.CurrentDomain.AssemblyResolve += resolver;
-            
             foreach (var assemblyPath in allDynamoAssemblyPaths)
             {
                 var fn = Path.GetFileName(assemblyPath);
