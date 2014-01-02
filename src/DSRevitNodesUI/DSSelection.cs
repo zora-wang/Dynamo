@@ -11,7 +11,6 @@ using Autodesk.Revit.DB;
 using DSRevitNodes.Interactivity;
 using Dynamo.Controls;
 using Dynamo.Models;
-using ProtoCore.AST;
 using ProtoCore.AST.AssociativeAST;
 using RevitServices.Persistence;
 
