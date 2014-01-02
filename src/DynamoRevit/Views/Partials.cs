@@ -7,6 +7,7 @@ using Autodesk.Revit.DB;
 using Dynamo.Controls;
 using Dynamo.Models;
 using Dynamo.Utilities;
+using RevitServices.Persistence;
 
 namespace Dynamo.Revit
 {
@@ -33,7 +34,7 @@ namespace Dynamo.Revit
                 return;
 
             //select the elements
-            dynRevitSettings.Doc.Selection.Elements.Clear();
+            DocumentManager.GetInstance().CurrentUIDocument.Selection.Elements.Clear();
 
             var existingElements = new List<Element>();
 
@@ -46,10 +47,10 @@ namespace Dynamo.Revit
                 }
             }
 
-            existingElements.ForEach(x => dynRevitSettings.Doc.Selection.Elements.Add(x));
+            existingElements.ForEach(x => DocumentManager.GetInstance().CurrentUIDocument.Selection.Elements.Add(x));
 
             //show the elements
-            dynRevitSettings.Doc.ShowElements(existingElements.Select(x => x.Id).ToList());
+            DocumentManager.GetInstance().CurrentUIDocument.ShowElements(existingElements.Select(x => x.Id).ToList());
         }
     }
 }
