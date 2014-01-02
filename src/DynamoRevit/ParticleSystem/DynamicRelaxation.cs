@@ -298,10 +298,8 @@ namespace Dynamo.Nodes
             _reset = false;
         }
 
-        public override void SetupCustomUIElements(dynNodeView nodeUI)
+        public void SetupCustomUIElements(dynNodeView nodeUI)
         {
-            base.SetupCustomUIElements(nodeUI);
-            
             var resetButt = new Button
             {
                 Content = "Reset",

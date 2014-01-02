@@ -159,7 +159,7 @@ namespace Dynamo.Nodes
 
         #region public methods
 
-        public override void SetupCustomUIElements(dynNodeView nodeUI)
+        public void SetupCustomUIElements(dynNodeView nodeUI)
         {
             //add a button to the inputGrid on the dynElement
             var selectButton = new NodeButton
@@ -326,7 +326,7 @@ namespace Dynamo.Nodes
 
         #region public methods
 
-        public override void SetupCustomUIElements(dynNodeView nodeUI)
+        public void SetupCustomUIElements(dynNodeView nodeUI)
         {
             //add a button to the inputGrid on the dynElement
             var selectButton = new NodeButton
@@ -515,7 +515,7 @@ namespace Dynamo.Nodes
 
         #region public methods
 
-        public override void SetupCustomUIElements(dynNodeView nodeUI)
+        public void SetupCustomUIElements(dynNodeView nodeUI)
         {
             //add a button to the inputGrid on the dynElement
             var selectButton = new NodeButton

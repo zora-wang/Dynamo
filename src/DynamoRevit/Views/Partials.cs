@@ -11,12 +11,10 @@ using RevitServices.Persistence;
 
 namespace Dynamo.Revit
 {
-    public partial class RevitTransactionNode : NodeModel
+    public partial class RevitTransactionNode
     {
-        public override void SetupCustomUIElements(dynNodeView nodeUI)
+        public void SetupCustomUIElements(dynNodeView nodeUI)
         {
-            base.SetupCustomUIElements(nodeUI);
-
             var mi = new MenuItem
             {
                 Header = "Show Elements"

@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Xml;
+using DSCoreNodesUI;
 using Dynamo.Controls;
 using Dynamo.Models;
 using ProtoCore.AST;
@@ -18,7 +19,7 @@ namespace Dynamo.Nodes
     /// Sample that contains a slider and produces a number.
     /// </summary>
     [Browsable(false)]
-    public class NumberSlider : NodeModel
+    public class NumberSlider : NodeModel, IWpfNode
     {
         public NumberSlider()
         {
@@ -44,7 +45,7 @@ namespace Dynamo.Nodes
         /// </summary>
         /// <param name="nodeUI">UI view that we can customize the UI of.</param>
         [Browsable(false)]
-        public override void SetupCustomUIElements(dynNodeView nodeUI)
+        public void SetupCustomUIElements(dynNodeView nodeUI)
         {
             //add a slider control to the input grid of the control
             var slider = new DynamoSlider(this)
