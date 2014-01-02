@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Windows;
@@ -14,23 +15,10 @@ using ProtoCore.AST.AssociativeAST;
 namespace Dynamo.Nodes
 {
     /// <summary>
-    /// All Custom-UI nodes inherit this.
-    /// </summary>
-    [Browsable(false)]
-    public abstract class NodeWithUI : NodeModel
-    {
-        //[Browsable(false)]
-        //public new abstract void SetupCustomUIElements(dynNodeView nodeUI);
-
-        [Browsable(false)]
-        public abstract Node BuildAst();
-    }
-
-    /// <summary>
     /// Sample that contains a slider and produces a number.
     /// </summary>
     [Browsable(false)]
-    public class NumberSlider : NodeWithUI
+    public class NumberSlider : NodeModel
     {
         public NumberSlider()
         {
@@ -41,9 +29,14 @@ namespace Dynamo.Nodes
         /// Builds the custom AST that contains information bound to the UI.
         /// </summary>
         [Browsable(false)]
-        public override Node BuildAst()
-        { 
-            return new DoubleNode(Value.ToString(CultureInfo.InvariantCulture));
+        public override IEnumerable<AssociativeNode> BuildOutputAst(List<AssociativeNode> inputAstNodes)
+        {
+            return new[]
+            {
+                AstFactory.BuildAssignment(
+                    GetAstIdentifierForOutputIndex(0),
+                    new DoubleNode(Value.ToString(CultureInfo.InvariantCulture)))
+            };
         }
 
         /// <summary>

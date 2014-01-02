@@ -17,8 +17,7 @@ using RevitServices.Persistence;
 
 namespace Dynamo.Nodes
 {
-    //TODO: DSSelection classes need to respond to document modification events
-    public abstract class DSSelectionBase : NodeWithUI
+    public abstract class DSSelectionBase : NodeModel 
     {
         protected bool _canSelect = true;
         protected string _selectionText ="";
@@ -217,22 +216,6 @@ namespace Dynamo.Nodes
             selectButton.SetBinding(Button.IsEnabledProperty, buttonEnabledBinding);
         }
 
-        public override Node BuildAst()
-        {
-            AssociativeNode node = null;
-
-            node = new FunctionCallNode
-            {
-                Function = new IdentifierNode("DSRevitNodes.Elements.ElementSelector.ByElementId"),
-                FormalArguments = new List<AssociativeNode>
-                {
-                    new IntNode((SelectedElement as Element).Id.IntegerValue.ToString(CultureInfo.InvariantCulture))
-                }
-            };
-
-            return node;
-        }
-
         #endregion
     
         /// <summary>
@@ -256,6 +239,22 @@ namespace Dynamo.Nodes
             {
                 DynamoLogger.Instance.Log(e);
             }
+        }
+
+        public override IEnumerable<AssociativeNode> BuildOutputAst(List<AssociativeNode> inputAstNodes)
+        {
+            AssociativeNode node = null;
+
+            node = new FunctionCallNode
+            {
+                Function = new IdentifierNode("DSRevitNodes.Elements.ElementSelector.ByElementId"),
+                FormalArguments = new List<AssociativeNode>
+                {
+                    new IntNode((SelectedElement as Element).Id.IntegerValue.ToString(CultureInfo.InvariantCulture))
+                }
+            };
+
+            return new[] {AstFactory.BuildAssignment(GetAstIdentifierForOutputIndex(0), node)};
         }
     }
 
@@ -384,7 +383,32 @@ namespace Dynamo.Nodes
             selectButton.SetBinding(Button.IsEnabledProperty, buttonEnabledBinding);
         }
 
-        public override Node BuildAst()
+        #endregion
+
+        /// <summary>
+        /// Callback when selection button is clicked. 
+        /// Calls the selection action, and stores the ElementId(s) of the selected objects.
+        /// </summary>
+        protected override void OnSelectClick()
+        {
+            try
+            {
+                //call the delegate associated with a selection type
+                SelectedElement = _selectionAction(_selectionMessage);
+                RaisePropertyChanged("SelectionText");
+                RequiresRecalc = true;
+            }
+            catch (OperationCanceledException)
+            {
+                CanSelect = true;
+            }
+            catch (Exception e)
+            {
+                DynamoLogger.Instance.Log(e);
+            }
+        }
+
+        public override IEnumerable<AssociativeNode> BuildOutputAst(List<AssociativeNode> inputAstNodes)
         {
             AssociativeNode node = null;
 
@@ -412,7 +436,7 @@ namespace Dynamo.Nodes
             }
             else
             {
-
+                    
                 node = new FunctionCallNode
                 {
                     Function = new IdentifierNode("DSRevitNodes.GeoemtryObjects.GeometryObjectSelector.ByReferenceId"),
@@ -423,32 +447,7 @@ namespace Dynamo.Nodes
                 };
             }
 
-            return node;
-        }
-
-        #endregion
-
-        /// <summary>
-        /// Callback when selection button is clicked. 
-        /// Calls the selection action, and stores the ElementId(s) of the selected objects.
-        /// </summary>
-        protected override void OnSelectClick()
-        {
-            try
-            {
-                //call the delegate associated with a selection type
-                SelectedElement = _selectionAction(_selectionMessage);
-                RaisePropertyChanged("SelectionText");
-                RequiresRecalc = true;
-            }
-            catch (OperationCanceledException)
-            {
-                CanSelect = true;
-            }
-            catch (Exception e)
-            {
-                DynamoLogger.Instance.Log(e);
-            }
+            return new[] {AstFactory.BuildAssignment(GetAstIdentifierForOutputIndex(0), node)};
         }
     }
 
@@ -573,26 +572,6 @@ namespace Dynamo.Nodes
             selectButton.SetBinding(Button.IsEnabledProperty, buttonEnabledBinding);
         }
 
-        public override Node BuildAst()
-        {
-            AssociativeNode node = null;
-
-            var els = SelectedElement as List<Element>;
-
-            var newInputs = els.Select(el => new FunctionCallNode
-            {
-                Function = new IdentifierNode("DSRevitNodes.Elements.ElementSelector.ByElementIds"),
-                FormalArguments = new List<AssociativeNode>
-                {
-                    new IntNode(el.Id.IntegerValue.ToString(CultureInfo.InvariantCulture))
-                }
-            }).Cast<AssociativeNode>().ToList();
-
-            node = AstFactory.BuildExprList(newInputs);
-
-            return node;
-        }
-
         #endregion
 
         /// <summary>
@@ -616,6 +595,26 @@ namespace Dynamo.Nodes
             {
                 DynamoLogger.Instance.Log(e);
             }
+        }
+
+        public override IEnumerable<AssociativeNode> BuildOutputAst(List<AssociativeNode> inputAstNodes)
+        {
+            AssociativeNode node = null;
+
+            var els = SelectedElement as List<Element>;
+
+            var newInputs = els.Select(el => new FunctionCallNode
+            {
+                Function = new IdentifierNode("DSRevitNodes.Elements.ElementSelector.ByElementIds"),
+                FormalArguments = new List<AssociativeNode>
+                {
+                    new IntNode(el.Id.IntegerValue.ToString(CultureInfo.InvariantCulture))
+                }
+            }).Cast<AssociativeNode>().ToList();
+
+            node = AstFactory.BuildExprList(newInputs);
+
+            return new[] {AstFactory.BuildAssignment(GetAstIdentifierForOutputIndex(0), node)};
         }
     }
 

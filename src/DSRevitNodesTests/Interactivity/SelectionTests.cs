@@ -1,4 +1,5 @@
-﻿using Autodesk.Revit.DB;
+﻿using System.Collections.Generic;
+using System.Linq;
 using DSRevitNodes.Elements;
 using Dynamo.Nodes;
 using NUnit.Framework;
@@ -9,26 +10,23 @@ namespace Dynamo.Tests
     [TestFixture]
     class SelectionTests
     {
-        /*
         [Test]
         public void SelectElementASTGeneration()
         {
             //create an element in revit
             var sphere = DSSolid.Sphere(Autodesk.DesignScript.Geometry.Point.ByCoordinates(0, 0, 0), 5);
             var element = DSFreeForm.BySolid(sphere);
-            var sel = DSSelection<Element>.SelectElement();
-            sel.SelectedElement = element.InternalElement;
+            var sel = new DSModelElementSelection {SelectedElement = element.InternalElement};
 
-            var buildOutput = sel.BuildAst();
+            var buildOutput = sel.BuildOutputAst(new List<AssociativeNode>());
 
-            Assert.IsInstanceOf<FunctionCallNode>(buildOutput);
-
-            var funCall = buildOutput as FunctionCallNode;
+            var funCall = (FunctionCallNode)((BinaryExpressionNode)buildOutput.First()).RightNode;
 
             Assert.IsInstanceOf<IdentifierNode>(funCall.Function);
             Assert.AreEqual(1, funCall.FormalArguments.Count);
             Assert.IsInstanceOf<IntNode>(funCall.FormalArguments[0]);
-            Assert.AreEqual(element.InternalElement.Id.IntegerValue.ToString(), (funCall.FormalArguments[0] as IntNode).value);
-        }*/
+
+            Assert.AreEqual(element.InternalElement.Id.IntegerValue.ToString(), ((IntNode)funCall.FormalArguments[0]).value);
+        }
     }
 }
