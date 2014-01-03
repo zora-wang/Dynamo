@@ -418,7 +418,7 @@ namespace Dynamo.Nodes
                         .GetGeometryObjectFromReference(geomRef);
             var stringNode = new StringNode
             {
-                value = (SelectedElement as Reference).ConvertToStableRepresentation(
+                value = SelectedElement.ConvertToStableRepresentation(
                     DocumentManager.GetInstance().CurrentDBDocument)
             };
 
@@ -426,7 +426,7 @@ namespace Dynamo.Nodes
             {
                 node = new FunctionCallNode
                 {
-                    Function = new IdentifierNode("DSRevitNodes.GeoemtryObjects.GeometryObjectSelector.ByCurve"),
+                    Function = new IdentifierNode("DSRevitNodes.GeometryObjects.GeometryObjectSelector.ByCurve"),
                     FormalArguments = new List<AssociativeNode>
                     { 
                         stringNode
@@ -438,7 +438,7 @@ namespace Dynamo.Nodes
                     
                 node = new FunctionCallNode
                 {
-                    Function = new IdentifierNode("DSRevitNodes.GeoemtryObjects.GeometryObjectSelector.ByReferenceId"),
+                    Function = new IdentifierNode("DSRevitNodes.GeometryObjects.GeometryObjectSelector.ByReferenceId"),
                     FormalArguments = new List<AssociativeNode>
                     { 
                         stringNode

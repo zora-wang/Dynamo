@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.DB;
+using DSRevitNodes.GeometryObjects;
 using Dynamo.Nodes;
 using NUnit.Framework;
 using ProtoCore.AST.AssociativeAST;
@@ -116,7 +117,8 @@ namespace Dynamo.Tests
             Assert.AreEqual(1, funCall.FormalArguments.Count);
             Assert.IsInstanceOf<StringNode>(funCall.FormalArguments[0]);
 
-            Assert.AreEqual(face.Reference.ConvertToStableRepresentation(DocumentManager.GetInstance().CurrentDBDocument), ((StringNode)funCall.FormalArguments[0]).value);
+            var stableRef = face.Reference.ConvertToStableRepresentation(DocumentManager.GetInstance().CurrentDBDocument);
+            Assert.AreEqual(stableRef, ((StringNode)funCall.FormalArguments[0]).value);
         }
     }
 }
