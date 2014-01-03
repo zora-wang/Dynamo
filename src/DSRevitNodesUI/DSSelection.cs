@@ -604,7 +604,7 @@ namespace Dynamo.Nodes
 
             var newInputs = els.Select(el => new FunctionCallNode
             {
-                Function = new IdentifierNode("DSRevitNodes.Elements.ElementSelector.ByElementIds"),
+                Function = new IdentifierNode("DSRevitNodes.Elements.ElementSelector.ByElementId"),
                 FormalArguments = new List<AssociativeNode>
                 {
                     new IntNode(el.Id.IntegerValue.ToString(CultureInfo.InvariantCulture))
