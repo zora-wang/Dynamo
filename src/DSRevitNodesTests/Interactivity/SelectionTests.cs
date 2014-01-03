@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.DB;
-using DSRevitNodes.GeometryObjects;
 using Dynamo.Nodes;
 using NUnit.Framework;
 using ProtoCore.AST.AssociativeAST;
