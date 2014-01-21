@@ -148,6 +148,12 @@ namespace Dynamo.UI
         #endregion
 
         public const string UpdateDownloadLocation = "http://dyn-builds-data.s3-us-west-2.amazonaws.com/";
+
+        #region Screen Capture Configurations
+        public static readonly double ScreenCaptureDefaultScaling = 1;
+        public static readonly double ScreenCaptureContentPaddingInPixel = 30;
+        public static readonly int ScreenCaptureDefaultDPI = 150;
+        #endregion
     }
 
     public class ResourceNames

@@ -113,7 +113,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DynamoAsm\DynamoAsm.csproj">
-      <Project>{95192F1A-3265-4986-8D07-50F8FD4F2439}</Project>
+      <Project>{95192f1a-3265-4986-8d07-50f8fd4f2439}</Project>
       <Name>DynamoAsm</Name>
     </ProjectReference>
     <ProjectReference Include="..\DynamoCore\DynamoCore.csproj">
