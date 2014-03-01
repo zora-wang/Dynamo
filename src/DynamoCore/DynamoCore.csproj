@@ -71,9 +71,15 @@ limitations under the License.
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\extern\greg\Greg.dll</HintPath>
     </Reference>
+    <Reference Include="HelixToolkit">
+      <HintPath>..\..\extern\Helix3D\Helix.SharpDX\HelixToolkit.dll</HintPath>
+    </Reference>
     <Reference Include="HelixToolkit.Wpf, Version=2012.4.24.1, Culture=neutral, PublicKeyToken=52aa3500039caf0d, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\extern\Helix3D\NET40\HelixToolkit.Wpf.dll</HintPath>
+      <HintPath>..\..\extern\Helix3D\Helix.SharpDX\HelixToolkit.Wpf.dll</HintPath>
+    </Reference>
+    <Reference Include="HelixToolkit.Wpf.SharpDX">
+      <HintPath>..\..\extern\Helix3D\Helix.SharpDX\HelixToolkit.Wpf.SharpDX.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.Practices.Prism">
@@ -101,6 +107,33 @@ limitations under the License.
     <Reference Include="RestSharp, Version=104.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\extern\greg\RestSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX, Version=2.5.0.0, Culture=neutral, PublicKeyToken=627a3d6d1956f55a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\extern\Helix3D\Helix.SharpDX\SharpDX.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.D3DCompiler, Version=2.5.0.0, Culture=neutral, PublicKeyToken=627a3d6d1956f55a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\extern\Helix3D\Helix.SharpDX\SharpDX.D3DCompiler.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.Direct3D11, Version=2.5.0.0, Culture=neutral, PublicKeyToken=627a3d6d1956f55a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\extern\Helix3D\Helix.SharpDX\SharpDX.Direct3D11.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.Direct3D11.Effects, Version=2.5.0.0, Culture=neutral, PublicKeyToken=627a3d6d1956f55a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\extern\Helix3D\Helix.SharpDX\SharpDX.Direct3D11.Effects.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.Direct3D9, Version=2.5.0.0, Culture=neutral, PublicKeyToken=627a3d6d1956f55a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\extern\Helix3D\Helix.SharpDX\SharpDX.Direct3D9.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.DXGI, Version=2.5.0.0, Culture=neutral, PublicKeyToken=627a3d6d1956f55a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\extern\Helix3D\Helix.SharpDX\SharpDX.DXGI.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.Toolkit.Graphics">
+      <HintPath>..\..\extern\Helix3D\Helix.SharpDX\SharpDX.Toolkit.Graphics.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
@@ -206,6 +239,7 @@ limitations under the License.
     <Compile Include="ViewModels\EndlessGridViewModel.cs" />
     <Compile Include="ViewModels\InfoBubbleViewModel.cs" />
     <Compile Include="ViewModels\Watch3DFullscreenViewModel.cs" />
+    <Compile Include="ViewModels\Watch3DViewModel.cs" />
     <Compile Include="ViewModels\WatchViewModel.cs" />
     <Compile Include="Search\BrowserInternalElement.cs" />
     <Compile Include="UI\Commands\ConnectorCommands.cs" />

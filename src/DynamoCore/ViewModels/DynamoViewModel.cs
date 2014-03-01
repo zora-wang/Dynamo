@@ -29,7 +29,7 @@ namespace Dynamo.ViewModels
 
     public delegate void RequestAboutWindowHandler(DynamoViewModel aboutViewModel);
 
-    public partial class DynamoViewModel : ViewModelBase, IWatchViewModel
+    public partial class DynamoViewModel : ViewModelBase
     {
         #region events
 
@@ -186,8 +186,6 @@ namespace Dynamo.ViewModels
         public DelegateCommand FitViewCommand { get; set; }
         public DelegateCommand TogglePanCommand { get; set; }
         public DelegateCommand EscapeCommand { get; set; }
-        public DelegateCommand SelectVisualizationInViewCommand { get; set; }
-        public DelegateCommand GetBranchVisualizationCommand { get; set; }
         public DelegateCommand TogglePreviewBubbleVisibilityCommand { get; set; }
         public DelegateCommand ExportToSTLCommand { get; set; }
         public DelegateCommand ImportLibraryCommand { get; set; }
@@ -588,8 +586,6 @@ namespace Dynamo.ViewModels
             FitViewCommand = new DelegateCommand(FitView, CanFitView);
             TogglePanCommand = new DelegateCommand(TogglePan, CanTogglePan);
             EscapeCommand = new DelegateCommand(Escape, CanEscape);
-            SelectVisualizationInViewCommand = new DelegateCommand(SelectVisualizationInView, CanSelectVisualizationInView);
-            GetBranchVisualizationCommand = new DelegateCommand(GetBranchVisualization, CanGetBranchVisualization);
             TogglePreviewBubbleVisibilityCommand = new DelegateCommand(TogglePreviewBubbleVisibility, CanTogglePreviewBubbleVisibility);
             ExportToSTLCommand = new DelegateCommand(ExportToSTL, CanExportToSTL);
             ImportLibraryCommand = new DelegateCommand(ImportLibrary, CanImportLibrary);
@@ -1620,45 +1616,6 @@ namespace Dynamo.ViewModels
             return true;
         }
 
-        #region IWatchViewModel interface
-
-        internal void SelectVisualizationInView(object parameters)
-        {
-            Debug.WriteLine("Selecting mesh from background watch.");
-
-            var arr = (double[])parameters;
-            double x = arr[0];
-            double y = arr[1];
-            double z = arr[2];
-
-            dynSettings.Controller.VisualizationManager.LookupSelectedElement(x, y, z);
-        }
-
-        internal bool CanSelectVisualizationInView(object parameters)
-        {
-            if (parameters != null)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        public void GetBranchVisualization(object parameters)
-        {
-            dynSettings.Controller.VisualizationManager.RenderUpstream(null);
-        }
-
-        public bool CanGetBranchVisualization(object parameter)
-        {
-            if (FullscreenWatchShowing)
-            {
-                return true;
-            }
-            return false;
-        }
-
-        #endregion
     }
 
     public class ZoomEventArgs : EventArgs
