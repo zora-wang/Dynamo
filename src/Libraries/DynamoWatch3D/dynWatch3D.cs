@@ -61,6 +61,11 @@ namespace Dynamo.Nodes
                 Height = _watchHeight
             };
 
+            //override the bindings for these
+            //properties for watch3d
+            View.View.ShowCoordinateSystem = true;
+            View.View.IsHitTestVisible = true;
+
             var backgroundRect = new Rectangle
             {
                 HorizontalAlignment = HorizontalAlignment.Stretch,

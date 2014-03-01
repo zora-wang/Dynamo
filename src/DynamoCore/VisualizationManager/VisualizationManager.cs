@@ -306,6 +306,8 @@ namespace Dynamo
         /// <returns>A render description containing all upstream geometry.</returns>
         public void RenderUpstream(string id)
         {
+            Debug.WriteLine(string.Format("Rendering for id:{0}", string.IsNullOrEmpty(id)?"Background":id));
+
             List<RenderPackage> packages; 
 
             //send back just what the node needs

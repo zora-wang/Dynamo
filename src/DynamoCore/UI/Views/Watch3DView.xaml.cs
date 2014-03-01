@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -6,9 +7,12 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
+using System.Windows.Threading;
+using Dynamo.DSEngine;
 using Dynamo.Utilities;
 using Dynamo.ViewModels;
 using HelixToolkit.Wpf.SharpDX;
+using SharpDX;
 using HitTestResult = System.Windows.Media.HitTestResult;
 using Point = System.Windows.Point;
 
@@ -21,7 +25,6 @@ namespace Dynamo.Controls
     {
         Point _rightMousePoint;
         private Watch3DViewModel _vm;
-        private bool _requiresUpdate = false;
 
         public Viewport3DX View
         {
@@ -62,6 +65,8 @@ namespace Dynamo.Controls
                 dynSettings.Controller.VisualizationManager.VisualizationUpdateComplete += VisualizationManager_VisualizationUpdateComplete;
                 dynSettings.Controller.VisualizationManager.ResultsReadyToVisualize += VisualizationManager_ResultsReadyToVisualize;
             }
+
+            VisualizationManager_ResultsReadyToVisualize(this, new VisualizationEventArgs(new List<RenderPackage>(), ""));
         }
 
         /// <summary>
@@ -71,8 +76,13 @@ namespace Dynamo.Controls
         /// <param name="e"></param>
         void VisualizationManager_ResultsReadyToVisualize(object sender, VisualizationEventArgs e)
         {
-            //Dispatcher.Invoke(new Action<VisualizationEventArgs>(_vm.RenderDrawables), DispatcherPriority.Render,
-                                //new object[] { e });
+            Dispatcher.Invoke(new Action<VisualizationEventArgs>(RenderDrawables), DispatcherPriority.Render,
+                                new object[] { e });
+        }
+
+        internal void RenderDrawables(VisualizationEventArgs e)
+        {
+            watch_view.Detach();
 
             _vm.RenderDrawables(e);
 
@@ -160,6 +170,18 @@ namespace Dynamo.Controls
                 models.Children.Add(lines);
             }
 
+            if (_vm.HelixGrid != null && _vm.HelixGrid.Lines.Any())
+            {
+                var grid = new LineGeometryModel3D()
+                {
+                    Geometry = _vm.HelixGrid,
+                    Color = SharpDX.Color.DarkGray,
+                    Transform = Transform3D.Identity,
+                    Thickness = 1
+                };
+                models.Children.Add(grid);
+            }
+
             watch_view.ReAttach();
         }
 
@@ -177,11 +199,9 @@ namespace Dynamo.Controls
 
             Dispatcher.Invoke(new Action(delegate
             {
-                var vm = (IWatchViewModel) DataContext;
-                   
-                if (vm.GetBranchVisualizationCommand.CanExecute(null))
+                if (_vm.GetBranchVisualizationCommand.CanExecute(null))
                 {
-                    vm.GetBranchVisualizationCommand.Execute(null);
+                    _vm.GetBranchVisualizationCommand.Execute(null);
                 }
             }));
         }

@@ -41,6 +41,7 @@ namespace Dynamo.ViewModels
         private ThreadSafeList<BillboardTextItem> _text = new ThreadSafeList<BillboardTextItem>();
         private Camera _camera;
         private bool _watchIsResizable;
+        private Vector3D _upAxis = new Vector3D(0, 0, 1);
 
         public PhongMaterial MeshMaterial { get; private set; }
         public PhongMaterial MeshSelectedMaterial { get; private set; }
@@ -64,7 +65,7 @@ namespace Dynamo.ViewModels
             get { return Materials.White; }
         }
 
-        public ThreadSafeList<Point3D> HelixGrid { get; set; }
+        public LineGeometry3D HelixGrid { get; set; }
         public LineGeometry3D HelixLines { get; set; }
         public LineGeometry3D HelixXAxes { get; set; }
         public LineGeometry3D HelixYAxes { get; set; }
@@ -72,6 +73,7 @@ namespace Dynamo.ViewModels
         public MeshGeometry3D HelixMesh { get; set; }
         public LineGeometry3D HelixLinesSelected { get; set; }
         public MeshGeometry3D HelixMeshSelected { get; set; }
+        public Transform3D Model1Transform { get; private set; }
 
         public ThreadSafeList<Point3D> HelixPoints
         {
@@ -106,7 +108,15 @@ namespace Dynamo.ViewModels
             }
         }
 
-        public Transform3D Model1Transform { get; private set; }
+        public Vector3D UpAxis
+        {
+            get { return _upAxis; }
+            set
+            {
+                _upAxis = value;
+                NotifyPropertyChanged("UpAxis");
+            }
+        }
 
         public DelegateCommand SelectVisualizationInViewCommand { get; set; }
         public DelegateCommand GetBranchVisualizationCommand { get; set; }
@@ -131,8 +141,6 @@ namespace Dynamo.ViewModels
 
             Model1Transform = Transform3D.Identity;
 
-            HelixGrid = new ThreadSafeList<Point3D>();
-
             MeshMaterial = PhongMaterials.Blue;
             MeshSelectedMaterial = PhongMaterials.Blue;
 
@@ -144,36 +152,10 @@ namespace Dynamo.ViewModels
             {
                 Position = new System.Windows.Media.Media3D.Point3D(10, 10, 10),
                 LookDirection = new System.Windows.Media.Media3D.Vector3D(-1, -1, -1),
-                UpDirection = new System.Windows.Media.Media3D.Vector3D(0, 1, 0),
+                UpDirection = new System.Windows.Media.Media3D.Vector3D(0, 0, 1),
                 NearPlaneDistance = 0.01,
                 FarPlaneDistance = 1000
             };
-
-            DrawGrid();
-        }
-
-        /// <summary>
-        /// Create the grid
-        /// </summary>
-        private void DrawGrid()
-        {
-            HelixGrid = null;
-
-            var newLines = new ThreadSafeList<Point3D>();
-
-            for (int x = -10; x <= 10; x++)
-            {
-                newLines.Add(new Point3D(x, -10, -.001));
-                newLines.Add(new Point3D(x, 10, -.001));
-            }
-
-            for (int y = -10; y <= 10; y++)
-            {
-                newLines.Add(new Point3D(-10, y, -.001));
-                newLines.Add(new Point3D(10, y, -.001));
-            }
-
-            HelixGrid = newLines;
         }
 
         /// <summary>
@@ -225,7 +207,9 @@ namespace Dynamo.ViewModels
             HelixMeshSelected = meshesSelected.ToMeshGeometry3D();
 
             HelixText = text;
-            
+
+            HelixGrid = LineBuilder.GenerateGrid(Vector3.UnitZ, -10, 10);
+
             //var sb = new StringBuilder();
             //sb.AppendLine();
             //sb.AppendLine(string.Format("Rendering complete:"));
@@ -241,11 +225,8 @@ namespace Dynamo.ViewModels
             //Debug.WriteLine(sb.ToString());
 
             sw.Stop();
-            //DynamoLogger.Instance.Log(string.Format("{0} ellapsed for updating background preview.", sw.Elapsed));
 
             Debug.WriteLine(string.Format("{0} ellapsed for updating background preview.", sw.Elapsed));
-
-            //NotifyPropertyChanged("RenderTechnique");
         }
 
         private void ConvertPoints(RenderPackage p,
@@ -374,7 +355,7 @@ namespace Dynamo.ViewModels
         {
             //var sw = new Stopwatch();
             //sw.Start();
-
+            
             //var builder = new MeshBuilder();
             var points = new List<Vector3>();
             var tex = new List<Vector2>();
@@ -398,7 +379,7 @@ namespace Dynamo.ViewModels
                 var normal = new Vector3((float)p.TriangleNormals[i],
                                             (float)p.TriangleNormals[i + 1],
                                             (float)p.TriangleNormals[i + 2]);
-
+                
                 //find a matching point
                 //compare the angle between the normals
                 //to discern a 'break' angle for adjacent faces
@@ -487,10 +468,16 @@ namespace Dynamo.ViewModels
 
         public bool CanGetBranchVisualization(object parameter)
         {
+            if (!string.IsNullOrEmpty(_id))
+            {
+                return true;
+            }
+
             if (dynSettings.Controller.DynamoViewModel.FullscreenWatchShowing)
             {
                 return true;
             }
+
             return false;
         }
 

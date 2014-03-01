@@ -32,14 +32,14 @@
         </Grid.ContextMenu>
 
         <htx:Viewport3DX Name="watch_view" 
-                         ZoomExtentsWhenLoaded="True" 
+                        ZoomExtentsWhenLoaded="True" 
                         ShowViewCube="False" 
                         CameraRotationMode="Turntable"
                         IsHitTestVisible="{Binding Path=DataContext.WatchPreviewHitTest, RelativeSource={RelativeSource FindAncestor,AncestorType={x:Type Window}}}" 
                         MouseLeftButtonDown="Watch_view_OnMouseDown" 
                         ShowCoordinateSystem="{Binding Path=DataContext.CanNavigateBackground, RelativeSource={RelativeSource FindAncestor,AncestorType={x:Type Window}}}"
                         RenderTechnique="{Binding RenderTechnique}"
-                        Camera="{Binding Camera}">
+                        Camera="{Binding Camera}" ModelUpDirection="{Binding UpAxis}">
 
             <htx:Viewport3DX.InputBindings>
                 <MouseBinding Gesture="RightClick" Command="htx:ViewportCommands.Rotate"/>
