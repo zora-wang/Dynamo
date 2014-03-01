@@ -7,6 +7,7 @@ using System.Text;
 using System.Linq;
 using Dynamo.Models;
 using Dynamo.Selection;
+using Dynamo.Utilities;
 using Microsoft.Practices.Prism.ViewModel;
 using String = System.String;
 using Dynamo.DSEngine;
@@ -303,7 +304,7 @@ namespace Dynamo
         /// </summary>
         /// <param name="node">The node whose upstream geometry you need.</param>
         /// <returns>A render description containing all upstream geometry.</returns>
-        public void RenderUpstream(NodeModel node)
+        public void RenderUpstream(string id)
         {
             List<RenderPackage> packages; 
 
@@ -311,7 +312,7 @@ namespace Dynamo
             var watch = new Stopwatch();
             watch.Start();
 
-            if (node == null)
+            if (string.IsNullOrEmpty(id))
             {
                 //send back everything
                 packages =
@@ -323,6 +324,12 @@ namespace Dynamo
             }
             else
             {
+                var node = dynSettings.Controller.DynamoModel.Nodes.FirstOrDefault(x => x.GUID.ToString() == id);
+                if (node == null)
+                {
+                    return;
+                }
+
                 //send back renderables for the branch
                 packages = GetUpstreamPackages(node.Inputs);
                 if (packages.Any())

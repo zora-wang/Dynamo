@@ -40,6 +40,7 @@ namespace Dynamo.ViewModels
         public ThreadSafeList<Point3D> _pointsCacheSelected = new ThreadSafeList<Point3D>();
         private ThreadSafeList<BillboardTextItem> _text = new ThreadSafeList<BillboardTextItem>();
         private Camera _camera;
+        private bool _watchIsResizable;
 
         public PhongMaterial MeshMaterial { get; private set; }
         public PhongMaterial MeshSelectedMaterial { get; private set; }
@@ -110,14 +111,23 @@ namespace Dynamo.ViewModels
         public DelegateCommand SelectVisualizationInViewCommand { get; set; }
         public DelegateCommand GetBranchVisualizationCommand { get; set; }
 
-        public bool WatchIsResizable { get; set; }
-
-        public Watch3DViewModel(string id)
+        public bool WatchIsResizable
         {
+            get { return _watchIsResizable; }
+            set
+            {
+                _watchIsResizable = value;
+                NotifyPropertyChanged("WatchIsResizable");
+            }
+        }
+
+        public Watch3DViewModel(string id, bool isResizable)
+        {
+            _id = id;
+            WatchIsResizable = isResizable;
+
             SelectVisualizationInViewCommand = new DelegateCommand(SelectVisualizationInView, CanSelectVisualizationInView);
             GetBranchVisualizationCommand = new DelegateCommand(GetBranchVisualization, CanGetBranchVisualization);
-
-            _id = id;
 
             Model1Transform = Transform3D.Identity;
 
@@ -125,6 +135,7 @@ namespace Dynamo.ViewModels
 
             MeshMaterial = PhongMaterials.Blue;
             MeshSelectedMaterial = PhongMaterials.Blue;
+
             RenderTechnique = Techniques.RenderPhong;
             AmbientLightColor = new Color4(0.1f, 0.1f, 0.1f, 1.0f);
             DirectionalLightColor = SharpDX.Color.White;
@@ -471,7 +482,7 @@ namespace Dynamo.ViewModels
 
         public void GetBranchVisualization(object parameters)
         {
-            dynSettings.Controller.VisualizationManager.RenderUpstream(null);
+            dynSettings.Controller.VisualizationManager.RenderUpstream(_id);
         }
 
         public bool CanGetBranchVisualization(object parameter)

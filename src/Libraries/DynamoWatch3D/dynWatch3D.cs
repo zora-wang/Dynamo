@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -8,9 +7,7 @@ using System.Windows.Shapes;
 using System.Xml;
 using Dynamo.Controls;
 using Dynamo.Models;
-using Dynamo.UI.Commands;
 using Dynamo.Utilities;
-using Dynamo.ViewModels;
 using Microsoft.FSharp.Collections;
 using Value = Dynamo.FScheme.Value;
 
@@ -21,34 +18,16 @@ namespace Dynamo.Nodes
     [NodeDescription("Shows a dynamic preview of geometry.")]
     [AlsoKnownAs("Dynamo.Nodes.dyn3DPreview", "Dynamo.Nodes.3DPreview")]
     [IsDesignScriptCompatible]
-    public class Watch3D : NodeWithOneOutput, IWatchViewModel
+    public class Watch3D : NodeWithOneOutput
     {
-        private bool _requiresRedraw;
-        private bool _isRendering;
-        private bool _canNavigateBackground = true;
+        //private bool _requiresRedraw;
+        //private bool _isRendering;
+        //private bool _canNavigateBackground = true;
         private double _watchWidth = 200;
         private double _watchHeight = 200;
         private Point3D _camPosition = new Point3D(10,10,10);
         private Vector3D _lookDirection = new Vector3D(-1,-1,-1);
-
-        public DelegateCommand SelectVisualizationInViewCommand { get; set; }
-        public DelegateCommand GetBranchVisualizationCommand { get; set; }
-        public bool WatchIsResizable { get; set; }
-
         public Watch3DView View { get; private set; }
-
-        public bool CanNavigateBackground
-        {
-            get
-            {
-                return _canNavigateBackground;
-            }
-            set
-            {
-                _canNavigateBackground = value;
-                RaisePropertyChanged("CanNavigateBackground");
-            }
-        }
 
         public Watch3D()
         {
@@ -58,18 +37,11 @@ namespace Dynamo.Nodes
             RegisterAllPorts();
 
             ArgumentLacing = LacingStrategy.Disabled;
-
-            GetBranchVisualizationCommand = new DelegateCommand(GetBranchVisualization, CanGetBranchVisualization);
-            SelectVisualizationInViewCommand = new DelegateCommand(SelectVisualizationInView, CanSelectVisualizationInView);
-            WatchIsResizable = true;
         }
 
         public override Value Evaluate(FSharpList<Value> args)
         {
             var input = args[0];
-
-            _requiresRedraw = true;
-
             return input;
         }
 
@@ -80,21 +52,14 @@ namespace Dynamo.Nodes
 
             nodeUI.MainContextMenu.Items.Add(mi);
 
-            //take out the left and right margins and make this so it's not so wide
-            //NodeUI.inputGrid.Margin = new Thickness(10, 10, 10, 10);
-
             //add a 3D viewport to the input grid
             //http://helixtoolkit.codeplex.com/wikipage?title=HelixViewport3D&referringTitle=Documentation
             //_watchView = new WatchView();
             View = new Watch3DView(GUID.ToString())
             {
-                //DataContext = this,
                 Width = _watchWidth,
                 Height = _watchHeight
             };
-
-            //View.View.Camera.Position = _camPosition;
-            //View.View.Camera.LookDirection = _lookDirection;
 
             var backgroundRect = new Rectangle
             {
@@ -117,20 +82,6 @@ namespace Dynamo.Nodes
             View.SetValue(Grid.ColumnSpanProperty, 3);
             View.Margin = new Thickness(5, 0, 5, 5);
             backgroundRect.Margin = new Thickness(5, 0, 5, 5);
-            CompositionTarget.Rendering += CompositionTarget_Rendering;
-        }
-
-        void CompositionTarget_Rendering(object sender, EventArgs e)
-        {
-            if (_isRendering)
-                return;
-
-            if (!_requiresRedraw)
-                return;
-
-            _isRendering = true;
-            _requiresRedraw = false;
-            _isRendering = false;
         }
 
         void mi_Click(object sender, RoutedEventArgs e)
@@ -208,35 +159,5 @@ namespace Dynamo.Nodes
             //do nothing
             //a watch should not draw its outputs
         }
-
-        #region IWatchViewModel interface
-
-        public void GetBranchVisualization(object parameters)
-        {
-            dynSettings.Controller.VisualizationManager.RenderUpstream(this);
-        }
-
-        public bool CanGetBranchVisualization(object parameter)
-        {
-            return true;
-        }
-
-        internal void SelectVisualizationInView(object parameters)
-        {
-            Debug.WriteLine("Selecting mesh from watch 3d node.");
-            var arr = (double[])parameters;
-            double x = arr[0];
-            double y = arr[1];
-            double z = arr[2];
-
-            dynSettings.Controller.VisualizationManager.LookupSelectedElement(x, y, z);
-        }
-
-        internal bool CanSelectVisualizationInView(object parameters)
-        {
-            return parameters != null;
-        }
-
-        #endregion
     }
 }

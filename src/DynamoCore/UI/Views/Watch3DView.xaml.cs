@@ -31,7 +31,7 @@ namespace Dynamo.Controls
         public Watch3DView()
         {
             InitializeComponent();
-            _vm = new Watch3DViewModel("");
+            _vm = new Watch3DViewModel("", false);
             DataContext = _vm;
             Loaded += WatchViewFullscreen_Loaded;
         }
@@ -39,7 +39,7 @@ namespace Dynamo.Controls
         public Watch3DView(string id)
         {
             InitializeComponent();
-            _vm = new Watch3DViewModel(id);
+            _vm = new Watch3DViewModel(id, true);
             DataContext = _vm;
             Loaded += WatchViewFullscreen_Loaded;
         }
