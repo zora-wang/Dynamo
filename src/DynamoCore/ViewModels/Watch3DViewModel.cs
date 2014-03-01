@@ -39,6 +39,7 @@ namespace Dynamo.ViewModels
         public ThreadSafeList<Point3D> _pointsCache = new ThreadSafeList<Point3D>();
         public ThreadSafeList<Point3D> _pointsCacheSelected = new ThreadSafeList<Point3D>();
         private ThreadSafeList<BillboardTextItem> _text = new ThreadSafeList<BillboardTextItem>();
+        private Camera _camera;
 
         public PhongMaterial MeshMaterial { get; private set; }
         public PhongMaterial MeshSelectedMaterial { get; private set; }
@@ -46,7 +47,16 @@ namespace Dynamo.ViewModels
         public Vector3 DirectionalLightDirection { get; private set; }
         public Color4 DirectionalLightColor { get; private set; }
         public Color4 AmbientLightColor { get; private set; }
-        public Camera Camera { get; private set; }
+
+        public Camera Camera
+        {
+            get { return _camera; }
+            private set
+            {
+                _camera = value;
+                NotifyPropertyChanged("Camera");
+            }
+        }
 
         public System.Windows.Media.Media3D.Material HelixMeshMaterial
         {
@@ -102,21 +112,6 @@ namespace Dynamo.ViewModels
 
         public bool WatchIsResizable { get; set; }
 
-        //public bool CanNavigateBackground
-        //{
-        //    get { return dynSettings.Controller.DynamoViewModel.CanNavigateBackground; }
-        //}
-
-        //public bool FullScreenWatchShowing
-        //{
-        //    get { return dynSettings.Controller.DynamoViewModel.FullscreenWatchShowing; }
-        //}
-
-        //public bool WatchPreviewHitTest
-        //{
-        //    get { return (dynSettings.Controller.DynamoViewModel.WatchEscapeIsDown || CanNavigateBackground); }
-        //}
-
         public Watch3DViewModel(string id)
         {
             SelectVisualizationInViewCommand = new DelegateCommand(SelectVisualizationInView, CanSelectVisualizationInView);
@@ -136,8 +131,8 @@ namespace Dynamo.ViewModels
             DirectionalLightDirection = new Vector3(-2, -5, -2);
             Camera = new PerspectiveCamera
             {
-                Position = new System.Windows.Media.Media3D.Point3D(0, 0, 5),
-                LookDirection = new System.Windows.Media.Media3D.Vector3D(-0, -0, -5),
+                Position = new System.Windows.Media.Media3D.Point3D(10, 10, 10),
+                LookDirection = new System.Windows.Media.Media3D.Vector3D(-1, -1, -1),
                 UpDirection = new System.Windows.Media.Media3D.Vector3D(0, 1, 0),
                 NearPlaneDistance = 0.01,
                 FarPlaneDistance = 1000

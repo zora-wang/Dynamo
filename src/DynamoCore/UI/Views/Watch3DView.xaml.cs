@@ -78,7 +78,7 @@ namespace Dynamo.Controls
 
             models.Children.Clear();
 
-            if (_vm.HelixMesh.Positions.Any())
+            if (_vm.HelixMesh != null && _vm.HelixMesh.Positions.Any())
             {
                 var mesh = new MeshGeometryModel3D
                 {
@@ -89,7 +89,7 @@ namespace Dynamo.Controls
                 models.Children.Add(mesh);
             }
 
-            if (_vm.HelixMeshSelected.Positions.Any())
+            if (_vm.HelixMeshSelected != null && _vm.HelixMeshSelected.Positions.Any())
             {
                 var mesh = new MeshGeometryModel3D
                 {
@@ -100,7 +100,7 @@ namespace Dynamo.Controls
                 models.Children.Add(mesh);
             }
 
-            if (_vm.HelixLines.Positions.Any())
+            if (_vm.HelixLines != null && _vm.HelixLines.Positions.Any())
             {
                 var lines = new LineGeometryModel3D
                 {
@@ -112,7 +112,7 @@ namespace Dynamo.Controls
                 models.Children.Add(lines);
             }
 
-            if (_vm.HelixLinesSelected.Positions.Any())
+            if (_vm.HelixLinesSelected != null && _vm.HelixLinesSelected.Positions.Any())
             {
                 var lines = new LineGeometryModel3D
                 {
@@ -124,7 +124,7 @@ namespace Dynamo.Controls
                 models.Children.Add(lines);
             }
 
-            if (_vm.HelixXAxes.Positions.Any())
+            if (_vm.HelixXAxes != null && _vm.HelixXAxes.Positions.Any())
             {
                 var lines = new LineGeometryModel3D
                 {
@@ -136,7 +136,7 @@ namespace Dynamo.Controls
                 models.Children.Add(lines);
             }
 
-            if (_vm.HelixYAxes.Positions.Any())
+            if (_vm.HelixYAxes != null && _vm.HelixYAxes.Positions.Any())
             {
                 var lines = new LineGeometryModel3D
                 {
@@ -148,7 +148,7 @@ namespace Dynamo.Controls
                 models.Children.Add(lines);
             }
 
-            if (_vm.HelixZAxes.Positions.Any())
+            if (_vm.HelixZAxes != null && _vm.HelixZAxes.Positions.Any())
             {
                 var lines = new LineGeometryModel3D
                 {

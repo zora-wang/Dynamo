@@ -88,13 +88,13 @@ namespace Dynamo.Nodes
             //_watchView = new WatchView();
             View = new Watch3DView(GUID.ToString())
             {
-                DataContext = this,
+                //DataContext = this,
                 Width = _watchWidth,
                 Height = _watchHeight
             };
 
-            View.View.Camera.Position = _camPosition;
-            View.View.Camera.LookDirection = _lookDirection;
+            //View.View.Camera.Position = _camPosition;
+            //View.View.Camera.LookDirection = _lookDirection;
 
             var backgroundRect = new Rectangle
             {
