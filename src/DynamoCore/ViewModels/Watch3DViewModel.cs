@@ -145,6 +145,7 @@ namespace Dynamo.ViewModels
             MeshSelectedMaterial = PhongMaterials.Blue;
 
             RenderTechnique = Techniques.RenderPhong;
+
             AmbientLightColor = new Color4(0.1f, 0.1f, 0.1f, 1.0f);
             DirectionalLightColor = SharpDX.Color.White;
             DirectionalLightDirection = new Vector3(-2, -5, -2);
@@ -153,8 +154,8 @@ namespace Dynamo.ViewModels
                 Position = new System.Windows.Media.Media3D.Point3D(10, 10, 10),
                 LookDirection = new System.Windows.Media.Media3D.Vector3D(-1, -1, -1),
                 UpDirection = new System.Windows.Media.Media3D.Vector3D(0, 0, 1),
-                NearPlaneDistance = 0.01,
-                FarPlaneDistance = 1000
+                NearPlaneDistance = 0.1,
+                FarPlaneDistance = 100
             };
         }
 

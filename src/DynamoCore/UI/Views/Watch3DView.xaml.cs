@@ -12,7 +12,6 @@ using Dynamo.DSEngine;
 using Dynamo.Utilities;
 using Dynamo.ViewModels;
 using HelixToolkit.Wpf.SharpDX;
-using SharpDX;
 using HitTestResult = System.Windows.Media.HitTestResult;
 using Point = System.Windows.Point;
 
@@ -36,7 +35,7 @@ namespace Dynamo.Controls
             InitializeComponent();
             _vm = new Watch3DViewModel("", false);
             DataContext = _vm;
-            Loaded += WatchViewFullscreen_Loaded;
+            Loaded += OnViewLoaded;
         }
 
         public Watch3DView(string id)
@@ -44,10 +43,10 @@ namespace Dynamo.Controls
             InitializeComponent();
             _vm = new Watch3DViewModel(id, true);
             DataContext = _vm;
-            Loaded += WatchViewFullscreen_Loaded;
+            Loaded += OnViewLoaded;
         }
 
-        void WatchViewFullscreen_Loaded(object sender, RoutedEventArgs e)
+        void OnViewLoaded(object sender, RoutedEventArgs e)
         {
             MouseLeftButtonDown += new MouseButtonEventHandler(view_MouseButtonIgnore);
             MouseLeftButtonUp += new MouseButtonEventHandler(view_MouseButtonIgnore);
@@ -94,7 +93,7 @@ namespace Dynamo.Controls
                 {
                     Geometry = _vm.HelixMesh,
                     Material = PhongMaterials.Blue,
-                    Transform = Transform3D.Identity
+                    Transform = Transform3D.Identity,
                 };
                 models.Children.Add(mesh);
             }
@@ -208,7 +207,11 @@ namespace Dynamo.Controls
 
         protected void mi_Click(object sender, RoutedEventArgs e)
         {
-            watch_view.ZoomExtents();
+            //watch_view.ZoomExtents();
+            if (ViewportCommands.ZoomExtents.CanExecute(null, watch_view))
+            {
+                ViewportCommands.ZoomExtents.Execute(null, watch_view);
+            }
         }
 
         private void MainContextMenu_ContextMenuOpening(object sender, ContextMenuEventArgs e)

@@ -20,9 +20,6 @@ namespace Dynamo.Nodes
     [IsDesignScriptCompatible]
     public class Watch3D : NodeWithOneOutput
     {
-        //private bool _requiresRedraw;
-        //private bool _isRendering;
-        //private bool _canNavigateBackground = true;
         private double _watchWidth = 200;
         private double _watchHeight = 200;
         private Point3D _camPosition = new Point3D(10,10,10);
@@ -54,7 +51,6 @@ namespace Dynamo.Nodes
 
             //add a 3D viewport to the input grid
             //http://helixtoolkit.codeplex.com/wikipage?title=HelixViewport3D&referringTitle=Documentation
-            //_watchView = new WatchView();
             View = new Watch3DView(GUID.ToString())
             {
                 Width = _watchWidth,
@@ -63,6 +59,8 @@ namespace Dynamo.Nodes
 
             //override the bindings for these
             //properties for watch3d
+            //View.View.Camera.Position = _camPosition;
+            //View.View.Camera.LookDirection = _lookDirection;
             View.View.ShowCoordinateSystem = true;
             View.View.IsHitTestVisible = true;
 
