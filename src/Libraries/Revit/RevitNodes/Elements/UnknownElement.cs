@@ -30,6 +30,7 @@ namespace Revit.Elements
         private UnknownElement(Autodesk.Revit.DB.Element element)
         {
             this._element = element;
+            this.InternalElementId = element.Id;
         }
 
         /// <summary>

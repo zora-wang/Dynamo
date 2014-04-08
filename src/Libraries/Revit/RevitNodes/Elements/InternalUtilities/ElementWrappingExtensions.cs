@@ -148,6 +148,11 @@ namespace Revit.Elements
             return WallType.FromExisting(ele, isRevitOwned);
         }
 
+        public static CurtainPanel Wrap(Autodesk.Revit.DB.Panel ele, bool isRevitOwned)
+        {
+           return CurtainPanel.FromExisting(ele, isRevitOwned);
+        }
+
         public static View3D Wrap(Autodesk.Revit.DB.View3D view, bool isRevitOwned)
         {
             if (view.IsPerspective)
