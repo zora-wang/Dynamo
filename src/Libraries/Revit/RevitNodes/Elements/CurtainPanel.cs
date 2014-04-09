@@ -25,6 +25,9 @@ namespace Revit.Elements
       {
          get
          {
+            // This creates a new wall and deletes the old one
+            TransactionManager.Instance.EnsureInTransaction(Document);
+
             var elementAsPanel = InternalElement as Autodesk.Revit.DB.Panel;
             if (elementAsPanel == null)
                throw new Exception("InternalElement of Curtain Panel is not Panel");
@@ -38,6 +41,8 @@ namespace Revit.Elements
             elementAsPanel.GetRefGridLines(ref uGridId, ref vGridId);
 
             CurtainCell cell = hostingGrid.InternalCurtainGrid.GetCell(uGridId, vGridId);
+
+            TransactionManager.Instance.TransactionTaskDone();
 
             if (cell == null)
                throw new Exception("Could not find cell for panel");

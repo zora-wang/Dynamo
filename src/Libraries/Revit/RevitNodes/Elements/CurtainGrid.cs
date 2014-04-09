@@ -246,7 +246,9 @@ namespace Revit.Elements
          {
             ElementId idPanel = panelEnum.Current;
             var panel = DocumentManager.Instance.CurrentDBDocument.GetElement(idPanel);
-            panels.Add(UnknownElement.FromExisting(panel));
+            if (!(panel is Panel))
+               continue;
+            panels.Add(CurtainPanel.FromExisting(panel as Panel, true));
          }
          return panels;
       }
