@@ -153,6 +153,11 @@ namespace Revit.Elements
            return CurtainPanel.FromExisting(ele, isRevitOwned);
         }
 
+        public static Mullion Wrap(Autodesk.Revit.DB.Mullion ele, bool isRevitOwned)
+        {
+           return Mullion.FromExisting(ele, isRevitOwned);
+        }
+
         public static View3D Wrap(Autodesk.Revit.DB.View3D view, bool isRevitOwned)
         {
             if (view.IsPerspective)

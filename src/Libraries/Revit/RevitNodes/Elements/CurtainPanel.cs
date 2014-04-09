@@ -15,7 +15,7 @@ using Plane = Autodesk.DesignScript.Geometry.Plane;
 namespace Revit.Elements
 {
    /// <summary>
-   /// A Revit CurtainGrid
+   /// A Revit CurtainPanel
    /// </summary>
    public class CurtainPanel : AbstractFamilyInstance
    {
@@ -278,7 +278,7 @@ namespace Revit.Elements
       {
          var elementAsPanel = panelElement.InternalElement as Autodesk.Revit.DB.Panel;
          if (elementAsPanel == null)
-            throw new Exception("curtain Panel should be Family Instance");
+            throw new Exception("Curtain Panel should represent Revit panel");
          return new CurtainPanel(elementAsPanel);
       }
 
@@ -304,6 +304,57 @@ namespace Revit.Elements
       #endregion
 
       #region public methods
+
+      public Mullion[] SupportingMullions()
+      {
+         var elementAsPanel = InternalElement as Autodesk.Revit.DB.Panel;
+         if (elementAsPanel == null)
+            throw new Exception("Curtain Panel should represent Revit panel");
+         var bounds = this.Boundaries;
+
+         var host = elementAsPanel.Host;
+
+         var hostingGrid = CurtainGrid.ByElement(UnknownElement.FromExisting(host));
+
+         var mullions = hostingGrid.GetMullions();
+         int numberMullions = mullions.Count;
+         var result = new List<Mullion>();
+
+         for (int index = 0; index < numberMullions; index++)
+         {
+            var mullionAtIndex = mullions[index] as Mullion;
+            if (mullionAtIndex == null)
+               continue;
+
+            var thisCurve = mullionAtIndex.LocationCurve;
+
+            var enumBounds = bounds.GetEnumerator();
+            bool neighbor = false;
+            for (; enumBounds.MoveNext() && !neighbor; )
+            {
+               var polycrv = enumBounds.Current as PolyCurve;
+               if (polycrv == null)
+                  continue;
+               var bndCrvs = polycrv.Curves();
+               var enumCrv = bndCrvs.GetEnumerator();
+               for (; enumCrv.MoveNext(); )
+               {
+                  var crv = enumCrv.Current as Autodesk.DesignScript.Geometry.Curve;
+                  if (crv == null)
+                     continue;
+                  var midPoint = crv.PointAtParameter(0.5);
+                  if (midPoint.DistanceTo(thisCurve) < 1.0e-7)
+                  {
+                     neighbor = true;
+                     break;
+                  }
+               }
+            }
+            if (neighbor)
+               result.Add(mullionAtIndex);
+         }
+         return result.ToArray();
+      }
 
       public FamilyInstance AsFamilyInstance()
       {

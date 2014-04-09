@@ -93,7 +93,7 @@ namespace Revit.Elements
                   for (; mullionEnum.MoveNext();)
                   {
                      ElementId idMullion = mullionEnum.Current;
-                     var mullion = DocumentManager.Instance.CurrentDBDocument.GetElement(idMullion) as Mullion;
+                     var mullion = DocumentManager.Instance.CurrentDBDocument.GetElement(idMullion) as Autodesk.Revit.DB.Mullion;
                      if (mullion == null)
                         continue;
                      var curveMullion = mullion.LocationCurve;
@@ -261,9 +261,9 @@ namespace Revit.Elements
 
          for (; mullionEnum.MoveNext(); )
          {
-            ElementId idPanel = mullionEnum.Current;
-            var mullion = DocumentManager.Instance.CurrentDBDocument.GetElement(idPanel);
-            mullions.Add(UnknownElement.FromExisting(mullion));
+            ElementId idMullion = mullionEnum.Current;
+            var mullion = DocumentManager.Instance.CurrentDBDocument.GetElement(idMullion);
+            mullions.Add(Mullion.FromExisting(mullion as Autodesk.Revit.DB.Mullion, true));
          }
          return mullions;
       }
