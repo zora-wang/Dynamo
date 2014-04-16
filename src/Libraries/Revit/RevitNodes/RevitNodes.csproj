@@ -77,6 +77,7 @@
     <Compile Include="AnalysisDisplay\PointAnalysisDisplay.cs" />
     <Compile Include="AnalysisDisplay\VectorAnalysisDisplay.cs" />
     <Compile Include="Application\Document.cs" />
+    <Compile Include="Elements\LiveSharedItem.cs" />
     <Compile Include="Elements\CurtainPanel.cs" />
     <Compile Include="Elements\Category.cs" />
     <Compile Include="Elements\CurtainGrid.cs" />
