@@ -1117,6 +1117,26 @@
             The fourth index
             </summary>
         </member>
+        <member name="T:Autodesk.DesignScript.Geometry.Core.EntityTags">
+            <summary>
+            Tags allow you to add arbitrary metadata to a DesignScriptEntity.  This is critical for Revit
+            geometry integration.
+            </summary>
+        </member>
+        <member name="M:Autodesk.DesignScript.Geometry.Core.EntityTags.AddTag(System.String,System.Object)">
+            <summary>
+            Add or overwrite a Geometry tag
+            </summary>
+            <param name="tag"></param>
+            <param name="data"></param>
+        </member>
+        <member name="M:Autodesk.DesignScript.Geometry.Core.EntityTags.LookupTag(System.String)">
+            <summary>
+            Do recursive lookup of geometry tags
+            </summary>
+            <param name="name"></param>
+            <returns></returns>
+        </member>
         <member name="M:Autodesk.DesignScript.Geometry.ParameterizedCollection.#ctor(System.Array)">
             <summary>
             Constructor that expects input data as collection of name and value
