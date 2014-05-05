@@ -25,9 +25,27 @@ namespace Revit.GeometryReferences
             this.InternalReference = curve.Reference;
         }
 
+        internal ElementCurveReference(Autodesk.Revit.DB.Reference reference)
+        {
+            this.InternalReference = reference;
+        }
+
+        public const string DefaultTag = "RevitCurveReference";
+
         internal static ElementCurveReference FromExisting(Autodesk.Revit.DB.Curve curve)
         {
             return new ElementCurveReference(curve);
+        }
+
+        internal static ElementCurveReference FromExisting(Autodesk.Revit.DB.Reference reference)
+        {
+            return new ElementCurveReference(reference);
+        }
+
+        internal static Autodesk.DesignScript.Geometry.Curve AddTag(Autodesk.DesignScript.Geometry.Curve curve, Autodesk.Revit.DB.Reference reference)
+        {
+            curve.Tags.AddTag(DefaultTag, reference);
+            return curve;
         }
 
         /// <summary>
@@ -77,7 +95,16 @@ namespace Revit.GeometryReferences
 
         private static ElementCurveReference TryGetCurveReference(Autodesk.DesignScript.Geometry.Curve curveObject, string nodeTypeString = "This node")
         {
-            throw new ArgumentException(nodeTypeString + " requires a ElementCurveReference extracted from a Revit Element! " +
+            // If a Reference has been added to this object, we can use that
+            // to build the element.
+            object tagObj = curveObject.Tags.LookupTag(DefaultTag);
+            if (tagObj != null)
+            {
+                var tagRef = (Reference) tagObj;
+                return new ElementCurveReference(tagRef);
+            }
+
+            throw new ArgumentException(nodeTypeString + " requires a Curve extracted from a Revit Element! " +
                                          "You can use the ModelCurve.ByCurve or ImportInstance.ByGeometry to " +
                                             "turn this Curve into a Revit Element.");
         }
