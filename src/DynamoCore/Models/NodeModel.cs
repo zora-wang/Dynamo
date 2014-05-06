@@ -1408,6 +1408,8 @@ namespace Dynamo.Models
             } 
         }
 
+        private bool forceReExec = false;
+
         /// <summary>
         ///     This property forces all AST nodes that generated from this node
         ///     to be executed, even there is no change in AST nodes.
@@ -1416,8 +1418,9 @@ namespace Dynamo.Models
         {
             get
             {
-                return false;
+                return forceReExec;
             }
+            set { forceReExec = value; }
         }
         #endregion
 
@@ -1634,7 +1637,7 @@ namespace Dynamo.Models
                 if (!string.IsNullOrEmpty(identifier))
                     drawables.Add(identifier);
             }
-
+                
             return drawables;
         }
 
