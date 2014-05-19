@@ -37,5 +37,11 @@ namespace Dynamo.Manipulation
             if (activeManipulators.TryGetValue(model.GUID, out disposable))
                 disposable.Dispose();
         }
+
+        internal void KillAll()
+        {
+            activeManipulators.Values.ToList().ForEach(x => x.Dispose());
+            activeManipulators.Clear();
+        }
     }
 }

@@ -134,6 +134,7 @@ limitations under the License.
     <Compile Include="Interfaces\ILogger.cs" />
     <Compile Include="Interfaces\IPreferences.cs" />
     <Compile Include="Interfaces\IWatchHandler.cs" />
+    <Compile Include="Manipulation\DSFunctionManipulatorCreator.cs" />
     <Compile Include="Manipulation\DynamoContext.cs" />
     <Compile Include="Manipulation\IManipulator.cs" />
     <Compile Include="Manipulation\IManipulatorDaemonInitializer.cs" />

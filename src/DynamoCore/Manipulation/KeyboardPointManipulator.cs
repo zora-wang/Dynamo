@@ -9,20 +9,10 @@ namespace Dynamo.Manipulation
 {
     public class KeyboardPointManipulatorCreator : INodeManipulatorCreator
     {
-
-        public string NodeType
-        {
-            get
-            {
-                return "Point.ByCoordinates@double,double,double";
-            }
-        }
-
         public IManipulator Create(NodeModel node, DynamoContext context)
         {
             return new KeyboardPointManipulator(node, context);
         }
-
     }
 
     public class KeyboardPointManipulator : IManipulator
@@ -72,22 +62,22 @@ namespace Dynamo.Manipulation
         {
             switch (e.Key)
             {
-                case Key.Up:
+                case Key.I:
                     Increment(YNode);
                     break;
-                case Key.Down:
+                case Key.K:
                     Decrement(YNode);
                     break;
-                case Key.Left:
+                case Key.J:
                     Increment(XNode);
                     break;
-                case Key.Right:
+                case Key.L:
                     Decrement(XNode);
                     break;
-                case Key.X:
+                case Key.F:
                     Increment(ZNode);
                     break;
-                case Key.Z:
+                case Key.G:
                     Decrement(ZNode);
                     break;
             }
@@ -103,15 +93,14 @@ namespace Dynamo.Manipulation
     {
         public static NodeModel GetInputNodeOfName(this NodeModel node, int inputPortIndex, string nodeName)
         {
-            if (node.Name != nodeName || 
-                node.InPorts.Count <= inputPortIndex || 
+            if (node.InPorts.Count <= inputPortIndex || 
                 node.InPorts[inputPortIndex].Connectors.Count == 0)
             {
                 return null;
             }
 
             var oppositeNode = node.InPorts[inputPortIndex].Connectors[0].Start.Owner;
-            return oppositeNode.Name != nodeName ? oppositeNode : null;
+            return oppositeNode.Name == nodeName ? oppositeNode : null;
         }
 
     }

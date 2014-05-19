@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Dynamo.Nodes;
 
 namespace Dynamo.Manipulation
 {
@@ -14,6 +15,7 @@ namespace Dynamo.Manipulation
         {
             return new Dictionary<Type, INodeManipulatorCreator>
             {
+                { typeof(DSFunction), new DSFunctionManipulatorCreator() }
             };
         }
     }

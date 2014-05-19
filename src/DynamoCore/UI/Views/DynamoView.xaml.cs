@@ -355,9 +355,19 @@ namespace Dynamo.Controls
 
             if (e.Action != NotifyCollectionChangedAction.Move)
             {
-                foreach (var nm in e.OldItems.OfType<NodeModel>())
-                    ManipulatorDaemon.KillManipulator(nm);
+                if (e.OldItems != null)
+                {
+                    foreach (var nm in e.OldItems.OfType<NodeModel>())
+                        ManipulatorDaemon.KillManipulator(nm);
+                }
             }
+
+            if (e.Action == NotifyCollectionChangedAction.Reset)
+            {
+                ManipulatorDaemon.KillAll();
+            }
+
+            if (e.NewItems == null) return;
 
             foreach (var nm in e.NewItems.OfType<NodeModel>())
                 ManipulatorDaemon.CreateManipulator(nm, this);
