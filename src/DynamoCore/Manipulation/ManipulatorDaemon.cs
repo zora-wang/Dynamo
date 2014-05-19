@@ -28,7 +28,11 @@ namespace Dynamo.Manipulation
         {
             INodeManipulatorCreator creator;
             if (registeredManipulators.TryGetValue(model.GetType(), out creator))
-                activeManipulators[model.GUID] = creator.Create(model, new DynamoContext { View = dynamoView });
+            {
+                var manipulator = creator.Create(model, new DynamoContext { View = dynamoView });
+                if (manipulator != null)
+                    activeManipulators[model.GUID] = manipulator;
+            }
         }
 
         public void KillManipulator(NodeModel model)
