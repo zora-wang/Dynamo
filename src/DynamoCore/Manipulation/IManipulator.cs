@@ -8,5 +8,11 @@ namespace Dynamo.Manipulation
 {
     public interface IManipulator : IDisposable
     {
+
+    }
+
+    internal class EmptyManipulator : IManipulator
+    {
+        public void Dispose() { }
     }
 }
