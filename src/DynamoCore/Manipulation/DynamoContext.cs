@@ -5,10 +5,7 @@ namespace Dynamo.Manipulation
 {
     public class DynamoContext
     {
-        public DynamoContext(DynamoView view)
-        {
-            this.View = view;
-        }
+        internal DynamoContext () { }
 
         public DynamoController Controller { get { return dynSettings.Controller; } }
         public DynamoView View { get; set; }

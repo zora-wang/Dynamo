@@ -19,7 +19,6 @@ namespace Dynamo.Manipulation
     {
         public DynamoContext Context { get; set; }
         public NodeModel PointNode { get; set; }
-        public Tuple<bool, bool, bool> FreeAxes { private get; set; }
 
         public double Velocity = 1;
 

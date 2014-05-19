@@ -141,6 +141,7 @@ limitations under the License.
     <Compile Include="Manipulation\INodeManipulatorCreator.cs" />
     <Compile Include="Manipulation\KeyboardPointManipulator.cs" />
     <Compile Include="Manipulation\ManipulatorDaemon.cs" />
+    <Compile Include="Manipulation\MousePointManipulator.cs" />
     <Compile Include="Nodes\VariableInputNode.cs" />
     <Compile Include="Nodes\WatchImage.cs" />
     <Compile Include="UI\Controls\GraphUpdateNotificationControl.xaml.cs">
