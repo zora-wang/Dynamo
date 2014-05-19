@@ -44,7 +44,9 @@ namespace Dynamo.Manipulation
 
         internal void KillAll()
         {
-            activeManipulators.Values.ToList().ForEach(x => x.Dispose());
+            foreach (var manip in activeManipulators.Values)
+                manip.Dispose();
+
             activeManipulators.Clear();
         }
     }
