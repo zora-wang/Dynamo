@@ -1,6 +1,7 @@
 //#define __NO_SAMPLES_MENU
 
 using System;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -11,6 +12,7 @@ using System.Windows.Input;
 using System.Diagnostics;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using Dynamo.Manipulation;
 using Dynamo.Models;
 using Dynamo.Nodes;
 using Dynamo.Nodes.Prompts;
@@ -59,8 +61,7 @@ namespace Dynamo.Controls
             var app = new Application();
 
             //create the view
-            var ui = new DynamoView();
-            ui.DataContext = controller.DynamoViewModel;
+            var ui = new DynamoView { DataContext = controller.DynamoViewModel };
             controller.UIDispatcher = ui.Dispatcher;
 
             app.Run(ui);
@@ -81,7 +82,11 @@ namespace Dynamo.Controls
 
             this.Loaded += DynamoView_Loaded;
             this.Unloaded += DynamoView_Unloaded;
+
+            ManipulatorDaemon = ManipulatorDaemon.Create(new HardcodedInitializer());
         }
+
+        public ManipulatorDaemon ManipulatorDaemon { get; private set; }
 
         void InitializeShortcutBar()
         {
@@ -343,10 +348,19 @@ namespace Dynamo.Controls
             }
         }
 
-        void Selection_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        void Selection_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             _vm.CopyCommand.RaiseCanExecuteChanged();
             _vm.PasteCommand.RaiseCanExecuteChanged();
+
+            if (e.Action != NotifyCollectionChangedAction.Move)
+            {
+                foreach (var nm in e.OldItems.OfType<NodeModel>())
+                    ManipulatorDaemon.KillManipulator(nm);
+            }
+
+            foreach (var nm in e.NewItems.OfType<NodeModel>())
+                ManipulatorDaemon.CreateManipulator(nm, this);
         }
         
         void Controller_RequestsCrashPrompt(object sender, CrashPromptArgs args)

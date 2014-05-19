@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Dynamo.Controls;
 using Dynamo.Models;
 
 namespace Dynamo.Manipulation
@@ -23,11 +24,11 @@ namespace Dynamo.Manipulation
             return new ManipulatorDaemon(initializer.GetManipulators());
         }
 
-        public void CreateManipulator(NodeModel model)
+        public void CreateManipulator(NodeModel model, DynamoView dynamoView)
         {
             INodeManipulatorCreator creator;
             if (registeredManipulators.TryGetValue(model.GetType(), out creator))
-                activeManipulators[model.GUID] = creator.Create(model, new DynamoContext());
+                activeManipulators[model.GUID] = creator.Create(model, new DynamoContext(dynamoView));
         }
 
         public void KillManipulator(NodeModel model)

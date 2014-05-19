@@ -136,8 +136,10 @@ limitations under the License.
     <Compile Include="Interfaces\IWatchHandler.cs" />
     <Compile Include="Manipulation\DynamoContext.cs" />
     <Compile Include="Manipulation\IManipulator.cs" />
+    <Compile Include="Manipulation\IManipulatorDaemonInitializer.cs" />
     <Compile Include="Manipulation\INodeManipulatorCreator.cs" />
     <Compile Include="Manipulation\KeyboardPointManipulator.cs" />
+    <Compile Include="Manipulation\ManipulatorDaemon.cs" />
     <Compile Include="Nodes\VariableInputNode.cs" />
     <Compile Include="Nodes\WatchImage.cs" />
     <Compile Include="UI\Controls\GraphUpdateNotificationControl.xaml.cs">
