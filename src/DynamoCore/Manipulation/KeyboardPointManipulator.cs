@@ -52,7 +52,7 @@ namespace Dynamo.Manipulation
 
         }
 
-        private void IncrementValue(NodeModel node)
+        private void Increment(NodeModel node)
         {
             if (node == null) return;
 
@@ -60,7 +60,7 @@ namespace Dynamo.Manipulation
             uiNode.Value = uiNode.Value + Velocity;
         }
 
-        private void DecrementValue(NodeModel node)
+        private void Decrement(NodeModel node)
         {
             if (node == null) return;
 
@@ -73,22 +73,22 @@ namespace Dynamo.Manipulation
             switch (e.Key)
             {
                 case Key.Up:
-                    IncrementValue(YNode);
+                    Increment(YNode);
                     break;
                 case Key.Down:
-                    DecrementValue(YNode);
+                    Decrement(YNode);
                     break;
                 case Key.Left:
-                    IncrementValue(XNode);
+                    Increment(XNode);
                     break;
                 case Key.Right:
-                    DecrementValue(XNode);
+                    Decrement(XNode);
                     break;
                 case Key.X:
-                    DecrementValue(ZNode);
+                    Increment(ZNode);
                     break;
                 case Key.Z:
-                    DecrementValue(ZNode);
+                    Decrement(ZNode);
                     break;
             }
         }
