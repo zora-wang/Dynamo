@@ -41,7 +41,8 @@ namespace Dynamo.Manipulation
                 {
                     {
                         "Autodesk.DesignScript.Geometry.Point.ByCoordinates@double,double,double",
-                        new[] { new KeyboardPointManipulatorCreator() }
+                        new INodeManipulatorCreator[] { new KeyboardPointManipulatorCreator(), 
+                            new MousePointManipulatorCreator() }
                     }
                 })
         { }
