@@ -358,7 +358,7 @@ namespace Dynamo.Controls
                 if (e.OldItems != null)
                 {
                     foreach (var nm in e.OldItems.OfType<NodeModel>())
-                        ManipulatorDaemon.KillManipulator(nm);
+                        ManipulatorDaemon.KillManipulators(nm);
                 }
             }
 
@@ -919,7 +919,7 @@ namespace Dynamo.Controls
 
         }
 
-		private void Button_MouseEnter(object sender, MouseEventArgs e)
+        private void Button_MouseEnter(object sender, MouseEventArgs e)
         {
             Grid g = (Grid)sender;
             TextBlock tb = (TextBlock)(g.Children[1]);
@@ -934,7 +934,7 @@ namespace Dynamo.Controls
             collapseIcon.Source = hover;
         }
 
-		private void Button_Click(object sender, EventArgs e)
+        private void Button_Click(object sender, EventArgs e)
         {
             SearchView sv = (SearchView)this.sidebarGrid.Children[0];
             if (sv.Visibility == Visibility.Collapsed)
@@ -957,7 +957,7 @@ namespace Dynamo.Controls
             //this.collapsedSidebar.Visibility = Visibility.Collapsed;
         }
 
-		private void Button_MouseLeave(object sender, MouseEventArgs e)
+        private void Button_MouseLeave(object sender, MouseEventArgs e)
         {
             Grid g = (Grid)sender;
             TextBlock tb = (TextBlock)(g.Children[1]);
@@ -1002,12 +1002,12 @@ namespace Dynamo.Controls
         private void Window_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             _vm.IsMouseDown = true;
-		}
+        }
 
         private void Window_PreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
             _vm.IsMouseDown = false;
-		}
+        }
 
         private void WorkspaceTabs_TargetUpdated(object sender, DataTransferEventArgs e)
         {
