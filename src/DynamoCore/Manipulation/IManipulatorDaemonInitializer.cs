@@ -6,23 +6,24 @@ namespace Dynamo.Manipulation
 {
     public interface IManipulatorDaemonInitializer 
     {
-        Dictionary<Type, INodeManipulatorCreator> GetManipulators();
+        Dictionary<Type, IEnumerable<INodeManipulatorCreator>> GetManipulators();
     }
 
     public class HardcodedInitializer : IManipulatorDaemonInitializer
     {
-        public Dictionary<Type, INodeManipulatorCreator> GetManipulators()
+        public Dictionary<Type, IEnumerable<INodeManipulatorCreator>> GetManipulators()
         {
-            return new Dictionary<Type, INodeManipulatorCreator>
+            return new Dictionary<Type, IEnumerable<INodeManipulatorCreator>>
             {
-                { typeof(DSFunction), new DSFunctionManipulatorCreator() }
+                { typeof(DSFunction), new[] { new DSFunctionManipulatorCreator() }},
+                { typeof(Function), new[] { CustomNodeManipulatorCreator.Instance }}
             };
         }
     }
 
     public class ReflectionInitializer : IManipulatorDaemonInitializer
     {
-        public Dictionary<Type, INodeManipulatorCreator> GetManipulators()
+        public Dictionary<Type, IEnumerable<INodeManipulatorCreator>> GetManipulators()
         {
             throw new NotImplementedException();
         }
