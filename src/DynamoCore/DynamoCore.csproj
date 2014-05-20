@@ -134,12 +134,14 @@ limitations under the License.
     <Compile Include="Interfaces\ILogger.cs" />
     <Compile Include="Interfaces\IPreferences.cs" />
     <Compile Include="Interfaces\IWatchHandler.cs" />
+    <Compile Include="Manipulation\CustomNodeManipulatorCreator.cs" />
     <Compile Include="Manipulation\DSFunctionManipulatorCreator.cs" />
     <Compile Include="Manipulation\DynamoContext.cs" />
     <Compile Include="Manipulation\IManipulator.cs" />
     <Compile Include="Manipulation\IManipulatorDaemonInitializer.cs" />
     <Compile Include="Manipulation\INodeManipulatorCreator.cs" />
     <Compile Include="Manipulation\KeyboardPointManipulator.cs" />
+    <Compile Include="Manipulation\LookupCreator.cs" />
     <Compile Include="Manipulation\ManipulatorDaemon.cs" />
     <Compile Include="Manipulation\MousePointManipulator.cs" />
     <Compile Include="Nodes\VariableInputNode.cs" />
@@ -201,6 +203,9 @@ limitations under the License.
     <Compile Include="UI\HandlingEventTrigger.cs" />
     <Compile Include="UI\Prompts\UsageReportingAgreementPrompt.xaml.cs">
       <DependentUpon>UsageReportingAgreementPrompt.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Views\AttributesView.xaml.cs">
+      <DependentUpon>AttributesView.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Views\InfoBubbleView.xaml.cs">
       <DependentUpon>InfoBubbleView.xaml</DependentUpon>
@@ -535,6 +540,10 @@ limitations under the License.
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="UI\Prompts\UsageReportingAgreementPrompt.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\Views\AttributesView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

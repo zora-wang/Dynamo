@@ -213,7 +213,7 @@ namespace Dynamo.Search
             e.Handled = true;
         }
 
-		private void OnLibraryClick(object sender, RoutedEventArgs e)
+        private void OnLibraryClick(object sender, RoutedEventArgs e)
         {
             //this.Width = 5;
             //if (this.Visibility == Visibility.Collapsed)
