@@ -63,6 +63,8 @@ namespace Dynamo.Selection
 
             if (e.OldItems != null)
             {
+
+
                 foreach (ISelectable n in e.OldItems)
                 {
                     n.Deselect();

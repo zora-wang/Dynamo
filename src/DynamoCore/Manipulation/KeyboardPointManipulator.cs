@@ -59,25 +59,21 @@ namespace Dynamo.Manipulation
 
         private void KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
         {
+            if (!e.KeyboardDevice.IsKeyDown(Key.LeftShift)) return;
+
             switch (e.Key)
             {
-                case Key.I:
+                case Key.Up:
                     Increment(YNode);
                     break;
-                case Key.K:
+                case Key.Down:
                     Decrement(YNode);
                     break;
-                case Key.J:
+                case Key.Right:
                     Increment(XNode);
                     break;
-                case Key.L:
+                case Key.Left:
                     Decrement(XNode);
-                    break;
-                case Key.F:
-                    Increment(ZNode);
-                    break;
-                case Key.G:
-                    Decrement(ZNode);
                     break;
             }
         }

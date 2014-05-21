@@ -57,10 +57,10 @@ namespace Dynamo.Manipulation
 
     internal class CompositeManipulator : IManipulator
     {
-        private readonly IEnumerable<IManipulator> subs;
+        private readonly List<IManipulator> subs;
         public CompositeManipulator(IEnumerable<IManipulator> subs)
         {
-            this.subs = subs;
+            this.subs = subs.ToList();
         }
 
         public void Dispose()

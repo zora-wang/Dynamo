@@ -1507,8 +1507,23 @@ namespace Dynamo.Models
                     }
                 }
 
+                // need a callback here to indicate in order to 
+                OnRenderPackageUpdate();
+
                 if (RenderPackages.Any())
                     HasRenderPackages = true;
+            }
+        }
+
+        public delegate void RenderPackageUpdateHandler(NodeModel node);
+
+        public event RenderPackageUpdateHandler RenderPackageUpdate;
+
+        public void OnRenderPackageUpdate()
+        {
+            if (RenderPackageUpdate != null)
+            {
+                RenderPackageUpdate(this);
             }
         }
 
