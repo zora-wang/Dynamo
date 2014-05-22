@@ -3,9 +3,9 @@ using Dynamo.Utilities;
 
 namespace Dynamo.Manipulation
 {
-    public class DynamoContext
+    public class DynamoManipulatorContext
     {
-        internal DynamoContext () { }
+        internal DynamoManipulatorContext () { }
 
         public DynamoController Controller { get { return dynSettings.Controller; } }
         public DynamoView View { get; set; }

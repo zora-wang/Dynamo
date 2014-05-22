@@ -16,27 +16,28 @@ using Dynamo.Models;
 using Dynamo.Utilities;
 using Dynamo.ViewModels;
 using HelixToolkit.Wpf;
-using Octree.Tools;
 using Point = Autodesk.DesignScript.Geometry.Point;
 
 namespace Dynamo.Manipulation
 {
     public class MousePointManipulatorCreator : INodeManipulatorCreator
     {
-        public IManipulator Create(NodeModel node, DynamoContext context)
+        public IManipulator Create(NodeModel node, DynamoManipulatorContext manipulatorContext)
         {
-            return new Manipulation.MousePointManipulator(node, context);
+            return new Manipulation.MousePointManipulator(node, manipulatorContext);
         }
     }
 
     public class MousePointManipulator : IManipulator
     {
-        public DynamoContext Context { get; set; }
+        #region Properties/Fields
+
+        public DynamoManipulatorContext ManipulatorContext { get; set; }
         public NodeModel PointNode { get; set; }
         public Watch3DView Watch3DView { get; set; }
         public HelixViewport3D Helix3DView { get; set; }
 
-        public double Velocity = 1;
+        public bool Active { get; set; }
 
         private NodeModel XNode;
         private NodeModel YNode;
@@ -48,17 +49,19 @@ namespace Dynamo.Manipulation
 
         private Autodesk.DesignScript.Geometry.Point Origin;
 
-        private Autodesk.DesignScript.Geometry.Point XAxisEnd;
-        private Autodesk.DesignScript.Geometry.Point YAxisEnd;
-        private Autodesk.DesignScript.Geometry.Point ZAxisEnd;
+        private Autodesk.DesignScript.Geometry.Vector XAxis;
+        private Autodesk.DesignScript.Geometry.Vector YAxis;
+        private Autodesk.DesignScript.Geometry.Vector ZAxis;
 
         private Point ExpectedPosition;
 
-        public MousePointManipulator(Models.NodeModel pointNode, DynamoContext context)
+        #endregion
+
+        public MousePointManipulator(Models.NodeModel pointNode, DynamoManipulatorContext manipulatorContext)
         {
             this.PointNode = pointNode;
-            this.Context = context;
-            this.Watch3DView = Context.View.background_preview;
+            this.ManipulatorContext = manipulatorContext;
+            this.Watch3DView = ManipulatorContext.View.background_preview;
             this.Helix3DView = Watch3DView.View;
 
             string sliderName = "Double Slider";
@@ -69,17 +72,23 @@ namespace Dynamo.Manipulation
             YNode = pointNode.GetInputNodeOfName(1, sliderName);
             ZNode = pointNode.GetInputNodeOfName(2, sliderName);
 
+            XAxis = Vector.XAxis();
+            YAxis = Vector.YAxis();
+            ZAxis = Vector.ZAxis();
+
             Watch3DView.View.MouseMove += MouseMove;
-            Watch3DView.View.MouseDown += ViewOnMouseDown;
-            Watch3DView.View.MouseUp += ViewOnMouseUp;
+            Watch3DView.View.MouseDown += MouseDown;
+            Watch3DView.View.MouseUp += MouseUp;
             PointNode.RenderPackageUpdate += this.DrawManipulator;
             
-            // hack to add the manipulator
-            ForceReevaluation();
+            ForceRedraw();
         }
 
-        private void ForceReevaluation()
+        #region Drawing
+
+        private void ForceRedraw()
         {
+            // Note:  This is a hack. Should be able to stimulate redraw without recompute
             if (XNode != null)
             {
                 Reset(XNode);
@@ -94,69 +103,24 @@ namespace Dynamo.Manipulation
             }
         }
 
-        private void UpdatePosition()
-        {
-            if (PointNode == null) return;
-
-            // hack to prevent this from throwing an exception
-            object val;
-            try
-            {
-                
-                val = PointNode.CachedValue != null ? PointNode.CachedValue.Data : null;
-            }
-            catch
-            {
-                val = null;
-            }
-
-            Origin = val as Point ?? this.Origin;
-
-            if (Origin == null)
-            {
-                this.Active = false;
-                Origin = Point.Origin();
-                return;
-            }
-
-            this.Active = true;
-        }
-
-        private void UpdateAxes()
-        {
-            if (Origin == null) return;
-
-            XAxisEnd = Origin.Add(Vector.XAxis());
-            YAxisEnd = Origin.Add(Vector.YAxis());
-            ZAxisEnd = Origin.Add(Vector.ZAxis());
-        }
-
         private void DrawManipulator(NodeModel node)
         {
             if (!PointNode.IsSelected) return;
 
             this.UpdatePosition();
-            this.UpdateAxes();
 
-            if (!this.Active) return;
+            if (!this.Active || this.Origin == null) return;
 
             PointNode.RenderPackages.AddRange(BuildRenderPackages());
         }
 
         private IEnumerable<RenderPackage> BuildRenderPackages()
         {
-  
             var pkgs = new List<RenderPackage>();
 
             if (XNode != null)
             {
-                var pkgX = new RenderPackage();
-                pkgX.PushLineStripVertexCount(2);
-                pkgX.PushLineStripVertexColor(255, 0, 0, 255);
-                pkgX.PushLineStripVertex(Origin.X, Origin.Y, Origin.Z);
-                pkgX.PushLineStripVertexColor(255, 0, 0, 255);
-                pkgX.PushLineStripVertex(XAxisEnd.X, XAxisEnd.Y, XAxisEnd.Z);
-                pkgs.Add(pkgX);
+                pkgs.Add(BuildAxisHandle(XAxis, System.Drawing.Color.Red));
 
                 if (DragX)
                 {
@@ -166,13 +130,7 @@ namespace Dynamo.Manipulation
 
             if (YNode != null)
             {
-                var pkgY = new RenderPackage();
-                pkgY.PushLineStripVertexCount(2);
-                pkgY.PushLineStripVertexColor(0, 255, 0, 255);
-                pkgY.PushLineStripVertex(Origin.X, Origin.Y, Origin.Z);
-                pkgY.PushLineStripVertexColor(0, 255, 0, 255);
-                pkgY.PushLineStripVertex(YAxisEnd.X, YAxisEnd.Y, YAxisEnd.Z);
-                pkgs.Add(pkgY);
+                pkgs.Add(BuildAxisHandle(YAxis, System.Drawing.Color.Lime));
 
                 if (DragY)
                 {
@@ -182,13 +140,7 @@ namespace Dynamo.Manipulation
 
             if (ZNode != null)
             {
-                var pkgZ = new RenderPackage();
-                pkgZ.PushLineStripVertexCount(2);
-                pkgZ.PushLineStripVertexColor(0, 0, 255, 255);
-                pkgZ.PushLineStripVertex(Origin.X, Origin.Y, Origin.Z);
-                pkgZ.PushLineStripVertexColor(0, 0, 255, 255);
-                pkgZ.PushLineStripVertex(ZAxisEnd.X, ZAxisEnd.Y, ZAxisEnd.Z);
-                pkgs.Add(pkgZ);
+                pkgs.Add(BuildAxisHandle(ZAxis, System.Drawing.Color.Blue));
 
                 if (DragZ)
                 {
@@ -198,6 +150,21 @@ namespace Dynamo.Manipulation
             }
 
             return pkgs;
+        }
+
+        private RenderPackage BuildAxisHandle(Vector axis, System.Drawing.Color color)
+        {
+            var axisEnd = this.Origin.Add(axis);
+
+            var pkgX = new RenderPackage();
+
+            pkgX.PushLineStripVertexCount(2);
+            pkgX.PushLineStripVertexColor(color.R, color.G, color.B, color.A);
+            pkgX.PushLineStripVertex(Origin.X, Origin.Y, Origin.Z);
+            pkgX.PushLineStripVertexColor(color.R, color.G, color.B, color.A);
+            pkgX.PushLineStripVertex(axisEnd.X, axisEnd.Y, axisEnd.Z);
+
+            return pkgX;
         }
 
         private RenderPackage BuildConstrainedAxisLine(Vector axis)
@@ -220,112 +187,9 @@ namespace Dynamo.Manipulation
             return pkgXL;
         }
 
-        private void ViewOnMouseUp(object sender, MouseButtonEventArgs mouseButtonEventArgs)
-        {
-            ResetDrag();
-            ForceReevaluation();
-        }
+        #endregion
 
-        private void ViewOnMouseDown(object sender, MouseButtonEventArgs mouseButtonEventArgs)
-        {
-            UpdatePosition();
-            UpdateAxes();
-            ResetDrag();
-
-            var ray = GetClickRay(mouseButtonEventArgs);
-
-            var dragX = DoesIntersectAxis(Origin, XAxisEnd, ray, 0.1);
-            var dragY = DoesIntersectAxis(Origin, YAxisEnd, ray, 0.1);
-            var dragZ = DoesIntersectAxis(Origin, ZAxisEnd, ray, 0.1);
-
-            // for now, arbitrarily take the first successful pick axis
-            if (dragX)
-            {
-                DragX = true;
-            }
-            else if (dragY)
-            {
-                DragY = true;
-            }
-            else if (dragZ)
-            {
-                DragZ = true;
-            }
-
-            ExpectedPosition = Origin;
-        }
-
-        struct Ray
-        {
-            public Point Origin;
-            public Vector Direction;
-
-            public Line ToLine()
-            {
-                return Line.ByStartPointEndPoint(Origin, Origin.Add(Direction.Scale(10000)));
-            }
-
-            public Line ToOriginCenteredLine()
-            {
-                return Line.ByStartPointEndPoint( Origin.Add(Direction.Scale(-100)), 
-                    Origin.Add(Direction.Scale(100)));
-            }
-        }
-
-        private Ray GetClickRay(MouseEventArgs mouseButtonEventArgs)
-        {
-            var mousePos = mouseButtonEventArgs.GetPosition(Watch3DView);
-
-            var width = this.Watch3DView.ActualWidth;
-            var height = this.Watch3DView.ActualHeight;
-
-            var c = Helix3DView.Camera as PerspectiveCamera;
-
-            var fov = c.FieldOfView*Math.PI/180;
-
-            var y = c.UpDirection.ToVector();
-            var z = c.LookDirection.ToVector().Normalized();
-            var x = z.Cross(y).Normalized();
-            y = z.Cross(x).Normalized();
-
-            // determine coordinates of the point click on the view plane
-            var ncx = (mousePos.X - width*0.5)*(1.0/width)*2;
-            var ncy = (mousePos.Y - height * 0.5) * (1.0 / width)*2;
-
-            var dist = 1 / System.Math.Tan(fov / 2);
-
-            var dx = x.Scale(ncx);
-            var dy = y.Scale(ncy);
-
-            var rayDir = z.Scale(dist).Add(dx.Add(dy)).Normalized();
-            var rayOrigin = c.Position.ToPoint();
-
-            return new Ray()
-            {
-                Direction = rayDir,
-                Origin = rayOrigin
-            };
-        }
-
-        public bool IsDragging()
-        {
-            return DragX || DragY || DragZ;
-        }
-
-        private void ResetDrag()
-        {
-            DragX = false;
-            DragY = false;
-            DragZ = false;
-        }
-
-        private bool DoesIntersectAxis( Point a0, Point a1, Ray ray, double tol )
-        {
-            var l1 = Line.ByStartPointEndPoint(a0, a1);
-            var l2 = ray.ToLine();
-
-            return l1.DistanceTo(l2) < tol;
-        }
+        #region Mouse handlers
 
         private void MouseMove(object sender, MouseEventArgs mouseEventArgs)
         {
@@ -336,10 +200,10 @@ namespace Dynamo.Manipulation
             if (!ExpectedPosition.IsAlmostEqualTo(Origin))
             {
                 // drag call is likely not yet executed, wait until it is 
-                return;  
+                return;
             }
 
-            var axis = new Ray {Origin = Origin};
+            var axis = new Ray { Origin = Origin };
 
             if (DragX)
             {
@@ -347,7 +211,7 @@ namespace Dynamo.Manipulation
             }
             else if (DragY)
             {
-                axis.Direction = Vector.YAxis(); 
+                axis.Direction = Vector.YAxis();
             }
             else if (DragZ)
             {
@@ -373,6 +237,150 @@ namespace Dynamo.Manipulation
             }
         }
 
+        private void MouseUp(object sender, MouseButtonEventArgs mouseButtonEventArgs)
+        {
+            ResetDrag();
+            ForceRedraw(); // this cleans up all of the geometry
+        }
+
+        private void MouseDown(object sender, MouseButtonEventArgs mouseButtonEventArgs)
+        {
+            UpdatePosition();
+            ResetDrag();
+
+            if (!Active || Origin == null) return;
+
+            var ray = GetClickRay(mouseButtonEventArgs);
+
+            var dragX = DoesRayIntersectLine(Origin, Origin.Add(XAxis), ray, 0.15);
+            var dragY = DoesRayIntersectLine(Origin, Origin.Add(YAxis), ray, 0.15);
+            var dragZ = DoesRayIntersectLine(Origin, Origin.Add(ZAxis), ray, 0.15);
+
+            // for now, arbitrarily take the first successful pick axis
+            if (dragX)
+            {
+                DragX = true;
+            }
+            else if (dragY)
+            {
+                DragY = true;
+            }
+            else if (dragZ)
+            {
+                DragZ = true;
+            }
+
+            ExpectedPosition = Origin;
+        }
+
+        #endregion
+
+        #region State update
+
+        private void UpdatePosition()
+        {
+            if (PointNode == null) return;
+
+            // hack: to prevent node mirror value lookup from throwing an exception
+            object val;
+            try
+            {
+
+                val = PointNode.CachedValue != null ? PointNode.CachedValue.Data : null;
+            }
+            catch
+            {
+                val = null;
+            }
+
+            Origin = val as Point ?? this.Origin;
+
+            if (Origin == null)
+            {
+                this.Active = false;
+                Origin = Point.Origin();
+                return;
+            }
+
+            this.Active = true;
+        }
+
+        public bool IsDragging()
+        {
+            return DragX || DragY || DragZ;
+        }
+
+        private void ResetDrag()
+        {
+            DragX = false;
+            DragY = false;
+            DragZ = false;
+        }
+
+        #endregion
+
+        #region Geometric helpers
+
+        struct Ray
+        {
+            public Point Origin;
+            public Vector Direction;
+
+            public Line ToLine()
+            {
+                return Line.ByStartPointEndPoint(Origin, Origin.Add(Direction.Scale(10000)));
+            }
+
+            public Line ToOriginCenteredLine()
+            {
+                return Line.ByStartPointEndPoint(Origin.Add(Direction.Scale(-100)),
+                    Origin.Add(Direction.Scale(100)));
+            }
+        }
+
+        private Ray GetClickRay(MouseEventArgs mouseButtonEventArgs)
+        {
+            var mousePos = mouseButtonEventArgs.GetPosition(Watch3DView);
+
+            var width = this.Watch3DView.ActualWidth;
+            var height = this.Watch3DView.ActualHeight;
+
+            var c = Helix3DView.Camera as PerspectiveCamera;
+
+            var fov = c.FieldOfView * Math.PI / 180;
+
+            var y = c.UpDirection.ToVector();
+            var z = c.LookDirection.ToVector().Normalized();
+            var x = z.Cross(y).Normalized();
+            y = z.Cross(x).Normalized();
+
+            // determine coordinates of the point click on the view plane
+            var ncx = (mousePos.X - width * 0.5) * (1.0 / width) * 2;
+            var ncy = (mousePos.Y - height * 0.5) * (1.0 / width) * 2;
+
+            var dist = 1 / System.Math.Tan(fov / 2);
+
+            var dx = x.Scale(ncx);
+            var dy = y.Scale(ncy);
+
+            var rayDir = z.Scale(dist).Add(dx.Add(dy)).Normalized();
+            var rayOrigin = c.Position.ToPoint();
+
+            return new Ray()
+            {
+                Direction = rayDir,
+                Origin = rayOrigin
+            };
+        }
+
+        private bool DoesRayIntersectLine( Point a0, Point a1, Ray ray, double tol )
+        {
+            var l1 = Line.ByStartPointEndPoint(a0, a1);
+            var l2 = ray.ToLine();
+
+            return l1.DistanceTo(l2) < tol;
+        }
+
         private Vector GetMoveVector(Ray axis, Ray mouseClickRay)
         {
             var axisLine = axis.ToOriginCenteredLine();
@@ -381,6 +389,10 @@ namespace Dynamo.Manipulation
             return axisLine.GetClosestPoint(mouseLine).AsVector()
                 .Subtract(Origin.AsVector());
         }
+
+        #endregion
+
+        #region Node value update
 
         private void Move(NodeModel node, double amount)
         {
@@ -398,16 +410,19 @@ namespace Dynamo.Manipulation
         {
             if (node == null) return;
 
+            // hack: to force node update
             dynamic uiNode = node;
             uiNode.Value = uiNode.Value + 0.00001;
         }
 
+        #endregion
+
         public void Dispose()
         {
             PointNode.RenderPackageUpdate -= this.DrawManipulator;
-            Watch3DView.View.MouseMove -= MouseMove;
-            Watch3DView.View.MouseDown -= ViewOnMouseDown;
-            Watch3DView.View.MouseUp -= ViewOnMouseUp;
+            Helix3DView.MouseMove -= MouseMove;
+            Helix3DView.MouseDown -= MouseDown;
+            Helix3DView.MouseUp -= MouseUp;
 
             // hack to remove the coordinate system
             if (PointNode.RenderPackages != null && PointNode.RenderPackages.Any())
@@ -417,10 +432,9 @@ namespace Dynamo.Manipulation
                 };
             }
 
-            ForceReevaluation();
+            ForceRedraw();
         }
 
-        public bool Active { get; set; }
     }
 
     public static class PointExtensions

@@ -32,7 +32,7 @@ namespace Dynamo.Manipulation
                 activeManipulators[model.GUID] =
                     new CompositeManipulator(
                         creators.Select(
-                            creator => creator.Create(model, new DynamoContext { View = dynamoView }))
+                            creator => creator.Create(model, new DynamoManipulatorContext { View = dynamoView }))
                             .Where(manipulator => manipulator != null));
             }
         }

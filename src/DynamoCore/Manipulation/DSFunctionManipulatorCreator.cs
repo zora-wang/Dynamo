@@ -18,7 +18,7 @@ namespace Dynamo.Manipulation
 
         protected LookupCreator() : this(new Dictionary<string, IEnumerable<INodeManipulatorCreator>>()) { }
 
-        public IManipulator Create(NodeModel node, DynamoContext context)
+        public IManipulator Create(NodeModel node, DynamoManipulatorContext manipulatorContext)
         {
             var dsfunc = node as T;
             if (dsfunc == null) return null;
@@ -26,7 +26,7 @@ namespace Dynamo.Manipulation
             var name = GetKey(dsfunc);
 
             return ManipulatorCreators.ContainsKey(name)
-                ? new CompositeManipulator(ManipulatorCreators[name].Select(m => m.Create(node, context)))
+                ? new CompositeManipulator(ManipulatorCreators[name].Select(m => m.Create(node, manipulatorContext)))
                 : null;
         }
 

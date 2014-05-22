@@ -6,6 +6,6 @@ namespace Dynamo.Manipulation
 {
     public interface INodeManipulatorCreator
     {
-        IManipulator Create(NodeModel node, DynamoContext context);
+        IManipulator Create(NodeModel node, DynamoManipulatorContext manipulatorContext);
     }
 }

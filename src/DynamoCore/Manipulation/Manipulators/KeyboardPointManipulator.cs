@@ -9,15 +9,15 @@ namespace Dynamo.Manipulation
 {
     public class KeyboardPointManipulatorCreator : INodeManipulatorCreator
     {
-        public IManipulator Create(NodeModel node, DynamoContext context)
+        public IManipulator Create(NodeModel node, DynamoManipulatorContext manipulatorContext)
         {
-            return new KeyboardPointManipulator(node, context);
+            return new KeyboardPointManipulator(node, manipulatorContext);
         }
     }
 
     public class KeyboardPointManipulator : IManipulator
     {
-        public DynamoContext Context { get; set; }
+        public DynamoManipulatorContext ManipulatorContext { get; set; }
         public NodeModel PointNode { get; set; }
 
         public double Velocity = 1;
@@ -26,12 +26,12 @@ namespace Dynamo.Manipulation
         private NodeModel YNode;
         private NodeModel ZNode;
 
-        public KeyboardPointManipulator(Models.NodeModel pointNode, DynamoContext context)
+        public KeyboardPointManipulator(Models.NodeModel pointNode, DynamoManipulatorContext manipulatorContext)
         {
             this.PointNode = pointNode;
-            this.Context = context;
+            this.ManipulatorContext = manipulatorContext;
 
-            Context.View.KeyUp += this.KeyUp;
+            ManipulatorContext.View.KeyUp += this.KeyUp;
 
             string sliderName = "Double Slider";
 
@@ -80,7 +80,7 @@ namespace Dynamo.Manipulation
 
         public void Dispose()
         {
-            Context.View.KeyUp -= this.KeyUp;
+            ManipulatorContext.View.KeyUp -= this.KeyUp;
         }
     }
 
