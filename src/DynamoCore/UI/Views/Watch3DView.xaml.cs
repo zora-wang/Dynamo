@@ -46,6 +46,7 @@ namespace Dynamo.Controls
         private Point3DCollection _xAxis = new Point3DCollection();
         private Point3DCollection _yAxis = new Point3DCollection();
         private Point3DCollection _zAxis = new Point3DCollection();
+        private Point3DCollection _greyLines = new Point3DCollection();
         private MeshGeometry3D _mesh = new MeshGeometry3D();
         private Point3DCollection _pointsSelected = new Point3DCollection();
         private Point3DCollection _linesSelected = new Point3DCollection();
@@ -99,6 +100,16 @@ namespace Dynamo.Controls
             {
                 _xAxis = value;
                 NotifyPropertyChanged("XAxes");
+            }
+        }
+
+        public Point3DCollection GreyLines
+        {
+            get { return _greyLines; }
+            set
+            {
+                _greyLines = value;
+                NotifyPropertyChanged("GreyLines");
             }
         }
 
@@ -452,6 +463,7 @@ namespace Dynamo.Controls
             var redLines = new Point3DCollection(lineCount);
             var greenLines = new Point3DCollection(lineCount);
             var blueLines = new Point3DCollection(lineCount);
+            var greyLines = new Point3DCollection(lineCount);
 
             //pre-size the text collection
             var textCount = e.Packages.Count(x => x.DisplayLabels);
@@ -474,14 +486,14 @@ namespace Dynamo.Controls
             foreach (var package in packages)
             {
                 ConvertPoints(package, points, text);
-                ConvertLines(package, lines, redLines, greenLines, blueLines, text);
+                ConvertLines(package, lines, redLines, greenLines, blueLines, greyLines, text);
                 ConvertMeshes(package, verts, norms, tris);
             }
 
             foreach (var package in selPackages)
             {
                 ConvertPoints(package, pointsSelected, text);
-                ConvertLines(package, linesSelected, redLines, greenLines, blueLines, text);
+                ConvertLines(package, linesSelected, redLines, greenLines, blueLines, greyLines, text);
                 ConvertMeshes(package, vertsSel, normsSel, trisSel);
             }
 
@@ -494,52 +506,96 @@ namespace Dynamo.Controls
                 vm.CheckForLatestRenderCommand.Execute(e.TaskId);
             }
 
-            Dispatcher.Invoke(new Action<Point3DCollection, Point3DCollection,
-                Point3DCollection, Point3DCollection, Point3DCollection, Point3DCollection,
-                Point3DCollection, Point3DCollection, Vector3DCollection, Int32Collection, 
-                Point3DCollection, Vector3DCollection, Int32Collection, MeshGeometry3D,
-                MeshGeometry3D, List<BillboardTextItem>>(SendGraphicsToView), DispatcherPriority.Render,
-                               new object[] {points, pointsSelected, lines, linesSelected, redLines, 
-                                   greenLines, blueLines, verts, norms, tris, vertsSel, normsSel, 
-                                   trisSel, mesh, meshSel, text});
+            var renderArgs = new RenderArgs()
+            {
+                Points = points,
+                PointsSelected = pointsSelected,
+
+                Lines= lines,
+                LinesSelected = linesSelected,
+                RedLines = redLines,
+                GreenLines = greenLines,
+                GreyLines = greyLines,
+
+                BlueLines = blueLines,
+                Verts = verts,
+                Norms = norms,
+                Tris = tris,
+                Mesh = mesh,
+
+                VertsSel = vertsSel,
+                NormsSel = normsSel,
+                TrisSel = trisSel,
+                MeshSel = meshSel,
+
+                Text = text
+            };
+
+            Dispatcher.Invoke(new Action<RenderArgs>(SendGraphicsToView), DispatcherPriority.Render,
+                               new object[] {renderArgs});
         }
 
-        private void SendGraphicsToView(Point3DCollection points, Point3DCollection pointsSelected,
-            Point3DCollection lines, Point3DCollection linesSelected, Point3DCollection redLines, Point3DCollection greenLines,
-            Point3DCollection blueLines, Point3DCollection verts, Vector3DCollection norms, Int32Collection tris,
-            Point3DCollection vertsSel, Vector3DCollection normsSel, Int32Collection trisSel, MeshGeometry3D mesh,
-            MeshGeometry3D meshSel, List<BillboardTextItem> text)
+        public struct RenderArgs
         {
-            points.Freeze();
-            pointsSelected.Freeze();
-            lines.Freeze();
-            linesSelected.Freeze();
-            redLines.Freeze();
-            greenLines.Freeze();
-            blueLines.Freeze();
-            verts.Freeze();
-            norms.Freeze();
-            tris.Freeze();
-            vertsSel.Freeze();
-            normsSel.Freeze();
-            trisSel.Freeze();
+            public Point3DCollection Points;
+            public Point3DCollection PointsSelected;
 
-            Points = points;
-            PointsSelected = pointsSelected;
-            Lines = lines;
-            LinesSelected = linesSelected;
-            XAxes = redLines;
-            YAxes = greenLines;
-            ZAxes = blueLines;
-            mesh.Positions = verts;
-            mesh.Normals = norms;
-            mesh.TriangleIndices = tris;
-            meshSel.Positions = vertsSel;
-            meshSel.Normals = normsSel;
-            meshSel.TriangleIndices = trisSel;
-            Mesh = mesh;
-            MeshSelected = meshSel;
-            Text = text;
+            public Point3DCollection Lines;
+            public Point3DCollection LinesSelected;
+            public Point3DCollection RedLines;
+            public Point3DCollection GreenLines;
+            public Point3DCollection GreyLines;
+
+            public Point3DCollection BlueLines;
+            public Point3DCollection Verts;
+            public Vector3DCollection Norms;
+            public Int32Collection Tris;
+
+            public Point3DCollection VertsSel;
+            public Vector3DCollection NormsSel;
+            public Int32Collection TrisSel;
+            public MeshGeometry3D Mesh;
+            public MeshGeometry3D MeshSel;
+            public List<BillboardTextItem> Text;
+        }
+
+        private void SendGraphicsToView(RenderArgs renderArgs)
+        {
+            renderArgs.Points.Freeze();
+            renderArgs.PointsSelected.Freeze();
+            renderArgs.Lines.Freeze();
+            renderArgs.LinesSelected.Freeze();
+            renderArgs.RedLines.Freeze();
+            renderArgs.GreenLines.Freeze();
+            renderArgs.BlueLines.Freeze();
+            renderArgs.GreyLines.Freeze();
+            renderArgs.Verts.Freeze();
+            renderArgs.Norms.Freeze();
+            renderArgs.Tris.Freeze();
+            renderArgs.VertsSel.Freeze();
+            renderArgs.NormsSel.Freeze();
+            renderArgs.TrisSel.Freeze();
+
+            Points = renderArgs.Points;
+            PointsSelected = renderArgs.PointsSelected;
+            Lines = renderArgs.Lines;
+            LinesSelected = renderArgs.LinesSelected;
+            XAxes = renderArgs.RedLines;
+            YAxes = renderArgs.GreenLines;
+            ZAxes = renderArgs.BlueLines;
+            GreyLines = renderArgs.GreyLines;
+
+            renderArgs.Mesh.Positions = renderArgs.Verts;
+            renderArgs.Mesh.Normals = renderArgs.Norms;
+            renderArgs.Mesh.TriangleIndices = renderArgs.Tris;
+            Mesh = renderArgs.Mesh;
+
+            renderArgs.MeshSel.Positions = renderArgs.VertsSel;
+            renderArgs.MeshSel.Normals = renderArgs.NormsSel;
+            renderArgs.MeshSel.TriangleIndices = renderArgs.TrisSel;
+            MeshSelected = renderArgs.MeshSel;
+
+            Text = renderArgs.Text;
         }
 
         private void ConvertPoints(RenderPackage p,
@@ -568,6 +624,7 @@ namespace Dynamo.Controls
             ICollection<Point3D> redLines,
             ICollection<Point3D> greenLines,
             ICollection<Point3D> blueLines,
+            ICollection<Point3D> greyLines,
             ICollection<BillboardTextItem> text)
         {
             int idx = 0;
@@ -605,6 +662,11 @@ namespace Dynamo.Controls
                     else if (startColor == Color.FromRgb(0, 255, 0))
                     {
                         greenLines.Add(point);
+                        isAxis = true;
+                    }
+                    else if (startColor == Color.FromRgb(100, 100, 100))
+                    {
+                        greyLines.Add(point);
                         isAxis = true;
                     }
                     else if (startColor == Color.FromRgb(0, 0, 255))

@@ -102,18 +102,30 @@ namespace Dynamo.Manipulation
             object val;
             try
             {
-                val = PointNode.GetValue(0) != null ? PointNode.GetValue(0).Data : null;
+                
+                val = PointNode.CachedValue != null ? PointNode.CachedValue.Data : null;
             }
             catch
             {
                 val = null;
             }
-           
-            Origin = val as Point ?? this.Origin ?? Point.Origin();
+
+            Origin = val as Point ?? this.Origin;
+
+            if (Origin == null)
+            {
+                this.Active = false;
+                Origin = Point.Origin();
+                return;
+            }
+
+            this.Active = true;
         }
 
         private void UpdateAxes()
         {
+            if (Origin == null) return;
+
             XAxisEnd = Origin.Add(Vector.XAxis());
             YAxisEnd = Origin.Add(Vector.YAxis());
             ZAxisEnd = Origin.Add(Vector.ZAxis());
@@ -123,56 +135,95 @@ namespace Dynamo.Manipulation
         {
             if (!PointNode.IsSelected) return;
 
-            Console.WriteLine("DRAW");
             this.UpdatePosition();
             this.UpdateAxes();
+
+            if (!this.Active) return;
 
             PointNode.RenderPackages.AddRange(BuildRenderPackages());
         }
 
         private IEnumerable<RenderPackage> BuildRenderPackages()
         {
-            var pkgX = new RenderPackage();
-            var pkgY = new RenderPackage();
-            var pkgZ = new RenderPackage();
+  
             var pkgs = new List<RenderPackage>();
 
             if (XNode != null)
             {
+                var pkgX = new RenderPackage();
                 pkgX.PushLineStripVertexCount(2);
                 pkgX.PushLineStripVertexColor(255, 0, 0, 255);
                 pkgX.PushLineStripVertex(Origin.X, Origin.Y, Origin.Z);
                 pkgX.PushLineStripVertexColor(255, 0, 0, 255);
                 pkgX.PushLineStripVertex(XAxisEnd.X, XAxisEnd.Y, XAxisEnd.Z);
                 pkgs.Add(pkgX);
+
+                if (DragX)
+                {
+                    pkgs.Add(BuildConstrainedAxisLine(Vector.XAxis()));
+                }
             }
 
             if (YNode != null)
             {
+                var pkgY = new RenderPackage();
                 pkgY.PushLineStripVertexCount(2);
                 pkgY.PushLineStripVertexColor(0, 255, 0, 255);
                 pkgY.PushLineStripVertex(Origin.X, Origin.Y, Origin.Z);
                 pkgY.PushLineStripVertexColor(0, 255, 0, 255);
                 pkgY.PushLineStripVertex(YAxisEnd.X, YAxisEnd.Y, YAxisEnd.Z);
                 pkgs.Add(pkgY);
+
+                if (DragY)
+                {
+                    pkgs.Add(BuildConstrainedAxisLine(Vector.YAxis()));
+                }
             }
 
             if (ZNode != null)
             {
+                var pkgZ = new RenderPackage();
                 pkgZ.PushLineStripVertexCount(2);
                 pkgZ.PushLineStripVertexColor(0, 0, 255, 255);
                 pkgZ.PushLineStripVertex(Origin.X, Origin.Y, Origin.Z);
                 pkgZ.PushLineStripVertexColor(0, 0, 255, 255);
                 pkgZ.PushLineStripVertex(ZAxisEnd.X, ZAxisEnd.Y, ZAxisEnd.Z);
                 pkgs.Add(pkgZ);
+
+                if (DragZ)
+                {
+                    pkgs.Add(BuildConstrainedAxisLine(Vector.ZAxis()));
+                }
+
             }
 
             return pkgs;
         }
 
+        private RenderPackage BuildConstrainedAxisLine(Vector axis)
+        {
+            var ray = new Ray()
+            {
+                Origin = this.Origin,
+                Direction = axis
+            };
+
+            var xl = ray.ToOriginCenteredLine();
+
+            var pkgXL = new RenderPackage();
+            pkgXL.PushLineStripVertexCount(2);
+            pkgXL.PushLineStripVertexColor(100, 100, 100, 255);
+            pkgXL.PushLineStripVertex(xl.StartPoint.X, xl.StartPoint.Y, xl.StartPoint.Z);
+            pkgXL.PushLineStripVertexColor(100, 100, 100, 255);
+            pkgXL.PushLineStripVertex(xl.EndPoint.X, xl.EndPoint.Y, xl.EndPoint.Z);
+
+            return pkgXL;
+        }
+
         private void ViewOnMouseUp(object sender, MouseButtonEventArgs mouseButtonEventArgs)
         {
             ResetDrag();
+            ForceReevaluation();
         }
 
         private void ViewOnMouseDown(object sender, MouseButtonEventArgs mouseButtonEventArgs)
@@ -358,14 +409,18 @@ namespace Dynamo.Manipulation
             Watch3DView.View.MouseDown -= ViewOnMouseDown;
             Watch3DView.View.MouseUp -= ViewOnMouseUp;
 
-            PointNode.RenderPackages = new List<IRenderPackage>(){
-                PointNode.RenderPackages.First()
-            };
-
-            Console.WriteLine("DISPOSE!");
             // hack to remove the coordinate system
+            if (PointNode.RenderPackages != null && PointNode.RenderPackages.Any())
+            {
+                PointNode.RenderPackages = new List<IRenderPackage>(){
+                    PointNode.RenderPackages.First()
+                };
+            }
+
             ForceReevaluation();
         }
+
+        public bool Active { get; set; }
     }
 
     public static class PointExtensions
