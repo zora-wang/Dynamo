@@ -14,6 +14,7 @@ using Dynamo.PackageManager;
 using Dynamo.Search.SearchElements;
 using Dynamo.Selection;
 using Dynamo.UI.Commands;
+using Dynamo.UI.Views;
 using Dynamo.Utilities;
 using Dynamo.Services;
 using DynamoUnits;
@@ -98,6 +99,13 @@ namespace Dynamo.ViewModels
             {
                 SidebarClosed(this, e);
             }
+        }
+
+        public event EventHandler RightSidebarClosed;
+        public virtual void OnRightSidebarClosed(object sender, EventArgs e)
+        {
+            if (RightSidebarClosed != null)
+                RightSidebarClosed(this, e);
         }
 
         public event WorkspaceSaveEventHandler RequestUserSaveWorkflow;

@@ -197,8 +197,15 @@ namespace Dynamo.Controls
             #region Search initialization
 
             var search = new SearchView { DataContext = dynSettings.Controller.SearchViewModel };
-            sidebarGrid.Children.Add(search);
+            LeftSidebarGrid.Children.Add(search);
             dynSettings.Controller.SearchViewModel.Visible = true;
+
+            #endregion
+
+            #region Attributes initialization
+
+            var attributes = new AttributesView();
+            RightSidebarGrid.Children.Add(attributes);
 
             #endregion
 
@@ -213,6 +220,7 @@ namespace Dynamo.Controls
             _vm.RequestClose += _vm_RequestClose;
             _vm.RequestSaveImage += _vm_RequestSaveImage;
             _vm.SidebarClosed += _vm_SidebarClosed;
+            _vm.RightSidebarClosed += _vm_RightSidebarClosed;
 
             dynSettings.Controller.RequestsCrashPrompt += Controller_RequestsCrashPrompt;
             dynSettings.Controller.RequestTaskDialog += Controller_RequestTaskDialog;
@@ -229,7 +237,6 @@ namespace Dynamo.Controls
             // Kick start the automation run, if possible.
             _vm.BeginCommandPlayback(this);
         }
-
         void DynamoView_Unloaded(object sender, RoutedEventArgs e)
         {
             
@@ -458,6 +465,11 @@ namespace Dynamo.Controls
             LibraryClicked(sender, e);
         }
 
+        private void _vm_RightSidebarClosed(object sender, EventArgs e)
+        {
+            AttributesClicked(sender, e);
+        }
+
         /// <summary>
         /// Handles the request for the presentation of the function name prompt
         /// </summary>
@@ -574,6 +586,7 @@ namespace Dynamo.Controls
             _vm.RequestClose -= _vm_RequestClose;
             _vm.RequestSaveImage -= _vm_RequestSaveImage;
             _vm.SidebarClosed -= _vm_SidebarClosed;
+            _vm.RightSidebarClosed -= _vm_RightSidebarClosed;
 
             DynamoSelection.Instance.Selection.CollectionChanged -= Selection_CollectionChanged;
 
@@ -936,25 +949,38 @@ namespace Dynamo.Controls
 
         private void Button_Click(object sender, EventArgs e)
         {
-            SearchView sv = (SearchView)this.sidebarGrid.Children[0];
+            SearchView sv = (SearchView)this.LeftSidebarGrid.Children[0];
             if (sv.Visibility == Visibility.Collapsed)
             {
-                //this.sidebarGrid.Width = restoreWidth;
+                //this.LeftSidebarGrid.Width = leftRestoreWidth;
                 sv.Width = double.NaN;
                 sv.HorizontalAlignment = HorizontalAlignment.Stretch;
                 sv.Height = double.NaN;
                 sv.VerticalAlignment = VerticalAlignment.Stretch;
 
-                this.mainGrid.ColumnDefinitions[0].Width = new System.Windows.GridLength(restoreWidth);
-                this.verticalSplitter.Visibility = Visibility.Visible;
+                this.mainGrid.ColumnDefinitions[0].Width = new System.Windows.GridLength(leftRestoreWidth);
+                this.LeftSidebarSplitter.Visibility = Visibility.Visible;
                 sv.Visibility = Visibility.Visible;
-                this.sidebarGrid.Visibility = Visibility.Visible;
-                this.collapsedSidebar.Visibility = Visibility.Collapsed;
+                this.LeftSidebarGrid.Visibility = Visibility.Visible;
+                this.CollapsedLeftSidebar.Visibility = Visibility.Collapsed;
             }
-            //SearchView sv = (SearchView)this.sidebarGrid.Children[0];
+            //SearchView sv = (SearchView)this.LeftSidebarGrid.Children[0];
             //sv.Width = double.NaN;
-            //this.sidebarGrid.Width = 250;
-            //this.collapsedSidebar.Visibility = Visibility.Collapsed;
+            //this.LeftSidebarGrid.Width = 250;
+            //this.CollapsedLeftSidebar.Visibility = Visibility.Collapsed;
+        }
+
+        private void AttributesButton_Click(object sender, RoutedEventArgs e)
+        {
+            //var sv = this.RightSidebarGrid.Children[0];
+            //if (sv.Visibility == Visibility.Collapsed)
+            //{
+                this.mainGrid.ColumnDefinitions[4].Width = new System.Windows.GridLength(rightRestoreWidth);
+                this.RightSidebarSplitter.Visibility = Visibility.Visible;
+                //sv.Visibility = Visibility.Visible;
+                this.RightSidebarGrid.Visibility = Visibility.Visible;
+                this.CollapsedRightSidebar.Visibility = Visibility.Collapsed;
+            //}
         }
 
         private void Button_MouseLeave(object sender, MouseEventArgs e)
@@ -972,24 +998,43 @@ namespace Dynamo.Controls
             collapseIcon.Source = hover;
         }
 
-        private double restoreWidth = 0;
+        private double leftRestoreWidth = 0;
+        private double rightRestoreWidth = 300;
 
         private void LibraryClicked(object sender, EventArgs e)
         {
-            // this.sidebarGrid.Visibility = Visibility.Collapsed;
-            restoreWidth = this.sidebarGrid.ActualWidth;
+            // this.LeftSidebarGrid.Visibility = Visibility.Collapsed;
+            leftRestoreWidth = this.LeftSidebarGrid.ActualWidth;
 
-            // this.sidebarGrid.Width = 0;
+            // this.LeftSidebarGrid.Width = 0;
             this.mainGrid.ColumnDefinitions[0].Width = new System.Windows.GridLength(0.0);
-            this.verticalSplitter.Visibility = System.Windows.Visibility.Collapsed;
-            this.sidebarGrid.Visibility = System.Windows.Visibility.Collapsed;
+            this.LeftSidebarSplitter.Visibility = System.Windows.Visibility.Collapsed;
+            this.LeftSidebarGrid.Visibility = System.Windows.Visibility.Collapsed;
             
             this.horizontalSplitter.Width = double.NaN;
-            SearchView sv = (SearchView)this.sidebarGrid.Children[0];
+            SearchView sv = (SearchView)this.LeftSidebarGrid.Children[0];
             sv.Visibility = Visibility.Collapsed;
 
-            this.sidebarGrid.Visibility = Visibility.Collapsed;
-            this.collapsedSidebar.Visibility = Visibility.Visible;
+            this.LeftSidebarGrid.Visibility = Visibility.Collapsed;
+            this.CollapsedLeftSidebar.Visibility = Visibility.Visible;
+        }
+
+        private void AttributesClicked(object sender, EventArgs e)
+        {
+            // this.LeftSidebarGrid.Visibility = Visibility.Collapsed;
+            rightRestoreWidth = this.RightSidebarGrid.ActualWidth;
+
+            // this.LeftSidebarGrid.Width = 0;
+            this.mainGrid.ColumnDefinitions[4].Width = new System.Windows.GridLength(0.0);
+            this.RightSidebarSplitter.Visibility = System.Windows.Visibility.Collapsed;
+            this.RightSidebarGrid.Visibility = System.Windows.Visibility.Collapsed;
+
+            this.horizontalSplitter.Width = double.NaN;
+            //SearchView sv = (SearchView)this.LeftSidebarGrid.Children[0];
+            //sv.Visibility = Visibility.Collapsed;
+
+            this.RightSidebarGrid.Visibility = Visibility.Collapsed;
+            this.CollapsedRightSidebar.Visibility = Visibility.Visible;
         }
 
         private void Workspace_SizeChanged(object sender, SizeChangedEventArgs e)
