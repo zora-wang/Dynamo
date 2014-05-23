@@ -74,6 +74,8 @@ namespace Dynamo.Manipulation
             ForceRedraw();
         }
 
+        #region Initialization
+
         public void AttachHandlers()
         {
             Watch3DView.View.MouseMove += MouseMove;
@@ -107,7 +109,7 @@ namespace Dynamo.Manipulation
 
                 if (csNode != null)
                 {
-                    var cs = GetCSFromNode(csNode);
+                    var cs = csNode.GetCachedValueOrDefault<CoordinateSystem>();
                     if (cs != null)
                     {
                         XAxis = cs.XAxis;
@@ -124,20 +126,7 @@ namespace Dynamo.Manipulation
 
         }
 
-        private static CoordinateSystem GetCSFromNode(NodeModel node)
-        {
-            object val;
-            try
-            {
-                val = node.CachedValue != null ? node.CachedValue.Data : null;
-            }
-            catch
-            {
-                val = null;
-            }
-
-            return val is CoordinateSystem ? val as CoordinateSystem : null;
-        }
+        #endregion
 
         #region Drawing
 
@@ -376,23 +365,6 @@ namespace Dynamo.Manipulation
 
         #region Geometric helpers
 
-        struct Ray
-        {
-            public Point Origin;
-            public Vector Direction;
-
-            public Line ToLine()
-            {
-                return Line.ByStartPointEndPoint(Origin, Origin.Add(Direction.Scale(10000)));
-            }
-
-            public Line ToOriginCenteredLine()
-            {
-                return Line.ByStartPointEndPoint(Origin.Add(Direction.Scale(-100)),
-                    Origin.Add(Direction.Scale(100)));
-            }
-        }
-
         private Ray GetClickRay(MouseEventArgs mouseButtonEventArgs)
         {
             var mousePos = mouseButtonEventArgs.GetPosition(Watch3DView);
@@ -402,30 +374,7 @@ namespace Dynamo.Manipulation
 
             var c = Helix3DView.Camera as PerspectiveCamera;
 
-            var fov = c.FieldOfView * Math.PI / 180;
-
-            var y = c.UpDirection.ToVector();
-            var z = c.LookDirection.ToVector().Normalized();
-            var x = z.Cross(y).Normalized();
-            y = z.Cross(x).Normalized();
-
-            // determine coordinates of the point click on the view plane
-            var ncx = (mousePos.X - width * 0.5) * (1.0 / width) * 2;
-            var ncy = (mousePos.Y - height * 0.5) * (1.0 / width) * 2;
-
-            var dist = 1 / System.Math.Tan(fov / 2);
-
-            var dx = x.Scale(ncx);
-            var dy = y.Scale(ncy);
-
-            var rayDir = z.Scale(dist).Add(dx.Add(dy)).Normalized();
-            var rayOrigin = c.Position.ToPoint();
-
-            return new Ray()
-            {
-                Direction = rayDir,
-                Origin = rayOrigin
-            };
+            return Ray.FromMouseClick(c, width, height, mousePos.X, mousePos.Y);
         }
 
         private bool DoesRayIntersectLine( Point a0, Point a1, Ray ray, double tol )
@@ -473,6 +422,7 @@ namespace Dynamo.Manipulation
         public void Dispose()
         {
             PointNode.RenderPackageUpdate -= this.DrawManipulator;
+
             Helix3DView.MouseMove -= MouseMove;
             Helix3DView.MouseDown -= MouseDown;
             Helix3DView.MouseUp -= MouseUp;
@@ -488,6 +438,69 @@ namespace Dynamo.Manipulation
             ForceRedraw();
         }
 
+    }
+
+    public struct Ray
+    {
+        public Point Origin;
+        public Vector Direction;
+
+        public Line ToLine()
+        {
+            return Line.ByStartPointEndPoint(Origin, Origin.Add(Direction.Scale(10000)));
+        }
+
+        public Line ToOriginCenteredLine()
+        {
+            return Line.ByStartPointEndPoint(Origin.Add(Direction.Scale(-100)),
+                Origin.Add(Direction.Scale(100)));
+        }
+
+        public static Ray FromMouseClick(PerspectiveCamera c, double width, double height, double mouseX, double mouseY)
+        {
+            var fov = c.FieldOfView * Math.PI / 180;
+
+            var y = c.UpDirection.ToVector();
+            var z = c.LookDirection.ToVector().Normalized();
+            var x = z.Cross(y).Normalized();
+            y = z.Cross(x).Normalized();
+
+            // determine coordinates of the point click on the view plane
+            var ncx = (mouseX - width * 0.5) * (1.0 / width) * 2;
+            var ncy = (mouseY - height * 0.5) * (1.0 / width) * 2;
+
+            var dist = 1 / System.Math.Tan(fov / 2);
+
+            var dx = x.Scale(ncx);
+            var dy = y.Scale(ncy);
+
+            var rayDir = z.Scale(dist).Add(dx.Add(dy)).Normalized();
+            var rayOrigin = c.Position.ToPoint();
+
+            return new Ray()
+            {
+                Direction = rayDir,
+                Origin = rayOrigin
+            };
+        }
+    }
+
+    public static class NodeExtensions
+    {
+        public static T GetCachedValueOrDefault<T>(this NodeModel node) where T : class
+        {
+            object val;
+            try
+            {
+                val = node.CachedValue != null ? node.CachedValue.Data : null;
+            }
+            catch
+            {
+                val = null;
+            }
+
+            return val is T ? val as T : null;
+        }
     }
 
     public static class PointExtensions
@@ -506,6 +519,8 @@ namespace Dynamo.Manipulation
         {
             return Vector.ByCoordinates(vec.X, vec.Y, vec.Z);
         }
+
+
     }
 
 }
