@@ -8,11 +8,13 @@ using System.Web.UI.WebControls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
+using System.Xml.Xsl;
 using Autodesk.DesignScript.Geometry;
 using Autodesk.DesignScript.Interfaces;
 using Dynamo.Controls;
 using Dynamo.DSEngine;
 using Dynamo.Models;
+using Dynamo.Nodes;
 using Dynamo.Utilities;
 using Dynamo.ViewModels;
 using HelixToolkit.Wpf;
@@ -64,24 +66,77 @@ namespace Dynamo.Manipulation
             this.Watch3DView = ManipulatorContext.View.background_preview;
             this.Helix3DView = Watch3DView.View;
 
-            string sliderName = "Double Slider";
-
             Origin = Point.Origin();
 
-            XNode = pointNode.GetInputNodeOfName(0, sliderName);
-            YNode = pointNode.GetInputNodeOfName(1, sliderName);
-            ZNode = pointNode.GetInputNodeOfName(2, sliderName);
+            AttachHandlers();
+            AssignInputNodes();
+            SetAxesFromNodeModel();
+            ForceRedraw();
+        }
+
+        public void AttachHandlers()
+        {
+            Watch3DView.View.MouseMove += MouseMove;
+            Watch3DView.View.MouseDown += MouseDown;
+            Watch3DView.View.MouseUp += MouseUp;
+            PointNode.RenderPackageUpdate += this.DrawManipulator;
+        }
+
+        public void AssignInputNodes()
+        {
+            string sliderName = "Double Slider";
+
+            int inputIndexShift = IsCartesianPoint() ? 1 : 0;
+            XNode = PointNode.GetInputNodeOfName(inputIndexShift, sliderName);
+            YNode = PointNode.GetInputNodeOfName(1 + inputIndexShift, sliderName);
+            ZNode = PointNode.GetInputNodeOfName(2 + inputIndexShift, sliderName);
+        }
+
+        public bool IsCartesianPoint()
+        {
+            return PointNode is DSFunction &&
+                   (PointNode as DSFunction).Definition.MangledName ==
+                  "Autodesk.DesignScript.Geometry.Point.ByCartesianCoordinates@Autodesk.DesignScript.Geometry.CoordinateSystem,double,double,double";
+        }
+
+        public void SetAxesFromNodeModel()
+        {
+            if (IsCartesianPoint())
+            {
+                var csNode = PointNode.GetInputNode(0);
+
+                if (csNode != null)
+                {
+                    var cs = GetCSFromNode(csNode);
+                    if (cs != null)
+                    {
+                        XAxis = cs.XAxis;
+                        YAxis = cs.YAxis;
+                        ZAxis = cs.ZAxis;
+                        return;
+                    }
+                }
+            }
 
             XAxis = Vector.XAxis();
             YAxis = Vector.YAxis();
             ZAxis = Vector.ZAxis();
 
-            Watch3DView.View.MouseMove += MouseMove;
-            Watch3DView.View.MouseDown += MouseDown;
-            Watch3DView.View.MouseUp += MouseUp;
-            PointNode.RenderPackageUpdate += this.DrawManipulator;
-            
-            ForceRedraw();
+        }
+
+        private static CoordinateSystem GetCSFromNode(NodeModel node)
+        {
+            object val;
+            try
+            {
+                val = node.CachedValue != null ? node.CachedValue.Data : null;
+            }
+            catch
+            {
+                val = null;
+            }
+
+            return val is CoordinateSystem ? val as CoordinateSystem : null;
         }
 
         #region Drawing
@@ -124,7 +179,7 @@ namespace Dynamo.Manipulation
 
                 if (DragX)
                 {
-                    pkgs.Add(BuildConstrainedAxisLine(Vector.XAxis()));
+                    pkgs.Add(BuildConstrainedAxisLine(XAxis));
                 }
             }
 
@@ -134,7 +189,7 @@ namespace Dynamo.Manipulation
 
                 if (DragY)
                 {
-                    pkgs.Add(BuildConstrainedAxisLine(Vector.YAxis()));
+                    pkgs.Add(BuildConstrainedAxisLine(YAxis));
                 }
             }
 
@@ -144,7 +199,7 @@ namespace Dynamo.Manipulation
 
                 if (DragZ)
                 {
-                    pkgs.Add(BuildConstrainedAxisLine(Vector.ZAxis()));
+                    pkgs.Add(BuildConstrainedAxisLine(ZAxis));
                 }
 
             }
@@ -207,15 +262,15 @@ namespace Dynamo.Manipulation
 
             if (DragX)
             {
-                axis.Direction = Vector.XAxis();
+                axis.Direction = XAxis;
             }
             else if (DragY)
             {
-                axis.Direction = Vector.YAxis();
+                axis.Direction = YAxis;
             }
             else if (DragZ)
             {
-                axis.Direction = Vector.ZAxis();
+                axis.Direction = ZAxis;
             }
 
             var moveVector = GetMoveVector(axis, GetClickRay(mouseEventArgs));
@@ -225,15 +280,15 @@ namespace Dynamo.Manipulation
 
             if (DragX)
             {
-                Move(XNode, moveVector.X);
+                Move(XNode, moveVector.Dot(XAxis));
             }
             else if (DragY)
             {
-                Move(YNode, moveVector.Y);
+                Move(YNode, moveVector.Dot(YAxis));
             }
             else if (DragZ)
             {
-                Move(ZNode, moveVector.Z);
+                Move(ZNode, moveVector.Dot(ZAxis));
             }
         }
 
@@ -399,8 +454,6 @@ namespace Dynamo.Manipulation
             if (node == null) return;
 
             if (Math.Abs(amount) < 0.001) return;
-
-            Console.WriteLine(amount);
 
             dynamic uiNode = node;
             uiNode.Value = uiNode.Value + amount;

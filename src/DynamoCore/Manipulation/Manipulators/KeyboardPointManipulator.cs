@@ -88,14 +88,21 @@ namespace Dynamo.Manipulation
     {
         public static NodeModel GetInputNodeOfName(this NodeModel node, int inputPortIndex, string nodeName)
         {
-            if (node.InPorts.Count <= inputPortIndex || 
+            var oppositeNode = GetInputNode(node, inputPortIndex);
+            if (oppositeNode == null) return null;
+            return oppositeNode.Name == nodeName ? oppositeNode : null;
+        }
+
+        public static NodeModel GetInputNode(this NodeModel node, int inputPortIndex)
+        {
+            if (node.InPorts.Count <= inputPortIndex ||
                 node.InPorts[inputPortIndex].Connectors.Count == 0)
             {
                 return null;
             }
 
             var oppositeNode = node.InPorts[inputPortIndex].Connectors[0].Start.Owner;
-            return oppositeNode.Name == nodeName ? oppositeNode : null;
+            return oppositeNode;
         }
 
     }
