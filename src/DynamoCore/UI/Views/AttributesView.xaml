@@ -3,12 +3,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:search="clr-namespace:Dynamo.Nodes.Search"
-             xmlns:searchElements="clr-namespace:Dynamo.Search.SearchElements"
              xmlns:dynui="clr-namespace:Dynamo.UI.Controls"
              xmlns:controls="clr-namespace:Dynamo.Controls" xmlns:clr="clr-namespace:System;assembly=mscorlib"
              xmlns:dynamo="clr-namespace:Dynamo"
              xmlns:ui="clr-namespace:Dynamo.UI"
+             xmlns:vm="clr-namespace:Dynamo.ViewModels"
              mc:Ignorable="d" 
              Visibility="Visible" 
              d:DesignWidth="300" 
@@ -88,6 +87,26 @@
                 Attributes
             </Label>
         </Grid>
+
+        <TreeView Grid.Row="1" 
+                  Name="AttributesStack" 
+                  ItemsSource="{Binding Categories}"
+                  Background="{StaticResource WorkspaceBackgroundBrush}">
+            <TreeView.Resources>
+                <HierarchicalDataTemplate DataType="{x:Type vm:AttributeCategory}" ItemsSource="{Binding Attributes}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Name}" />
+                    </StackPanel>
+                </HierarchicalDataTemplate>
+                <DataTemplate DataType="{x:Type vm:Attribute}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Name}" />
+                        <UserControl Content="{Binding Element}"/>
+                    </StackPanel>
+                </DataTemplate>
+            </TreeView.Resources>
+        </TreeView>
+        
     </Grid>
 
 </UserControl>

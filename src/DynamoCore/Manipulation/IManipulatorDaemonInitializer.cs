@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using Dynamo.Manipulation.Manipulators;
+using Dynamo.Models;
 using Dynamo.Nodes;
 
 namespace Dynamo.Manipulation
@@ -15,8 +17,9 @@ namespace Dynamo.Manipulation
         {
             return new Dictionary<Type, IEnumerable<INodeManipulatorCreator>>
             {
-                { typeof(DSFunction), new[] { new DSFunctionManipulatorCreator() }},
-                { typeof(Function), new[] { CustomNodeManipulatorCreator.Instance }}
+                { typeof(DSFunction), new[] { new DSFunctionManipulatorCreator() } },
+                { typeof(Function), new[] { CustomNodeManipulatorCreator.Instance } },
+                { typeof(NodeModel), new[] { new AttributesManipulatorCreator() } }
             };
         }
     }

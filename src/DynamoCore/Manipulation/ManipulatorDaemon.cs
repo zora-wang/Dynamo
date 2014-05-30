@@ -26,15 +26,16 @@ namespace Dynamo.Manipulation
 
         public void CreateManipulator(NodeModel model, DynamoView dynamoView)
         {
-            IEnumerable<INodeManipulatorCreator> creators;
-            if (registeredManipulators.TryGetValue(model.GetType(), out creators))
-            {
-                activeManipulators[model.GUID] =
-                    new CompositeManipulator(
-                        creators.Select(
-                            creator => creator.Create(model, new DynamoManipulatorContext { View = dynamoView }))
-                            .Where(manipulator => manipulator != null));
-            }
+            IEnumerable<INodeManipulatorCreator> creators = 
+                registeredManipulators.Where(pair => pair.Key.IsInstanceOfType(model))
+                    .SelectMany(pair => pair.Value);
+
+            activeManipulators[model.GUID] =
+                new CompositeManipulator(
+                    creators.Select(
+                        creator => creator.Create(model, new DynamoManipulatorContext { View = dynamoView }))
+                        .Where(manipulator => manipulator != null)
+                        .ToList());
         }
 
         public void KillManipulators(NodeModel model)
@@ -58,9 +59,9 @@ namespace Dynamo.Manipulation
     internal class CompositeManipulator : IManipulator
     {
         private readonly List<IManipulator> subs;
-        public CompositeManipulator(IEnumerable<IManipulator> subs)
+        public CompositeManipulator(List<IManipulator> subs)
         {
-            this.subs = subs.ToList();
+            this.subs = subs;
         }
 
         public void Dispose()

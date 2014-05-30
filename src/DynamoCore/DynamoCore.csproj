@@ -140,6 +140,7 @@ limitations under the License.
     <Compile Include="Manipulation\IManipulator.cs" />
     <Compile Include="Manipulation\IManipulatorDaemonInitializer.cs" />
     <Compile Include="Manipulation\INodeManipulatorCreator.cs" />
+    <Compile Include="Manipulation\Manipulators\AttributesManipulator.cs" />
     <Compile Include="Manipulation\Manipulators\KeyboardPointManipulator.cs" />
     <Compile Include="Manipulation\LookupCreator.cs" />
     <Compile Include="Manipulation\ManipulatorDaemon.cs" />
@@ -226,6 +227,7 @@ limitations under the License.
     <Compile Include="Utilities\CursorLibrary.cs" />
     <Compile Include="Utilities\MathUtils.cs" />
     <Compile Include="Utilities\XmlHelper.cs" />
+    <Compile Include="ViewModels\AttributesViewModel.cs" />
     <Compile Include="ViewModels\EndlessGridViewModel.cs" />
     <Compile Include="ViewModels\InfoBubbleViewModel.cs" />
     <Compile Include="ViewModels\Watch3DFullscreenViewModel.cs" />

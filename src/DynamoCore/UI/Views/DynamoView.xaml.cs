@@ -204,7 +204,7 @@ namespace Dynamo.Controls
 
             #region Attributes initialization
 
-            var attributes = new AttributesView();
+            var attributes = new AttributesView { DataContext = dynSettings.Controller.AttributesViewModel };
             RightSidebarGrid.Children.Add(attributes);
 
             #endregion

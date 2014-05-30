@@ -276,6 +276,7 @@ namespace Dynamo
             CustomNodeManager = new CustomNodeManager(pluginsPath);
             
             SearchViewModel = new SearchViewModel();
+            AttributesViewModel = new AttributesViewModel();
 
             dynSettings.PackageLoader = new PackageLoader();
 
@@ -366,6 +367,7 @@ namespace Dynamo
         };
 
         public bool Running { get; protected set; }
+        public AttributesViewModel AttributesViewModel { get; private set; }
 
         public void RunExpression(int? executionInterval = null)
         {

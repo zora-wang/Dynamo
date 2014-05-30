@@ -23,7 +23,7 @@ namespace Dynamo.Manipulation
             var name = GetKey(dsfunc);
 
             return ManipulatorCreators.ContainsKey(name)
-                ? new CompositeManipulator(ManipulatorCreators[name].Select(m => m.Create(node, context)))
+                ? new CompositeManipulator(ManipulatorCreators[name].Select(m => m.Create(node, context)).ToList())
                 : null;
         }
 
