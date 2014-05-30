@@ -91,16 +91,29 @@
         <TreeView Grid.Row="1" 
                   Name="AttributesStack" 
                   ItemsSource="{Binding Categories}"
-                  Background="{StaticResource WorkspaceBackgroundBrush}">
+                  Background="{StaticResource WorkspaceBackgroundBrush}"
+                  BorderThickness="0">
+            
+            <TreeView.ItemContainerStyle>
+                <Style>
+                    <Setter Property="TreeViewItem.IsExpanded" Value="True"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Path=Type}" Value="menu">
+                            <Setter Property="TreeViewItem.IsSelected" Value="True"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TreeView.ItemContainerStyle>
+
             <TreeView.Resources>
                 <HierarchicalDataTemplate DataType="{x:Type vm:AttributeCategory}" ItemsSource="{Binding Attributes}">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding Name}" />
+                        <TextBlock Foreground="AntiqueWhite" Text="{Binding Name}" />
                     </StackPanel>
                 </HierarchicalDataTemplate>
                 <DataTemplate DataType="{x:Type vm:Attribute}">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding Name}" />
+                        <TextBlock Foreground="White" Text="{Binding Name}" Margin="0,0,5,0" />
                         <UserControl Content="{Binding Element}"/>
                     </StackPanel>
                 </DataTemplate>
