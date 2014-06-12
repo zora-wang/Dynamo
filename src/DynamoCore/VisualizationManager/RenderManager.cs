@@ -41,6 +41,8 @@ namespace Dynamo
     {
         private readonly DynamoController controller;
         private readonly Thread controllerThread;
+        private readonly List<RenderTask> renderQueue = new List<RenderTask>();
+
         public RenderManager(DynamoController controller)
         {
             this.controller = controller;
@@ -49,6 +51,8 @@ namespace Dynamo
             controllerThread.IsBackground = true;
             controllerThread.Start();
         }
+
+        #region Event handling
 
         /// <summary>
         /// An event triggered on the completion of visualization update.
@@ -80,9 +84,10 @@ namespace Dynamo
                 RenderFailed(sender, e);
         }
 
+        #endregion
 
 
-        private List<RenderTask> renderQueue = new List<RenderTask>();
+        #region Public API 
 
         /// <summary>
         /// Schedule the render task specified for execution
@@ -96,6 +101,48 @@ namespace Dynamo
                 renderQueue.Add(renderTask);
             }
         }
+
+        /// <summary>
+        /// Synchronously render
+        /// </summary>
+        /// <param name="renderTask"></param>
+        public void RenderSync(RenderTask renderTask)
+        {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+
+            //Flush the renderqueue in case we're in a mixed sync/async environment
+
+            while (true)
+            {
+                lock (renderQueue)
+                {
+                    Thread.Sleep(0);
+                    if (renderQueue.Count > 0)
+                    {
+                        continue;
+                    }
+
+                    if (sw.ElapsedMilliseconds > 1)
+                    {
+                        dynSettings.DynamoLogger.Log("RenderSync span for " + sw.Elapsed);
+                    }
+
+
+
+                    //We have an empty queue, run the task
+                    Render(renderTask.TaskID, renderTask.NodesToUpdateRendering);
+                    dynSettings.DynamoLogger.Log("RenderSync completed in " + sw.Elapsed);
+                    return;
+
+                    
+                }
+            }
+
+        }
+
+
+        #endregion
 
         private void RenderLoopController()
         {
