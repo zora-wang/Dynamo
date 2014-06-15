@@ -278,12 +278,12 @@ namespace Dynamo
 
             var packages = new List<RenderPackage>();
 
-            //This also isn't thread safe
+            //TODO(Luke): Fix threading on access to DynamoModel.Nodes
             foreach (var node in dynSettings.Controller.DynamoModel.Nodes)
             {
                 lock (node.RenderPackagesMutex)
                 {
-                    //Note(Luke): this seems really inefficent, it's doing an O(n) search for a tag
+                    //TODO(Luke): this seems really inefficent, it's doing an O(n) search for a tag
                     //This is also a target for memory optimisation
 
                     packages
@@ -382,6 +382,8 @@ namespace Dynamo
 
             //LogVisualizationUpdateData(rd, watch.Elapsed.ToString());
         }
+
+        
 
         /// <summary>
         /// Checks the current Render task id against the list of task ids.
@@ -529,6 +531,7 @@ namespace Dynamo
             controller.DynamoModel.ConnectorDeleted += DynamoModel_ConnectorDeleted;
             DynamoSelection.Instance.Selection.CollectionChanged += SelectionChanged;
 
+            //TODO(Luke): Consider routing this through a central event source
             dynSettings.Controller.DynamoModel.Nodes.ForEach(n => n.PropertyChanged += NodePropertyChanged);
 
             renderManager.RenderComplete += RenderManagerOnRenderComplete;
@@ -560,7 +563,8 @@ namespace Dynamo
         /// <param name="e"></param>
         private void Update(object sender, EventArgs e)
         {
-            renderManager.RequestRenderAsync(new RenderTask());
+            renderManager.RenderSync(new RenderTask());
+            //renderManager.RequestRenderAsync(new RenderTask());
             //renderManager.Render();
         }
 
