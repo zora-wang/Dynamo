@@ -131,7 +131,10 @@ namespace Dynamo.DSEngine
                 dynSettings.DynamoLogger.Log("Error in Node. Not sent for building and compiling");
 
             if (isDeltaExecution)
+            {
+                node.LastUpdatedTime = TSOManager.GetInstance().CurrentTime;
                 OnAstNodeBuilding(node.GUID);
+            }
 
 #if DEBUG
             Validity.Assert(!inputAstNodes.Any((n) => n == null), 

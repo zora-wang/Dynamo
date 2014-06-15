@@ -10,6 +10,8 @@ using System.Diagnostics;
 using System.Collections.ObjectModel;
 using Autodesk.DesignScript.Geometry;
 using Autodesk.DesignScript.Interfaces;
+
+using Dynamo.Core;
 using Dynamo.Interfaces;
 using Dynamo.Nodes;
 using System.Xml;
@@ -1741,6 +1743,13 @@ namespace Dynamo.Models
         {
             return true; // Default implementation: always show preview.
         }
+
+
+        public TimeStamp LastUpdatedTime { get; internal set; }
+        public TimeStamp LastRenderedTime { get; internal set; }
+
+
+
     }
 
     public enum ElementState

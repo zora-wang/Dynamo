@@ -75,6 +75,9 @@ namespace Dynamo.Core
 
                 controller.EngineController.GenerateGraphSyncData(controller.DynamoViewModel.Model.HomeSpace.Nodes);
 
+                //Increment the clock to get the current run id
+                TimeStamp runStartTime = TSOManager.GetInstance().AllocateTimeStamp();
+
                 //No additional work needed
                 if (!controller.EngineController.HasPendingGraphSyncData)
                     return;
