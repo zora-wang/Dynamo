@@ -1928,4 +1928,14 @@ namespace Dynamo.Models
         public Action ActionToDispatch { get; set; }
         public List<object> Parameters { get; set; }
     }
+
+    public class TimestampEventArgs : EventArgs
+    {
+        public TimestampEventArgs(NodeModel node)
+        {
+            Node = node;
+        }
+
+        public NodeModel Node { get; private set; }
+    }
 }

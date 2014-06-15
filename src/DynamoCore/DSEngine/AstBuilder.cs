@@ -25,6 +25,7 @@ namespace Dynamo.DSEngine
     {
         void OnAstNodeBuilding(Guid nodeGuid);
         void OnAstNodeBuilt(Guid nodeGuid, IEnumerable<AssociativeNode> astNodes);
+        void OnTimestampChanged(Guid nodeGuid);
     }
 
     /// <summary>
@@ -133,6 +134,7 @@ namespace Dynamo.DSEngine
             if (isDeltaExecution)
             {
                 node.LastUpdatedTime = TSOManager.GetInstance().CurrentTime;
+                OnTimestampChanged(node.GUID);
                 OnAstNodeBuilding(node.GUID);
             }
 
@@ -293,6 +295,13 @@ namespace Dynamo.DSEngine
             if (nodeContainer != null)
                 nodeContainer.OnAstNodeBuilding(nodeGuid);
         }
+
+        private void OnTimestampChanged(Guid nodeGuid)
+        {
+            if (nodeContainer != null)
+                nodeContainer.OnTimestampChanged(nodeGuid);
+        }
+
 
         /// <summary>
         ///     Notify IAstNodeContainer that AST nodes have been built.

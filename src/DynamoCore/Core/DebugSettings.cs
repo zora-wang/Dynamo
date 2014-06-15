@@ -6,6 +6,8 @@ namespace Dynamo.Core
     {
         private bool showDebugASTs = false;
         private bool verboseLogging = false;
+        private bool showTimestamps = false;
+
 
         /// <summary>
         /// Enable verbose logging this is a lot of data
@@ -27,6 +29,16 @@ namespace Dynamo.Core
             {
                 showDebugASTs = value;
                 RaisePropertyChanged("ShowDebugASTs");
+            }
+        }
+
+        public bool ShowTimestamps
+        {
+            get { return showTimestamps; }
+            set
+            {
+                showTimestamps = value;
+                RaisePropertyChanged("ShowTimestamps");
             }
         }
     }

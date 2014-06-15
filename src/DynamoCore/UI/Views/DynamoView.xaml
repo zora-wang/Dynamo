@@ -369,6 +369,8 @@
                     <MenuItem Header="Debug" Focusable="False" Visibility="{Binding IsDebugBuild, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}">
                         <MenuItem Focusable="False" Name="VerboseLogging" IsCheckable="True" IsChecked="{Binding VerboseLogging}" Header="Verbose Logging"/>
                         <MenuItem Focusable="False" Name="ShowDebugASTs" IsCheckable="True" Header ="Show Debug ASTs" IsChecked="{Binding ShowDebugASTs}" ></MenuItem>
+                        <MenuItem Focusable="False" Name="ShowTimestamps" IsCheckable="True" Header ="Show timestamps" IsChecked="{Binding ShowTimestamps}" ></MenuItem>
+
                         <MenuItem Focusable="False" Name="ForceReexec" Header="Force Re-execute" 
                                     Command="{Binding ForceRunExpressionCommand}"
                                     CommandParameter="{Binding Path=RunInDebug}"

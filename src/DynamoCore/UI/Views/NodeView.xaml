@@ -24,6 +24,7 @@
             <RowDefinition Height="Auto"></RowDefinition>
             <RowDefinition Height="Auto"></RowDefinition>
             <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
@@ -369,7 +370,11 @@
                 Background="Blue">
         </Canvas>
 
-        <Canvas ClipToBounds="False" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Visibility="{Binding ShowDebugASTs, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}">
+        <Canvas ClipToBounds="False" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Visibility="{Binding ShowTimestamps, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}">
+            <Label Content="{Binding TimestampText}" HorizontalContentAlignment="Center"></Label>
+        </Canvas>
+
+        <Canvas ClipToBounds="False" Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3" Visibility="{Binding ShowDebugASTs, Converter={StaticResource BooleanToVisibilityCollapsedConverter}}">
             <Label Content="{Binding ASTText}" HorizontalContentAlignment="Center"></Label>
         </Canvas>
     </Grid>

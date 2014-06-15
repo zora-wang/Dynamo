@@ -566,6 +566,19 @@ namespace Dynamo.ViewModels
             }
         }
 
+        /// <summary>
+        /// Display timestamp debugging data?
+        /// </summary>
+        public bool ShowTimestamps
+        {
+            get { return IsDebugBuild && dynSettings.Controller.DebugSettings.ShowTimestamps; }
+            set
+            {
+                Controller.DebugSettings.ShowTimestamps = value;
+                RaisePropertyChanged("ShowTimestamps");
+            }
+        }
+
         #endregion
 
         public DynamoViewModel(DynamoController controller, string commandFilePath)

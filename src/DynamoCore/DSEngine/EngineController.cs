@@ -15,6 +15,8 @@ using ProtoCore.DSASM.Mirror;
 namespace Dynamo.DSEngine
 {
     public delegate void AstBuiltEventHandler(object sender, AstBuilder.ASTBuiltEventArgs e);
+    public delegate void TimestampChangedEventHandler(object sender, TimestampEventArgs e);
+
 
     /// <summary>
     /// A controller to coordinate the interactions between some DesignScript
@@ -23,6 +25,7 @@ namespace Dynamo.DSEngine
     public class EngineController: IAstNodeContainer, IDisposable
     {
         public event AstBuiltEventHandler AstBuilt;
+        public event TimestampChangedEventHandler TimestampChanged;
 
         private LiveRunnerServices liveRunnerServices;
         private LibraryServices libraryServices;
@@ -430,6 +433,19 @@ namespace Dynamo.DSEngine
             }
         }
         
+
+        public void OnTimestampChanged(Guid nodeGuid)
+        {
+            if (TimestampChanged != null)
+            {
+                if (controller.DynamoModel.NodeMap.ContainsKey(nodeGuid))
+                {
+                    TimestampChanged(
+                        this, new TimestampEventArgs(controller.DynamoModel.NodeMap[nodeGuid]));
+                }
+            }
+        }
+
         #endregion
 
         /// <summary>

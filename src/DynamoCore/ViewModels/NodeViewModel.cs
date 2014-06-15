@@ -39,6 +39,7 @@ namespace Dynamo.ViewModels
         private bool isFullyConnected = false;
         private double zIndex = 3;
         private string astText = string.Empty;
+        private string timestampText = String.Empty;
 
         #endregion
 
@@ -274,6 +275,21 @@ namespace Dynamo.ViewModels
             }
         }
 
+        /// <summary>
+        /// Debug display text with the timestamps associated with this node
+        /// </summary>
+        public string TimestampText
+        {
+            get { return timestampText;  }
+            set { 
+                timestampText = value;
+            RaisePropertyChanged("TimestampText");
+            }
+        }
+
+        /// <summary>
+        /// Display AST debug data?
+        /// </summary>
         public bool ShowDebugASTs
         {
             get { return dynSettings.Controller.DebugSettings.ShowDebugASTs; }
@@ -282,6 +298,19 @@ namespace Dynamo.ViewModels
                 dynSettings.Controller.DebugSettings.ShowDebugASTs = value;
             }
         }
+
+        /// <summary>
+        /// Display time stamp debug data?
+        /// </summary>
+        public bool ShowTimestamps
+        {
+            get { return dynSettings.Controller.DebugSettings.ShowTimestamps; }
+            set
+            {
+                dynSettings.Controller.DebugSettings.ShowTimestamps = value;
+            }
+        }
+
 
         #endregion
 
@@ -342,6 +371,7 @@ namespace Dynamo.ViewModels
             if (IsDebugBuild)
             {
                 dynSettings.Controller.EngineController.AstBuilt += EngineController_AstBuilt;
+                dynSettings.Controller.EngineController.TimestampChanged += EngineController_TimestampChanged;
             }
         }
 
@@ -351,7 +381,12 @@ namespace Dynamo.ViewModels
             {
                 RaisePropertyChanged("ShowDebugASTs");
             }
+            if (e.PropertyName == "ShowTimestamps")
+            {
+                RaisePropertyChanged("ShowTimestamps");
+            }
         }
+
 
         /// <summary>
         /// Handler for the EngineController's AstBuilt event.
@@ -386,6 +421,18 @@ namespace Dynamo.ViewModels
                 }
 
                 ASTText = sb.ToString();
+            }
+        }
+
+        void EngineController_TimestampChanged(object sender, TimestampEventArgs e)
+        {
+            if (e.Node == nodeLogic)
+            {
+                var sb = new StringBuilder();
+                sb.AppendLine("Last Update Time: " + e.Node.LastUpdatedTime);
+                sb.AppendLine("Last Render Time: " + e.Node.LastRenderedTime);
+
+                TimestampText = sb.ToString();
             }
         }
 
