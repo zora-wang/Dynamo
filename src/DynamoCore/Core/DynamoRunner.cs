@@ -49,7 +49,7 @@ namespace Dynamo.Core
         public void RunExpression(int? executionInterval = null)
         {
             this.execInternval = executionInterval;
-
+            TimeStamp runStartTime;
             lock (runControlMutex)
             {
                 if (Running)
@@ -76,7 +76,7 @@ namespace Dynamo.Core
                 controller.EngineController.GenerateGraphSyncData(controller.DynamoViewModel.Model.HomeSpace.Nodes);
 
                 //Increment the clock to get the current run id
-                TimeStamp runStartTime = TSOManager.GetInstance().AllocateTimeStamp();
+                runStartTime = TSOManager.GetInstance().AllocateTimeStamp();
 
                 //No additional work needed
                 if (!controller.EngineController.HasPendingGraphSyncData)
@@ -96,23 +96,23 @@ namespace Dynamo.Core
                 {
                     Validity.Assert(Running);
                 }
-                RunAsync();
+                RunAsync(runStartTime);
             }
             else
             {
                 //for testing, we do not want to run asynchronously, as it will finish the 
                 //test before the evaluation (and the run) is complete
                 //RunThread(evaluationWorker, new DoWorkEventArgs(executionInterval));
-                RunSync();
+                RunSync(runStartTime);
             }
         }
 
-        private void RunAsync()
+        private void RunAsync(TimeStamp runStartTime)
         {
-            new Thread(RunSync).Start();
+            new Thread(() => RunSync(runStartTime)).Start();
         }
 
-        private void RunSync()
+        private void RunSync(TimeStamp runStartTime)
         {
             do
             {
@@ -126,21 +126,24 @@ namespace Dynamo.Core
             }
             while (!cancelSet);
 
-            RunComplete();
+            
+
+            RunComplete(runStartTime);
         }
 
         /// <summary>
         /// Method to group together all the tasks associated with an execution being complete
         /// </summary>
-        public void RunComplete()
+        public void RunComplete(TimeStamp runStamp)
         {
-            controller.OnRunCompleted(this, false);
 
             lock (runControlMutex)
             {
                 Running = false;
                 controller.DynamoViewModel.RunEnabled = true;
             }
+
+            controller.OnRunCompleted(this, false, runStamp);
         }
 
 

@@ -157,12 +157,12 @@ namespace Dynamo
                 RequestNodeSelect(sender, e);
         }
 
-        public delegate void RunCompletedHandler(object controller, bool success);
+        public delegate void RunCompletedHandler(object controller, bool success, TimeStamp runStartTimeStamp);
         public event RunCompletedHandler RunCompleted;
-        public virtual void OnRunCompleted(object sender, bool success)
+        public virtual void OnRunCompleted(object sender, bool success, TimeStamp runStartTimeStamp)
         {
             if (RunCompleted != null)
-                RunCompleted(sender, success);
+                RunCompleted(sender, success, runStartTimeStamp);
         }
 
         public event EventHandler RequestsRedraw;
@@ -198,6 +198,16 @@ namespace Dynamo
         {
             if (EvaluationCompleted != null)
                 EvaluationCompleted(sender, e);
+        }
+
+
+
+        void DynamoController_RunCompleted(object controller, bool success, TimeStamp runStartTimeStamp)
+        {
+            if (Runner.NeedsAdditionalRun)
+            {
+                Runner.RunExpression();
+            }
         }
 
 
@@ -332,6 +342,8 @@ namespace Dynamo
             MigrationManager.Instance.MigrationTargets.Add(typeof(WorkspaceMigrations));
 
             Runner = new DynamoRunner();
+
+            this.RunCompleted += DynamoController_RunCompleted;
         }
 
         /// <summary>
