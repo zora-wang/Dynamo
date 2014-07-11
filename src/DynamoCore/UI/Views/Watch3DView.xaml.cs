@@ -2,23 +2,49 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
 using System.Windows.Threading;
+
+using Autodesk.DesignScript.Geometry;
+
 using Dynamo.DSEngine;
 using Dynamo.Utilities;
 using Dynamo.ViewModels;
+
+using DynamoUtilities;
+
 using HelixToolkit.Wpf;
 using Color = System.Windows.Media.Color;
+using MenuItem = System.Windows.Controls.MenuItem;
+using PixelFormat = System.Drawing.Imaging.PixelFormat;
+using Point = System.Windows.Point;
+using UserControl = System.Windows.Controls.UserControl;
 
 namespace Dynamo.Controls
 {
+    public delegate void SendGraphicsToViewDelegate(
+        Point3DCollection points, Point3DCollection pointsSelected,
+        Point3DCollection lines, Point3DCollection linesSelected, Point3DCollection redLines,
+        Point3DCollection greenLines,
+        Point3DCollection blueLines, Point3DCollection verts, Vector3DCollection norms,
+        Int32Collection tris,
+        Point3DCollection vertsSel, Vector3DCollection normsSel, Int32Collection trisSel,
+        MeshGeometry3D mesh,
+        MeshGeometry3D meshSel, List<BillboardTextItem> text, PointCollection textCoords);
+
     /// <summary>
     /// Interaction logic for WatchControl.xaml
     /// </summary>
@@ -52,6 +78,9 @@ namespace Dynamo.Controls
         private MeshGeometry3D _meshSelected = new MeshGeometry3D();
         private List<Point3D> _grid = new List<Point3D>();
         private List<BillboardTextItem> _text = new List<BillboardTextItem>();
+        private BitmapImage colorMap;
+        private string colorMapPath;
+        private Dictionary<Color,Point> colorDictionary;
 
         #endregion
 
@@ -175,6 +204,16 @@ namespace Dynamo.Controls
         /// during render.
         /// </summary>
         public int MeshCount { get; set; }
+
+        public BitmapImage ColorMap
+        {
+            get { return colorMap; }
+            set
+            {
+                colorMap = value;
+                NotifyPropertyChanged("ColorMap");
+            }
+        }
 
         #endregion
 
@@ -404,6 +443,11 @@ namespace Dynamo.Controls
             var sw = new Stopwatch();
             sw.Start();
 
+            // Replace this list of colors with one created from
+            // the colors in the render packages. Use a linear
+            // gradient of colors to test.
+            colorDictionary = GenerateColorMap(CreateLinearGradient(Colors.Yellow, Colors.Purple));
+            
             Points = null;
             Lines = null;
             Mesh = null;
@@ -459,19 +503,20 @@ namespace Dynamo.Controls
             var normsSel = new Vector3DCollection(meshVertSelCount);
             var tris = new Int32Collection(meshVertCount);
             var trisSel = new Int32Collection(meshVertSelCount);
-                
+            var textCoords = new PointCollection();
+
             foreach (var package in packages)
             {
                 ConvertPoints(package, points, text);
                 ConvertLines(package, lines, redLines, greenLines, blueLines, text);
-                ConvertMeshes(package, verts, norms, tris);
+                ConvertMeshes(package, verts, norms, tris, textCoords);
             }
 
             foreach (var package in selPackages)
             {
                 ConvertPoints(package, pointsSelected, text);
                 ConvertLines(package, linesSelected, redLines, greenLines, blueLines, text);
-                ConvertMeshes(package, vertsSel, normsSel, trisSel);
+                ConvertMeshes(package, vertsSel, normsSel, trisSel, textCoords);
             }
 
             sw.Stop();
@@ -497,21 +542,17 @@ namespace Dynamo.Controls
             normsSel.Freeze();
             trisSel.Freeze();
 
-            Dispatcher.Invoke(new Action<Point3DCollection, Point3DCollection,
-                Point3DCollection, Point3DCollection, Point3DCollection, Point3DCollection,
-                Point3DCollection, Point3DCollection, Vector3DCollection, Int32Collection, 
-                Point3DCollection, Vector3DCollection, Int32Collection, MeshGeometry3D,
-                MeshGeometry3D, List<BillboardTextItem>>(SendGraphicsToView), DispatcherPriority.Render,
+            Dispatcher.Invoke(new SendGraphicsToViewDelegate(SendGraphicsToView), DispatcherPriority.Render,
                                new object[] {points, pointsSelected, lines, linesSelected, redLines, 
                                    greenLines, blueLines, verts, norms, tris, vertsSel, normsSel, 
-                                   trisSel, mesh, meshSel, text});
+                                   trisSel, mesh, meshSel, text, textCoords});
         }
 
         private void SendGraphicsToView(Point3DCollection points, Point3DCollection pointsSelected,
             Point3DCollection lines, Point3DCollection linesSelected, Point3DCollection redLines, Point3DCollection greenLines,
             Point3DCollection blueLines, Point3DCollection verts, Vector3DCollection norms, Int32Collection tris,
             Point3DCollection vertsSel, Vector3DCollection normsSel, Int32Collection trisSel, MeshGeometry3D mesh,
-            MeshGeometry3D meshSel, List<BillboardTextItem> text)
+            MeshGeometry3D meshSel, List<BillboardTextItem> text, PointCollection textCoords)
         {
             Points = points;
             PointsSelected = pointsSelected;
@@ -520,12 +561,16 @@ namespace Dynamo.Controls
             XAxes = redLines;
             YAxes = greenLines;
             ZAxes = blueLines;
+
             mesh.Positions = verts;
             mesh.Normals = norms;
             mesh.TriangleIndices = tris;
+            mesh.TextureCoordinates = textCoords;
+
             meshSel.Positions = vertsSel;
             meshSel.Normals = normsSel;
             meshSel.TriangleIndices = trisSel;
+            
             Mesh = mesh;
             MeshSelected = meshSel;
             Text = text;
@@ -619,7 +664,7 @@ namespace Dynamo.Controls
 
         private void ConvertMeshes(RenderPackage p,
             ICollection<Point3D> points, ICollection<Vector3D> norms,
-            ICollection<int> tris)
+            ICollection<int> tris, ICollection<Point> textCoords)
         {
             for (int i = 0; i < p.TriangleVertices.Count; i+=3)
             {
@@ -660,6 +705,14 @@ namespace Dynamo.Controls
                 tris.Add(points.Count);
                 points.Add(new_point);
                 norms.Add(normal);
+
+                // For testing, randomly select a color from the 
+                // color dictionary. Replace this with a lookup
+                // of the UV with a color Key.
+                var rand = new Random();
+                var values = colorDictionary.Values.ToList();
+                int size = colorDictionary.Count;
+                textCoords.Add(values[rand.Next(size)]);
             }
 
             if (tris.Count > 0)
@@ -701,6 +754,79 @@ namespace Dynamo.Controls
             }
 
             return HitTestResultBehavior.Continue;
+        }
+
+        private Dictionary<Color, Point> GenerateColorMap(IEnumerable<Color> colors)
+        {
+            var map = new Dictionary<Color, Point>();
+
+            const int w = 512;
+            const int h = 512;
+            const int block = 8;
+            var bmp = new Bitmap(w, h);
+            using (var gfx = Graphics.FromImage(bmp))
+            {
+                // Make an image with 8x8 squares of each color
+                var x = 0;
+                var y = 0;
+                foreach (var color in colors)
+                {
+                    if (map.ContainsKey(color))
+                    {
+                        continue;
+                    }
+
+                    using (
+                        var brush =
+                            new SolidBrush(
+                                System.Drawing.Color.FromArgb(color.A, color.R, color.G, color.B)))
+                    {
+                        gfx.FillRectangle(brush, x, y, block, block);
+
+                        // Get a UV coordinate right in the
+                        // middle of the block.
+                        var u = (double)((x + block/2))/(double)w;
+                        var v = (double)((y + block/2))/(double)h;
+                        map.Add(color, new Point(u,v));
+                    }
+
+                    x += 8;
+                    if (x >= 512)
+                    {
+                        x = 0;
+                        y += 8;
+                    }
+                }
+            }
+
+            using (var memory = new MemoryStream())
+            {
+                var bitmapImage = new BitmapImage();
+                bmp.Save(memory, ImageFormat.Png);
+                memory.Position = 0;
+                memory.Seek(0, SeekOrigin.Begin);
+                bitmapImage.BeginInit();
+                bitmapImage.StreamSource = memory;
+                bitmapImage.CacheOption = BitmapCacheOption.OnDemand;
+                bitmapImage.EndInit();
+                ColorMap = bitmapImage;
+            }
+
+            return map;
+        }
+
+        private static IEnumerable<Color> CreateLinearGradient(Color minColor, Color maxColor)
+        {
+            var colorList = new List<Color>();
+            const int size = 30;
+            for (int i = 0; i < size; i++)
+            {
+                var avgR = minColor.R + (int)((maxColor.R - minColor.R) * i / size);
+                var avgG = minColor.G + (int)((maxColor.G - minColor.G) * i / size);
+                var avgB = minColor.B + (int)((maxColor.B - minColor.B) * i / size);
+                colorList.Add(Color.FromArgb(255, (byte)avgR, (byte)avgG, (byte)avgB));
+            }
+            return colorList;
         }
 
         #endregion
