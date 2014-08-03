@@ -209,6 +209,9 @@ namespace Dynamo.Applications
                 Updater.ElementAddedForID += ElementMappingCache.GetInstance().WatcherMethodForAdd;
                 Updater.ElementsDeleted += ElementMappingCache.GetInstance().WatcherMethodForDelete;
 
+                dynRevitSettings.RevitServicesUpdater = Updater;
+
+
                 RevThread.IdlePromise.ExecuteOnIdleAsync(
                     delegate
                     {

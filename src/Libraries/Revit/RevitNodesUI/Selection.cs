@@ -29,6 +29,16 @@ namespace Dynamo.Nodes
         protected string _selectionMessage;
         protected string _selectButtonContent;
 
+
+        protected DSSelectionBase()
+        {
+            dynRevitSettings.Controller.EvaluationCompleted += (sender, args) =>
+                {
+                    ForceReExecuteOfNode = false;
+                };
+
+        }
+
         /// <summary>
         /// The text that describes this selection.
         /// </summary>
@@ -92,6 +102,9 @@ namespace Dynamo.Nodes
         /// Override this to perform custom selection logic.
         /// </summary>
         protected abstract void OnSelectClick();
+
+        public override bool ForceReExecuteOfNode { get; set; } 
+
 
         public abstract void SetupCustomUIElements(dynNodeView view);
 
@@ -165,10 +178,6 @@ namespace Dynamo.Nodes
             }
         }
 
-        public override bool ForceReExecuteOfNode
-        {
-            get { return true; }
-        }
 
         #region protected constructors
 
@@ -274,6 +283,7 @@ namespace Dynamo.Nodes
             if (SelectedElement != null && updated.Contains(selectedUniqueId))
             {
                 RequiresRecalc = true;
+                ForceReExecuteOfNode = true;
             }
         }
 
@@ -384,10 +394,6 @@ namespace Dynamo.Nodes
             }
         }
 
-        public override bool ForceReExecuteOfNode
-        {
-            get { return true; }
-        }
 
         #region protected constructors
 
@@ -505,6 +511,7 @@ namespace Dynamo.Nodes
                 RaisePropertyChanged("SelectionText");
 
                 RequiresRecalc = true;
+                ForceReExecuteOfNode = true;
             }
             catch (OperationCanceledException)
             {
@@ -693,6 +700,7 @@ namespace Dynamo.Nodes
             {
 
                 RequiresRecalc = true;
+                ForceReExecuteOfNode = true;
             }
         }
 

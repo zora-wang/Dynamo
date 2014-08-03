@@ -33,6 +33,10 @@ namespace RevitServices.Elements
         public event ElementUpdateDelegate ElementsModified;
         public event ElementDeleteDelegate ElementsDeleted;
 
+        private readonly Dictionary<String, List<SpecificElementUpdateDelegate>> updateDependantDict = 
+            new Dictionary<string, List<SpecificElementUpdateDelegate>>();
+
+
         #region Event Invokers
 
         protected virtual void OnElementsAdded(IEnumerable<string> updated)
@@ -50,6 +54,21 @@ namespace RevitServices.Elements
 
         protected virtual void OnElementsModified(IEnumerable<string> updated)
         {
+            foreach (string updatedUID in updated)
+            {
+                System.Diagnostics.Debug.WriteLine("Revit Element Modified: " + updatedUID);
+                
+                if (updateDependantDict.ContainsKey(updatedUID))
+                {
+                    foreach (SpecificElementUpdateDelegate del in updateDependantDict[updatedUID])
+                    {
+                        del(updatedUID);
+                    }
+                }
+
+            }
+
+
             var handler = ElementsModified;
             if (handler != null) handler(updated);
         }
@@ -61,6 +80,37 @@ namespace RevitServices.Elements
         }
 
         #endregion
+
+        public void AddUniqueElementHandler(string uid, SpecificElementUpdateDelegate handler)
+        {
+            if (!updateDependantDict.ContainsKey(uid))
+                updateDependantDict.Add(uid, new List<SpecificElementUpdateDelegate>());
+
+            updateDependantDict[uid].Add(handler);
+        }
+
+        public void RemoveUniqueElementHandler(string uid, SpecificElementUpdateDelegate handler)
+        {
+            if (!updateDependantDict.ContainsKey(uid))
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    "Probable defect, trying to remove an update handler for a UID that has not been registed");
+                return;
+            }
+
+            if (!updateDependantDict[uid].Contains(handler))
+            {
+
+                System.Diagnostics.Debug.WriteLine(
+                    "Probable defect, trying to remove an update handler that has not been registed");
+                return;
+            }
+
+
+            updateDependantDict[uid].Remove(handler);
+
+        }
+
 
         // constructor takes the AddInId for the add-in associated with this updater
         public RevitServicesUpdater(/*AddInId id, */ControlledApplication app, IEnumerable<IUpdater> updaters)
@@ -153,6 +203,11 @@ namespace RevitServices.Elements
     /// <param name="updated">All modified elements that have been registered with this callback.</param>
     public delegate void ElementUpdateDelegate(IEnumerable<string> updated);
 
+    /// <summary>
+    /// Callback for a specific element being udpated
+    /// </summary>
+    /// <param name="updatedElementUID">The element that has been updated, this will always be the same as the element that was registered</param>
+    public delegate void SpecificElementUpdateDelegate(string updatedElementUID);
 
     /// <summary>
     /// Callback for when Elements have been updated.

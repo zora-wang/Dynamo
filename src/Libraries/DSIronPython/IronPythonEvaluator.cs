@@ -52,7 +52,11 @@ namespace DSIronPython
             try
             {
                 OnEvaluationBegin(engine, scope, code, bindingValues);
+                System.Diagnostics.Debug.WriteLine(code);
+
                 engine.CreateScriptSourceFromString(code).Execute(scope);
+            
+            
             }
             catch (Exception e)
             {

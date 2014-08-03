@@ -135,6 +135,9 @@ namespace Dynamo.Utilities
             }
         }
 
+        public static RevitServices.Elements.RevitServicesUpdater RevitServicesUpdater { get; set; }
+
+
         public static DynamoController_Revit Controller { get; internal set; }
 
         public class DynamoWarningSwallower : IFailuresPreprocessor
