@@ -87,6 +87,11 @@
     <Compile Include="SunPath.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\DynamoRevit\DynamoRevit.csproj">
+      <Project>{fd56ae51-739e-4893-8de4-925d60c7097c}</Project>
+      <Name>DynamoRevit</Name>
+      <Private>False</Private>
+    </ProjectReference>
     <ProjectReference Include="..\RevitNodes\RevitNodes.csproj">
       <Project>{0bc2a611-bd0e-4fcc-a1de-81f14ed369b2}</Project>
       <Name>RevitNodes</Name>

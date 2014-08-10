@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <DYNAMO_BUILD_DIR Condition="'$(DYNAMO_BUILD_DIR)' == ''">$(SolutionDir)..\..\bin\$(Platform)\$(Configuration)</DYNAMO_BUILD_DIR>
+    <DYNAMO_REPO_BASE Condition="'$(DYNAMO_REPO_BASE)' == ''">$(SolutionDir)..\..\</DYNAMO_REPO_BASE>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
-    <OutputPath Condition=" '$(OutputPath)' == '' ">$(DYNAMO_BUILD_DIR)</OutputPath>
+    <OutputPath Condition=" '$(OutputPath)' == '' ">$(DYNAMO_REPO_BASE)\bin\$(Platform)\$(Configuration)</OutputPath>
     <NunitPath Condition=" '$(NunitPath)' == '' ">$(SolutionDir)..\extern\NUnit</NunitPath>
     <REVITAPI  Condition=" '$(REVITAPI)' == '' ">C:\Program Files\Autodesk\Revit Architecture 2014</REVITAPI>
     <REVITAPI Condition=" !Exists('$(REVITAPI)') ">C:\Program Files\Autodesk\Revit 2014</REVITAPI>
@@ -18,9 +18,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DYNAMO_BUILD_DIR Condition="'$(DYNAMO_BUILD_DIR)' == ''">$(SolutionDir)..\bin\$(Platform)\$(Configuration)</DYNAMO_BUILD_DIR>
+    <DYNAMO_REPO_BASE Condition="'$(DYNAMO_REPO_BASE)' == ''">$(SolutionDir)..\bin\$(Platform)\$(Configuration)</DYNAMO_REPO_BASE>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
-    <OutputPath Condition=" '$(OutputPath)' == '' ">$(DYNAMO_BUILD_DIR)</OutputPath>
+    <OutputPath Condition=" '$(OutputPath)' == '' ">$(DYNAMO_REPO_BASE)</OutputPath>
     <NunitPath Condition=" '$(NunitPath)' == '' ">$(SolutionDir)..\extern\NUnit</NunitPath>
     <REVITAPI  Condition=" '$(REVITAPI)' == '' ">C:\Program Files\Autodesk\Revit Architecture 2014</REVITAPI>
     <REVITAPI Condition=" !Exists('$(REVITAPI)') ">C:\Program Files\Autodesk\Revit 2014</REVITAPI>

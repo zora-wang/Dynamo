@@ -180,13 +180,13 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy /Y "$(SolutionDir)..\extern\DynamoRaaS\RevitRaaS.dll.config" "$(OutputPath)"
-copy /Y "$(SolutionDir)..\extern\DynamoRaaS\DynamoRaaS.dll" "$(OutputPath)\nodes\DynamoRaaS.dll"
-copy /Y "$(SolutionDir)..\extern\DynamoRaaS\SimpleRaaS.dll" "$(OutputPath)"
-copy /Y "$(SolutionDir)..\extern\DynamoRaaS\JobMonitor.dll" "$(OutputPath)"
-copy /Y "$(SolutionDir)..\extern\DynamoRaaS\RevitRaaS.dll" "$(OutputPath)"
-copy /Y "$(SolutionDir)..\extern\DynamoRaaS\SDF.dll" "$(OutputPath)"
-copy /Y "$(SolutionDir)..\extern\DynamoRaaS\*_DynamoCustomization.xml" "$(OutputPath)"</PostBuildEvent>
+    <PostBuildEvent>copy /Y "$(DYNAMO_REPO_BASE)\extern\DynamoRaaS\RevitRaaS.dll.config" "$(OutputPath)"
+copy /Y "$(DYNAMO_REPO_BASE)\extern\DynamoRaaS\DynamoRaaS.dll" "$(OutputPath)\nodes\DynamoRaaS.dll"
+copy /Y "$(DYNAMO_REPO_BASE)\extern\DynamoRaaS\SimpleRaaS.dll" "$(OutputPath)"
+copy /Y "$(DYNAMO_REPO_BASE)\extern\DynamoRaaS\JobMonitor.dll" "$(OutputPath)"
+copy /Y "$(DYNAMO_REPO_BASE)\extern\DynamoRaaS\RevitRaaS.dll" "$(OutputPath)"
+copy /Y "$(DYNAMO_REPO_BASE)\extern\DynamoRaaS\SDF.dll" "$(OutputPath)"
+copy /Y "$(DYNAMO_REPO_BASE)\extern\DynamoRaaS\*_DynamoCustomization.xml" "$(OutputPath)"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
