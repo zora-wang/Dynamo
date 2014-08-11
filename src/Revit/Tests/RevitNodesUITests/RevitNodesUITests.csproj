@@ -33,6 +33,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DynamoCore">
+      <HintPath>..\..\..\..\bin\AnyCPU\Debug\DynamoCore.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Microsoft.Practices.Prism, Version=4.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\extern\prism\Microsoft.Practices.Prism.dll</HintPath>
@@ -41,8 +45,17 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\extern\NUnit\nunit.framework.dll</HintPath>
     </Reference>
+    <Reference Include="ProtoCore">
+      <HintPath>..\..\..\..\bin\AnyCPU\Debug\ProtoCore.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="RevitAPI">
       <HintPath>$(REVITAPI)\RevitAPI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="RevitTestFrameworkTypes, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\extern\RevitTestFrameworkTypes.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
@@ -59,34 +72,25 @@
     <Compile Include="SelectionTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\src\DynamoCore\DynamoCore.csproj">
-      <Project>{7858fa8c-475f-4b8e-b468-1f8200778cf8}</Project>
-      <Name>DynamoCore</Name>
+    <ProjectReference Include="..\..\DynamoRevit\DynamoRevit.csproj">
+      <Project>{fd56ae51-739e-4893-8de4-925d60c7097c}</Project>
+      <Name>DynamoRevit</Name>
+      <Private>False</Private>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\..\src\Engine\ProtoCore\ProtoCore.csproj">
-      <Project>{7a9e0314-966f-4584-baa3-7339cbb849d1}</Project>
-      <Name>ProtoCore</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\src\Libraries\Revit\RevitNodesUI\RevitNodesUI.csproj">
+    <ProjectReference Include="..\..\Libraries\RevitNodesUI\RevitNodesUI.csproj">
       <Project>{75940acc-3708-4526-8d91-7e3365baf682}</Project>
       <Name>RevitNodesUI</Name>
       <Private>False</Private>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\..\src\Libraries\Revit\RevitNodes\RevitNodes.csproj">
-      <Project>{0bc2a611-bd0e-4fcc-a1de-81f14ed369b2}</Project>
-      <Name>RevitNodes</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\src\Libraries\Revit\RevitServices\RevitServices.csproj">
+    <ProjectReference Include="..\..\Libraries\RevitServices\RevitServices.csproj">
       <Project>{e4701f9e-41ab-4044-8166-85d924feb632}</Project>
       <Name>RevitServices</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\RevitTestFramework\RevitTestFramework.csproj">
-      <Project>{745cca0f-549e-4756-a31e-41bf7f905b8a}</Project>
-      <Name>RevitTestFramework</Name>
+      <Private>False</Private>
     </ProjectReference>
     <ProjectReference Include="..\RevitNodesTests\RevitNodesTests.csproj">
       <Project>{9e79dc8d-25b1-491f-b094-ea39de1bbc66}</Project>
       <Name>RevitNodesTests</Name>
+      <Private>False</Private>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
