@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+        <DirectoryRef Id="DYNAMO_REVIT_DIR">
+            <Directory Id="dir899C863CFBC8CFCC758BFA23C029E85D" Name="nodes" />
+        </DirectoryRef>
+    </Fragment>
+    <Fragment>
+        <ComponentGroup Id="REVIT">
+            <Component Id="cmp2E39E15F6A7E6C7DFEA87286F9ECF936" Directory="DYNAMO_REVIT_DIR" Guid="{1534A8C2-9B87-4E4C-BA65-00DF4295960D}">
+                <File Id="fil967E050540A63CDD4C06E7A3E3A8111B" KeyPath="yes" Source="$(var.harvest)\DynamoRaaSHelper.dll" />
+            </Component>
+            <Component Id="cmp59B5CAAD41D830603E162368B9D565E2" Directory="DYNAMO_REVIT_DIR" Guid="{FDB8C45D-D6E4-4B0F-A957-6A7A92A92A31}">
+                <File Id="filD9E482C9E0B4DBC0D335BFB4351284ED" KeyPath="yes" Source="$(var.harvest)\DynamoRevitDS.dll" />
+            </Component>
+            <Component Id="cmp459A1B13A19B092C0527F6B6F17EFDA0" Directory="DYNAMO_REVIT_DIR" Guid="{2133D11B-EA96-4C36-90FE-9A0083653A98}">
+                <File Id="fil5A6E7846ED562A711574EFE3EB8AF776" KeyPath="yes" Source="$(var.harvest)\DynamoRevitDS.pdb" />
+            </Component>
+            <Component Id="cmp3BF9BA24FD9621F57CBF5EE935E85F4C" Directory="DYNAMO_REVIT_DIR" Guid="{2EF0E82C-AFCE-4430-AC6C-120C236493B9}">
+                <File Id="fil5A115A391CDEA465C4248EDAB656A59B" KeyPath="yes" Source="$(var.harvest)\DynamoRevitDS.XML" />
+            </Component>
+            <Component Id="cmp647C709143C433B7DD511F9E996F78D0" Directory="DYNAMO_REVIT_DIR" Guid="{66166138-5163-454A-BF4C-F02BC2029C3F}">
+                <File Id="fil6A184F1E0E65A752CD5C9147929C6C49" KeyPath="yes" Source="$(var.harvest)\DynamoRevitTester.dll" />
+            </Component>
+            <Component Id="cmp6A003FD4F48AFAEB874F26C12676F651" Directory="DYNAMO_REVIT_DIR" Guid="{C637C939-75C4-4A1B-9CB0-2DF75470B096}">
+                <File Id="fil43F03C30E5639BA952AD1E56D8EBEA2E" KeyPath="yes" Source="$(var.harvest)\DynamoRevitTester.pdb" />
+            </Component>
+            <Component Id="cmpCD0201CB6B437E1E68B960B69B295A15" Directory="DYNAMO_REVIT_DIR" Guid="{C8E1D21F-88BE-4E56-A1B9-CDAFC659948E}">
+                <File Id="fil28F060798F8373114BE9151A6632B2F9" KeyPath="yes" Source="$(var.harvest)\DynamoRevitVersionSelector.dll" />
+            </Component>
+            <Component Id="cmp510AC38A5A7C4436D5B80017A6300C22" Directory="DYNAMO_REVIT_DIR" Guid="{ED71FBF1-F48A-486E-A67E-442C070614F3}">
+                <File Id="filDACA40B11C93992F4AF48B946D70068F" KeyPath="yes" Source="$(var.harvest)\DynamoRevitVersionSelector.pdb" />
+            </Component>
+            <Component Id="cmp9D6EF0C0CD81D45051A9579CDA44C273" Directory="DYNAMO_REVIT_DIR" Guid="{42D54687-4FFA-4797-A735-5D848C4B0400}">
+                <File Id="filA9E761347A6EF6C0FB21E95726EDF353" KeyPath="yes" Source="$(var.harvest)\DynamoUnits.dll" />
+            </Component>
+            <Component Id="cmp38F4ED65BBAD3F509185DDA338E62583" Directory="DYNAMO_REVIT_DIR" Guid="{C005C066-E76D-463B-9D0B-E710814DD81E}">
+                <File Id="fil8EC4347D051C420E75EA95307E38C13F" KeyPath="yes" Source="$(var.harvest)\DynamoUnits.pdb" />
+            </Component>
+            <Component Id="cmp0FBC7DF24A03CD44B4E095EEB3B14DAA" Directory="DYNAMO_REVIT_DIR" Guid="{606A12AE-3ADD-4F30-9972-711970A7A4ED}">
+                <File Id="filEF45CC2E61D02C7A243B15C425861599" KeyPath="yes" Source="$(var.harvest)\DynamoUtilities.dll" />
+            </Component>
+            <Component Id="cmpD4B4B5531274FC04FAE80ED34C7D674F" Directory="DYNAMO_REVIT_DIR" Guid="{1C222043-34DB-4C2E-859B-7DEB41C64E98}">
+                <File Id="filE2421AA044AA4C99087F778B1FD9BD7E" KeyPath="yes" Source="$(var.harvest)\DynamoUtilities.pdb" />
+            </Component>
+            <Component Id="cmp9184D698347BA1A0AD9E5FE76C27AA7F" Directory="DYNAMO_REVIT_DIR" Guid="{D05EF5F7-731A-4AF2-A3E4-B3F0E117F7CB}">
+                <File Id="filB4D76B4DF4962DBD81092395104CABD6" KeyPath="yes" Source="$(var.harvest)\Greg.dll" />
+            </Component>
+            <Component Id="cmp113DCA987FF46F44352A3685B472B8CB" Directory="DYNAMO_REVIT_DIR" Guid="{F4D37797-8FF9-41D1-9EA0-823DD9753E5F}">
+                <File Id="fil0B7408A91C2C58A8DC68CEB583918C7B" KeyPath="yes" Source="$(var.harvest)\GregRevitAuth.dll" />
+            </Component>
+            <Component Id="cmpF2FB838B18E89CB17345FAE09AC9350F" Directory="DYNAMO_REVIT_DIR" Guid="{DD1AD1A9-DA0C-4456-9EE9-D318C62458FF}">
+                <File Id="filB169E3D018EC39C84F454234D9795128" KeyPath="yes" Source="$(var.harvest)\JobMonitor.dll" />
+            </Component>
+            <Component Id="cmpF38EED983C64EE15903B1E961F1ABB6E" Directory="DYNAMO_REVIT_DIR" Guid="{8E49EE58-18E0-4BC4-8ED2-FADBF01F8A02}">
+                <File Id="fil73CE9F481AEA8524E723FFF93DA6C568" KeyPath="yes" Source="$(var.harvest)\Microsoft.Practices.Prism.dll" />
+            </Component>
+            <Component Id="cmp65230D23F22696456E7FCD07B6DD2D54" Directory="DYNAMO_REVIT_DIR" Guid="{8BF46DE8-EDF9-45E1-9DBD-CCA74B930BF1}">
+                <File Id="fil70826F974A4FF65DCA1CE7E86820C5A5" KeyPath="yes" Source="$(var.harvest)\nunit.framework.dll" />
+            </Component>
+            <Component Id="cmp9B2F2B929825729046BE27BBB07F7C5A" Directory="DYNAMO_REVIT_DIR" Guid="{0732AB66-9D62-4C97-AC12-708404EE0193}">
+                <File Id="fil46A0F0A8C09A23110648B8B9370E5E67" KeyPath="yes" Source="$(var.harvest)\nunit.framework.xml" />
+            </Component>
+            <Component Id="cmp1A3D0C8200AE8CE7AD078444601B44BE" Directory="DYNAMO_REVIT_DIR" Guid="{94E7D49D-13EA-4B06-8604-4281DD67D711}">
+                <File Id="fil9F180E8C8ACECD86D1F782D9FD338C5A" KeyPath="yes" Source="$(var.harvest)\RevitNodes.dll" />
+            </Component>
+            <Component Id="cmp7A8E9BEB8D70CE7200F2B81B4B19C5B8" Directory="DYNAMO_REVIT_DIR" Guid="{C5F59B48-DA95-4C2E-BA0A-67E724DE07D8}">
+                <File Id="fil536F312F28477AB577202AAD178D6143" KeyPath="yes" Source="$(var.harvest)\RevitNodes.pdb" />
+            </Component>
+            <Component Id="cmp9EA9617EA3AB5332BFBCE8DAB4520F83" Directory="DYNAMO_REVIT_DIR" Guid="{198B91F4-852E-446F-9EA8-297D7A0E7A8C}">
+                <File Id="filD43759418EB15F748FDBB327ECAB465A" KeyPath="yes" Source="$(var.harvest)\RevitNodes.XML" />
+            </Component>
+            <Component Id="cmpF35F8104936B917AA997873B87BC9BAE" Directory="DYNAMO_REVIT_DIR" Guid="{ADA3E98E-CD93-47DB-904C-A6CFEC1C2EF1}">
+                <File Id="fil649DDC266BF39EFF0AE10A8569D89408" KeyPath="yes" Source="$(var.harvest)\RevitNodesTests.dll" />
+            </Component>
+            <Component Id="cmp6290C09F9901FEC138F3AD9803CCC247" Directory="DYNAMO_REVIT_DIR" Guid="{61A2DA06-62ED-42DF-B64F-31C6BA9BCDB5}">
+                <File Id="fil25180711D5280522F9ECDC03A153C5BC" KeyPath="yes" Source="$(var.harvest)\RevitNodesTests.pdb" />
+            </Component>
+            <Component Id="cmp4CF73193C61402D3B87DA766876DBA21" Directory="DYNAMO_REVIT_DIR" Guid="{C5F04F95-08BB-4F95-AD34-77719321F6CE}">
+                <File Id="fil6D1275976438A02066B37777C17E5F52" KeyPath="yes" Source="$(var.harvest)\RevitNodesUITests.dll" />
+            </Component>
+            <Component Id="cmp7B710883146E197497385F13C8B5E6CD" Directory="DYNAMO_REVIT_DIR" Guid="{6D764BAF-5A08-4E20-9805-BF187472C3DF}">
+                <File Id="filF1E37EFD8C7E16DEDD14EA7C2BC068EB" KeyPath="yes" Source="$(var.harvest)\RevitNodesUITests.pdb" />
+            </Component>
+            <Component Id="cmp7FFDEFCD4C0088D4D71973E4632425B0" Directory="DYNAMO_REVIT_DIR" Guid="{5E35F7A0-976C-413F-B5A1-848CFB5FF94C}">
+                <File Id="fil11A384C43F19BCAE28E528573E3D5863" KeyPath="yes" Source="$(var.harvest)\RevitNodes_DynamoCustomization.xml" />
+            </Component>
+            <Component Id="cmp695B44A6736084DF3C520D06E13125CF" Directory="DYNAMO_REVIT_DIR" Guid="{E7ADE707-1B1D-44D2-BF81-5799953C693F}">
+                <File Id="fil4214384AA293B012B03143A4B1B9C57B" KeyPath="yes" Source="$(var.harvest)\RevitRaaS.dll" />
+            </Component>
+            <Component Id="cmpD4D44E5B5246198DEB3E04DE3B9A5402" Directory="DYNAMO_REVIT_DIR" Guid="{C615EB36-8271-4C8D-93CB-53CB7F621F1E}">
+                <File Id="fil9F8C0AA473131A159528B0105B636150" KeyPath="yes" Source="$(var.harvest)\RevitRaaS.dll.config" />
+            </Component>
+            <Component Id="cmp139B2532A41C995F42228121930D46F2" Directory="DYNAMO_REVIT_DIR" Guid="{01D20EF8-0867-427A-BC54-D38F2C4B5D5A}">
+                <File Id="fil70738DBD8089C6A14E96B1E8518326C0" KeyPath="yes" Source="$(var.harvest)\RevitServices.dll" />
+            </Component>
+            <Component Id="cmpBE30FDB5377159E4CD20482A826999E8" Directory="DYNAMO_REVIT_DIR" Guid="{66ED5C2B-2F8F-4181-9421-61504B6F3C8D}">
+                <File Id="fil84CD3553A4C8C35C5C321656668527CA" KeyPath="yes" Source="$(var.harvest)\RevitServices.pdb" />
+            </Component>
+            <Component Id="cmp7FE94DD16E6D5A11E25EA88FFCAE3BC6" Directory="DYNAMO_REVIT_DIR" Guid="{B9560762-CE26-4CC0-9D14-530BC9BF2ED0}">
+                <File Id="fil207D419B7360A9A9BF7FD9077260E667" KeyPath="yes" Source="$(var.harvest)\RevitServicesTests.dll" />
+            </Component>
+            <Component Id="cmp0D93EC387C023AA58470C70BF25AE2EE" Directory="DYNAMO_REVIT_DIR" Guid="{0AF77615-FB5E-4461-9D90-DE0B855B637E}">
+                <File Id="fil02AFE5623A99973F5ABB71DD3100D7E7" KeyPath="yes" Source="$(var.harvest)\RevitServicesTests.pdb" />
+            </Component>
+            <Component Id="cmp3BA85740CF02568809EE0912654FCC40" Directory="DYNAMO_REVIT_DIR" Guid="{5F28B205-8990-4F88-9DE5-D28CE15FECE6}">
+                <File Id="fil4F73FB37AF98E57B64696479B963E324" KeyPath="yes" Source="$(var.harvest)\RevitTestFrameworkTypes.dll" />
+            </Component>
+            <Component Id="cmp44189242C9F37DFE2E63AA53D6B24CE5" Directory="DYNAMO_REVIT_DIR" Guid="{523B8394-2C91-45A8-AFFD-8B40ACCBE3D8}">
+                <File Id="fil6990F76B9E7CDF03D09A0195B00C5F49" KeyPath="yes" Source="$(var.harvest)\SDF.dll" />
+            </Component>
+            <Component Id="cmp600C573EA353A3FC6F03E9F7E55410BB" Directory="DYNAMO_REVIT_DIR" Guid="{737AAC53-1EAD-4CF3-ABB1-4C238576336B}">
+                <File Id="filF0CB9E01CB217F3CF57662498B93D96B" KeyPath="yes" Source="$(var.harvest)\SimpleRaaS.dll" />
+            </Component>
+            <Component Id="cmp5AF1192C165A44F6D255447B0493F5AA" Directory="DYNAMO_REVIT_DIR" Guid="{360D8E9F-CD4E-4B8D-B357-60157062492A}">
+                <File Id="filF435776BD7C03E6B7B260476C5A67492" KeyPath="yes" Source="$(var.harvest)\SimpleRaaS_DynamoCustomization.xml" />
+            </Component>
+            <Component Id="cmpB75822AA3F44AE046B8782EE0FA17F5F" Directory="dir899C863CFBC8CFCC758BFA23C029E85D" Guid="{59FFA0F7-E352-40D4-A431-FE6E1304116F}">
+                <File Id="fil1DE4D480DCB3E13EE29F9AA7F57B7ED7" KeyPath="yes" Source="$(var.harvest)\nodes\DSRevitNodesUI.dll" />
+            </Component>
+            <Component Id="cmpEE0C19E026984C6E91F6EA2C7DDFCDC9" Directory="dir899C863CFBC8CFCC758BFA23C029E85D" Guid="{C86E30BE-AF40-4648-9980-3C87D38099E9}">
+                <File Id="fil72F7FAC441C5112A252FEDDCC1336E91" KeyPath="yes" Source="$(var.harvest)\nodes\DSRevitNodesUI.pdb" />
+            </Component>
+            <Component Id="cmp9BCD3373D1C85F3D82F1A419A489CC7A" Directory="dir899C863CFBC8CFCC758BFA23C029E85D" Guid="{F023408D-D452-442B-BAB2-B783E4D94292}">
+                <File Id="filE7E412C911510BA0F9F4FA661ABA5027" KeyPath="yes" Source="$(var.harvest)\nodes\DynamoRaaS.dll" />
+            </Component>
+        </ComponentGroup>
+    </Fragment>
+</Wix>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Product Id="16af3c1b-4b35-46f8-a351-3baa9db36e9c" 
+           Name="Dynamo For Revit 2014" 
+           Language="1033" 
+           Version="0.7.1"
+           Manufacturer="Dynamo" 
+           UpgradeCode="342ef3f2-bfe5-4486-94ab-418dd3a50e21">
+    
+		<Package InstallerVersion="200"
+             Compressed="yes" 
+             InstallScope="perMachine" 
+             Platform="x64"/>
+
+		<MajorUpgrade 
+      Schedule="afterInstallInitialize"
+      DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+
+    <MediaTemplate EmbedCab="yes" />
+
+    <!--Property used to define on which version of Revit to install.-->
+    <Property Id="INSTALL_FOR_REVIT_2014">1</Property>
+
+    <!--Find Revit installations by finding the uninstall registry key.-->
+    <Property Id="VASARI">
+      <RegistrySearch Id='VasariRegistry_2014' Type='raw' Win64='yes'
+        Root='HKLM' Key='SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Autodesk Vasari Beta 3' Name='InstallLocation' />
+    </Property>
+
+    <Property Id="REVIT_2014">
+      <RegistrySearch Id='RevitRegistry_2014' Type='raw' Win64='yes'
+        Root='HKLM' Key='SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Autodesk Revit 2014' Name='InstallLocation' />
+    </Property>
+
+    <Property Id="REVIT_ARCHITECTURE_2014">
+      <RegistrySearch Id='RevitRegistry_Architecture_2014' Type='raw' Win64='yes'
+        Root='HKLM' Key='SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Autodesk Revit Architecture 2014' Name='InstallLocation' />
+    </Property>
+
+    <Property Id='DYNAMO_INSTALLDIR'></Property>
+    <SetProperty Id="DYNAMO_INSTALLDIR" Value="[ProgramFiles64Folder]\Dynamo 0.7" After="LaunchConditions"></SetProperty>
+    
+    <!--Revit features are only the addin. All Revit assets are currently installed as part of core.-->
+    <Feature Id="DYNAMO_REVIT_2014"
+             Title="Dynamo for Revit 2014"
+             Level="1">
+      <ComponentGroupRef Id="REVIT_2014"/>
+      <ComponentGroupRef Id="REVIT"/>
+      <Condition Level="0">(REVIT_2014="" AND REVIT_ARCHITECTURE_2014="" AND VASARI="") OR INSTALL_FOR_REVIT_2014=0</Condition>
+    </Feature>
+    
+	</Product>
+
+	<Fragment>
+		<Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="DYNAMO_INSTALLDIR"/>
+        <Directory Id="DYNAMO_REVIT_DIR" Name="Revit_2014"/>
+      <Directory Id="CommonAppDataFolder">
+        <Directory Id="ADESK_DATA" Name="Autodesk">
+          <Directory Id="REVIT_DATA" Name="Revit">
+            <Directory Id="ADDIN_DATA" Name="Addins">
+              <Directory Id="ADDINS_2014" Name="2014"/>
+            </Directory>
+          </Directory>
+        </Directory>
+      </Directory>
+		</Directory>
+	</Fragment>
+
+	<Fragment>
+    <!-- Install the Addin files-->
+    <ComponentGroup Id="REVIT_2014" Directory="ADDINS_2014">
+      <Component Id="DynamoForRevit2014.addin" Guid="976a5fd6-0a53-4530-b9c8-1004fc7a6200">
+        <File Id="DynamoForRevit2014.addin" Name="Dynamo.addin" Source="$(var.SolutionDir)\Addin\DynamoForRevit2014.addin"/>
+      </Component>
+    </ComponentGroup>
+	</Fragment>
+</Wix>

@@ -54,6 +54,10 @@ limitations under the License.
       <HintPath>..\..\..\..\bin\AnyCPU\Debug\DSNodeServices.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="DynamoCore">
+      <HintPath>..\..\..\..\bin\AnyCPU\Debug\DynamoCore.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="RevitAPI">
       <HintPath>$(REVITAPI)\RevitAPI.dll</HintPath>
       <Private>False</Private>
@@ -82,18 +86,6 @@ limitations under the License.
     <Compile Include="Threading\IdlePromise.cs" />
     <Compile Include="Threading\RevitSchedulerThread.cs" />
     <Compile Include="Transactions\TransactionManager.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\DynamoCore\DynamoCore.csproj">
-      <Project>{7858fa8c-475f-4b8e-b468-1f8200778cf8}</Project>
-      <Name>DynamoCore</Name>
-      <Private>False</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\NodeServices\NodeServices.csproj">
-      <Project>{EF879A10-041D-4C68-83E7-3192685F1BAE}</Project>
-      <Name>NodeServices</Name>
-      <Private>False</Private>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

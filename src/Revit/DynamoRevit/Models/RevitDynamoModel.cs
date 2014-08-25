@@ -13,12 +13,9 @@ using Autodesk.Revit.UI.Events;
 using DSIronPython;
 
 using DSNodeServices;
-
-using Dynamo.Core;
 using Dynamo.Interfaces;
 using Dynamo.Models;
 using Dynamo.Nodes;
-using Dynamo.UpdateManager;
 using Dynamo.Utilities;
 
 using ProtoCore;
@@ -93,7 +90,6 @@ namespace Dynamo.Applications.Models
             string context = configuration.Context;
             IPreferences preferences = configuration.Preferences;
             string corePath = configuration.DynamoCorePath;
-            IUpdateManager updateManager = configuration.UpdateManager;
             bool isTestMode = configuration.StartInTestMode;
 
             RevitServicesUpdater = new RevitServicesUpdater(DynamoRevitApp.ControlledApplication, DynamoRevitApp.Updaters);
