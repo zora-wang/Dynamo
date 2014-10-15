@@ -232,11 +232,6 @@ namespace Dynamo.Nodes
             RaisePropertyChanged("SelectionResults");
         }
 
-        protected override bool ShouldDisplayPreviewCore()
-        {
-            return false; // Previews are not shown for this node type.
-        }
-
         /// <summary>
         /// Get an object in the model from a string identifier.
         /// </summary>
