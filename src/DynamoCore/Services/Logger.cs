@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading;
 
 using CSharpAnalytics;
 using CSharpAnalytics.Protocols.Measurement;
 
-using Dynamo.Utilities;
+using Dynamo.Models;
 
 using Microsoft.Win32;
 using net.riversofdata.dhlogger;
@@ -20,9 +16,12 @@ namespace Dynamo.Services
     /// </summary>
     public class InstrumentationLogger
     {
+
+        private static readonly DynamoModel dynamoModel;
+
         private const bool IS_VERBOSE_DIAGNOSTICS = false;
 
-        private static string userID = GetUserID();
+        private static readonly string userID = GetUserID();
         private static string sessionID = Guid.NewGuid().ToString();
         private static Log loggerImpl;
 
@@ -35,16 +34,14 @@ namespace Dynamo.Services
         static InstrumentationLogger()
         {
             userID = GetUserID();
-
             StabilityTracking.GetInstance();
-            
         }
 
         //Service start
-        public static void Start()
+        public static void Start(DynamoModel dynamoModel)
         {
             string appVersion = Process.GetCurrentProcess().ProcessName + "-"
-                                + dynSettings.Controller.UpdateManager.ProductVersion.ToString();
+                                + UpdateManager.UpdateManager.Instance.ProductVersion.ToString();
 
 
             CSharpAnalytics.MeasurementConfiguration mc = new MeasurementConfiguration(ANALYTICS_PROPERTY,
@@ -53,10 +50,7 @@ namespace Dynamo.Services
             sessionID = Guid.NewGuid().ToString();
             loggerImpl = new Log("Dynamo", userID, sessionID);
 
-            // The following starts the heartbeat, do not remove this 
-            // because of the unreferenced "heartbeat" variable.
-            var heartbeat = Heartbeat.GetInstance();
-
+            
             CSharpAnalytics.AutoMeasurement.Start(mc);
             client = AutoMeasurement.Client;
 
@@ -66,6 +60,13 @@ namespace Dynamo.Services
             }
 
             started = true;
+
+            // The following starts the heartbeat, do not remove this 
+            // because of the unreferenced "heartbeat" variable.
+
+// ReSharper disable UnusedVariable
+            var heartbeat = Heartbeat.GetInstance(dynamoModel);
+// ReSharper restore UnusedVariable
 
         }
 
@@ -128,7 +129,7 @@ namespace Dynamo.Services
 
         public static void LogAnonymousTimedEvent(string category, string variable, TimeSpan time, string label = null)
         {
-            if (DynamoController.IsTestMode)
+            if (DynamoModel.IsTestMode)
                 return;
 
             if (!started)
@@ -139,7 +140,7 @@ namespace Dynamo.Services
 
         public static void LogAnonymousEvent(string action, string category, string label = null)
         {
-            if (DynamoController.IsTestMode)
+            if (DynamoModel.IsTestMode)
                 return;
 
             if (!started)
@@ -150,7 +151,7 @@ namespace Dynamo.Services
 
         public static void LogAnonymousScreen(string screenName)
         {
-            if (DynamoController.IsTestMode)
+            if (DynamoModel.IsTestMode)
                 return;
 
             if (!started)
@@ -163,7 +164,7 @@ namespace Dynamo.Services
 
         public static void LogException(Exception e)
         {
-            if (DynamoController.IsTestMode)
+            if (DynamoModel.IsTestMode)
                 return;
 
             if (!started)
@@ -182,7 +183,7 @@ namespace Dynamo.Services
 
         public static void FORCE_LogInfo(string tag, string data)
         {
-            if (DynamoController.IsTestMode)
+            if (DynamoModel.IsTestMode)
                 return;
 
             if (!started)
@@ -193,7 +194,7 @@ namespace Dynamo.Services
 
         public static void LogPiiInfo(string tag, string data)
         {
-            if (DynamoController.IsTestMode)
+            if (DynamoModel.IsTestMode)
                 return;
 
             if (!started)

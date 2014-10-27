@@ -23,7 +23,7 @@ def add(x,y) { return = x + y;}
 
 // fo = add(?, 42);
 fo = _SingleFunctionObject(add, 2, {1}, {null, 42}, true);
-r = Apply(fo, 3);
+r = __Apply(fo, 3);
 ";
             thisTest.RunScriptSource(code);
             thisTest.Verify("r", 45);
@@ -41,9 +41,9 @@ def add(x,y,z) { return = x + y + z;}
 fo1 = _SingleFunctionObject(add, 3, {1}, {null, 42, null}, true);
 
 // foo2 = add(100, 42, ?);
-fo2 = Apply(fo1, 100);
+fo2 = __Apply(fo1, 100);
 
-r = Apply(fo2, 3);
+r = __Apply(fo2, 3);
 ";
             thisTest.RunScriptSource(code);
             thisTest.Verify("r", 145);
@@ -59,7 +59,7 @@ def add(x,y) { return = x + y;}
 
 // fo = add(?, {100, 200});
 fo = _SingleFunctionObject(add, 2, {1}, {null, {100, 200}}, true);
-r = Apply(fo, {1, 2});
+r = __Apply(fo, {1, 2});
 ";
             thisTest.RunScriptSource(code);
             thisTest.Verify("r", new object[] { 101, 202 });
@@ -75,7 +75,7 @@ def add(x,y) { return = x + y;}
 
 // fo = add(?, {100, 200});
 fo = _SingleFunctionObject(add, 2, {1}, {null, {100, 200}}, true);
-r = Apply(fo, 1);
+r = __Apply(fo, 1);
 ";
             thisTest.RunScriptSource(code);
             thisTest.Verify("r", new object[] { 101, 201 });
@@ -91,7 +91,7 @@ def add(x,y) { return = x + y;}
 
 // fo = add(?, {100, 200});
 fo = _SingleFunctionObject(add, 2, {1}, {null, {100, 200}}, true);
-r = Apply(fo, {1});
+r = __Apply(fo, {1});
 ";
             thisTest.RunScriptSource(code);
             thisTest.Verify("r", new object[] { 101 });
@@ -113,7 +113,7 @@ def getFunctionObject()
 
 fo = getFunctionObject();
 
-r = Apply(fo, 42);
+r = __Apply(fo, 42);
 ";
             thisTest.RunScriptSource(code);
             thisTest.Verify("r", 142);
@@ -135,9 +135,9 @@ def getFunctionObject(f:function)
 }
 
 fo1 = getFunctionObject(add);
-r1 = Apply(fo1, 42);
+r1 = __Apply(fo1, 42);
 fo2 = getFunctionObject(mul);
-r2 = Apply(fo2, 3);
+r2 = __Apply(fo2, 3);
 ";
             thisTest.RunScriptSource(code);
             thisTest.Verify("r1", 142);
@@ -159,7 +159,7 @@ def getFunctionObject(f:function)
 }
 
 fo = getFunctionObject({add, mul});
-r = Apply(fo, 3);
+r = __Apply(fo, 3);
 ";
             thisTest.RunScriptSource(code);
             thisTest.Verify("r", new object[] {103, 300});
@@ -179,7 +179,7 @@ fo2 = _SingleFunctionObject(mul, 2, {0}, {3, null}, true);
 fo3 = _ComposedFunctionObject({fo1, fo2});
 
 // r = 2 * 3 + 100
-r = Apply(fo3, 2);
+r = __Apply(fo3, 2);
 ";
             thisTest.RunScriptSource(code);
             thisTest.Verify("r", 106);
@@ -198,7 +198,7 @@ fo1 = _SingleFunctionObject(add, 2, {1}, {null, 100}, true);
 fo2 = _ComposedFunctionObject({fo1, fo1});
 
 // r = 42 + 100 + 100
-r = Apply(fo2, 42);
+r = __Apply(fo2, 42);
 ";
             thisTest.RunScriptSource(code);
             thisTest.Verify("r", 242);
@@ -207,6 +207,8 @@ r = Apply(fo2, 42);
         [Test]
         public void TestCompose03()
         {
+            // Tracked by: http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-4037
+            string err = "MAGN-4037 Defects with FunctionObject tests";
             string code =
     @"
 import (""FunctionObject.ds"");
@@ -217,17 +219,17 @@ def mul(x, y) { return = x * y; }
 fo1 = _SingleFunctionObject(add, 2, { 1 }, { null, 3}, true);
 fo2 = _SingleFunctionObject(mul, 2, { 0 }, { 5, null }, true);
 
-r1 = Apply(fo1, 7);     // 3 + 7
-r2 = Apply(fo2, 11);    // 5 * 11
+r1 = __Apply(fo1, 7);     // 3 + 7
+r2 = __Apply(fo2, 11);    // 5 * 11
 
 comp1 = __Compose({ fo1, fo2 }); 
-r3 = Apply(comp1, 11);  // (5 * 11) + 3
+r3 = __Apply(comp1, 11);  // (5 * 11) + 3
 
 comp2 = __Compose({ fo2, fo1 });
-r4 = Apply(comp2, 7);         // 5 * (3 + 7)
+r4 = __Apply(comp2, 7);         // 5 * (3 + 7)
 
 comp3 = __Compose({ comp1, fo1, fo2 });
-r5 = Apply(comp3, 9);
+r5 = __Apply(comp3, 9);
 ";
             thisTest.RunScriptSource(code);
             thisTest.Verify("r1", 10);
@@ -252,7 +254,7 @@ class Foo
 }
 
 fo = _SingleFunctionObject(Foo.foo, 2, { 1 }, { null, 100 }, true);
-r = Apply(fo, 3);
+r = __Apply(fo, 3);
 ";
             thisTest.RunScriptSource(code);
             thisTest.Verify("r", 103);
@@ -274,7 +276,7 @@ class Foo
 }
 
 c = _SingleFunctionObject(Foo.Foo, 2, { 1 }, { null, 100 }, true);
-f = Apply(c, 3);
+f = __Apply(c, 3);
 r = f.i;
 ";
             thisTest.RunScriptSource(code);
@@ -284,8 +286,11 @@ r = f.i;
         [Test]
         public void TestSortByKey()
         {
+            // Tracked by: http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-4037
+            string err = "MAGN-4037 Defects with FunctionObject tests";
             string code =
     @"
+import (""DSCoreNodes.dll"");
 import (""FunctionObject.ds"");
 class Point
 {
@@ -313,16 +318,16 @@ r1 = SortByKey(null, getPointKey);
 r2 = SortByKey({ }, getPointKey);
 
 r3 = SortByKey({ p1 }, getPointKey);
-t1 = __Map(r3, getPointKey);
+t1 = __Map(getPointKey, r3);
 
 r4 = SortByKey({ p1, p1, p1 }, getPointKey);
-t2 = __Map(r4, getPointKey);
+t2 = __Map(getPointKey, r4);
 
 r5 = SortByKey({ p1, p2, p3 }, getPointKey);
-t3 = __Map(r5, getPointKey);
+t3 = __Map(getPointKey, r5);
 
 r6 = SortByKey({ p2, p1 }, getPointKey);
-t4 = __Map(r6, getPointKey);
+t4 = __Map(getPointKey, r6);
 ";
             thisTest.RunScriptSource(code);
             thisTest.Verify("t1", new object[]{6});
@@ -331,84 +336,7 @@ t4 = __Map(r6, getPointKey);
             thisTest.Verify("t4", new object[] { 6, 9});
         }
 
-        [Test]
-        public void TestSortByComparision()
-        {
-            string code =
-    @"
-import (""FunctionObject.ds"");
-class Point
-{
-    constructor Point(_x, _y, _z)
-    {
-        x = _x;
-        y = _y;
-        z = _z;
-    }
-    
-    x; y; z;
-}
-
-p1 = Point(2, 1, 3);
-p2 = Point(1, 3, 3);
-p3 = Point(1, 2, 4);
-p4 = Point(3, 1, 2);
-
-def comparePoint(p1 : Point, p2: Point)
-{
-    return = [Imperative]
-    {
-        if (p1.x > p2.x)
-        {
-            return = 1;
-        }
-        else if (p1.x < p2.x)
-        {
-            return = -1;
-        }
-        else
-        {
-            if (p1.y > p2.y)
-            {
-                return = 1;
-            }
-            else if (p1.y < p2.y)
-            {
-                return = -1;
-            }
-            else
-            {
-                if (p1.z > p2.z)
-                {
-                    return = 1;
-                }
-                else if (p1.z < p2.z)
-                {
-                    return = -1;
-                }
-                else
-                {
-                    return = 0;
-                }
-            }
-        }
-    }
-}
-
-pointComparer = _SingleFunctionObject(comparePoint, 2, { }, { }, true);
-
-r = SortByComparsion({ p1, p2, p3, p4 }, pointComparer);
-r1 = r.x;
-r2 = r.y;
-r3 = r.z;
-";
-            thisTest.RunScriptSource(code);
-            thisTest.Verify("r1", new object[] { 1, 1, 2, 3 });
-            thisTest.Verify("r2", new object[] { 2, 3, 1, 1});
-            thisTest.Verify("r3", new object[] { 4, 3, 3, 2 });
-        }
-
-        [Test]
+        [Test, Category("Failure")]
         public void TestGroupByKey()
         {
             string code =
@@ -437,8 +365,8 @@ def getCoordinateValue(p : Point)
 
 getPointKey = _SingleFunctionObject(getCoordinateValue, 1, { }, { }, true);
 r = GroupByKey({ p1, p2, p3 }, getPointKey);
-t1 = __Map(r[0], getPointKey);
-t2 = __Map(r[1], getPointKey);
+t1 = __Map(getPointKey, r[0]);
+t2 = __Map(getPointKey, r[1]);
 ";
             thisTest.RunScriptSource(code);
             thisTest.Verify("t1", new object[] { 6, 6});
@@ -481,8 +409,9 @@ def sum(x, y)
 
 acc1 = _SingleFunctionObject(mul, 2, { }, { }, true);
 acc2 = _SingleFunctionObject(sum, 2, { }, { }, true);
-v1 = Reduce(1..10, 1, acc1);
-v2 = Reduce(1..10, 0, acc2);
+
+v1 = __Reduce(acc1, 1, 1..10);
+v2 = __Reduce(acc2, 0, 1..10);
 ";
             thisTest.RunScriptSource(code);
             thisTest.Verify("v1", 3628800);

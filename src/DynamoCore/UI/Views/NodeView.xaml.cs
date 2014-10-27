@@ -6,17 +6,15 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using Dynamo.Models;
-using Dynamo.Nodes;
 using Dynamo.Prompts;
 using Dynamo.Selection;
 using Dynamo.UI;
 using Dynamo.UI.Prompts;
 using Dynamo.Utilities;
 using Dynamo.ViewModels;
-using System.Windows.Media;
-using DynCmd = Dynamo.ViewModels.DynamoViewModel;
-using System.Windows.Threading;
-using Dynamo.Core;
+
+using DynCmd = Dynamo.Models.DynamoModel;
+
 using Dynamo.UI.Controls;
 
 namespace Dynamo.Controls
@@ -51,7 +49,7 @@ namespace Dynamo.Controls
             {
                 if (this.previewControl == null)
                 {
-                    this.previewControl = new PreviewControl();
+                    this.previewControl = new PreviewControl(this.ViewModel);
                     this.previewControl.StateChanged += OnPreviewControlStateChanged;
                     this.expansionBay.Children.Add(this.previewControl);
                 }
@@ -76,7 +74,7 @@ namespace Dynamo.Controls
             Dispatcher.ShutdownStarted += Dispatcher_ShutdownStarted;
             inputGrid.Loaded += new RoutedEventHandler(inputGrid_Loaded);
 
-            this.SizeChanged += OnSizeChanged;
+            this.nodeBorder.SizeChanged += OnSizeChanged;
             this.DataContextChanged += OnDataContextChanged;
 
             Canvas.SetZIndex(this, 1);
@@ -105,7 +103,7 @@ namespace Dynamo.Controls
         {
             if (ViewModel != null)
             {
-                var size = new double[] { ActualWidth, ActualHeight };
+                var size = new double[] { ActualWidth, nodeBorder.ActualHeight };
                 if (ViewModel.SetModelSizeCommand.CanExecute(size))
                 {
                     //Debug.WriteLine(string.Format("Updating {2} node size {0}:{1}", size[0], size[1], ViewModel.NodeLogic.GetType().ToString()));
@@ -220,7 +218,7 @@ namespace Dynamo.Controls
 
             e.Handled = true;
 
-            var editWindow = new EditWindow
+            var editWindow = new EditWindow(viewModel.DynamoViewModel)
             {
                 DataContext = ViewModel,
                 Title = "Edit Node Name"
@@ -312,26 +310,21 @@ namespace Dynamo.Controls
             //e.Handled = true;
         }
 
-        private void MainContextMenu_ContextMenuOpening(object sender, ContextMenuEventArgs e)
-        {
-
-        }
-
         private void topControl_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (ViewModel == null) return;
 
             var view = WPF.FindUpVisualTree<DynamoView>(this);
 
-            dynSettings.ReturnFocusToSearch();
+            this.ViewModel.DynamoViewModel.ReturnFocusToSearch();
 
             view.mainGrid.Focus();
 
             var node = this.ViewModel.NodeModel;
-            if (node.WorkSpace.Nodes.Contains(node))
+            if (node.Workspace.Nodes.Contains(node))
             {
                 Guid nodeGuid = this.ViewModel.NodeModel.GUID;
-                dynSettings.Controller.DynamoViewModel.ExecuteCommand(
+                this.ViewModel.DynamoViewModel.ExecuteCommand(
                     new DynCmd.SelectModelCommand(nodeGuid, Keyboard.Modifiers));
             }
             if (e.ClickCount == 2)

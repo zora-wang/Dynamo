@@ -45,8 +45,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\..\src\AssemblySharedInfoGenerator\AssemblySharedInfo.cs">
+      <Link>AssemblySharedInfo.cs</Link>
+    </Compile>
     <Compile Include="AbstractDisposeTracert.cs" />
     <Compile Include="ClassFunctionality.cs" />
+    <Compile Include="CodeCompletionClass.cs" />
+    <Compile Include="DummyMath.cs" />
+    <Compile Include="GlobalClass.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="TestCSharpAttribute.cs" />
     <Compile Include="DisposeTracer.cs" />
     <Compile Include="DummyCollection.cs" />

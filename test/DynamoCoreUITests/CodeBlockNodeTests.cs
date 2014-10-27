@@ -10,13 +10,17 @@ using Dynamo.Models;
 using Dynamo.Tests;
 using Dynamo.ViewModels;
 using NUnit.Framework;
+using System.Text.RegularExpressions;
+using Dynamo.UI.Controls;
+using Dynamo.Utilities;
+using Dynamo.DSEngine;
 
 namespace DynamoCoreUITests
 {
     //public delegate void CommandCallback(string commandTag);
 
     [TestFixture]
-    public class CodeBlockNodeTests : DSEvaluationUnitTest
+    public class CodeBlockNodeTests : DSEvaluationViewModelUnitTest
     {
         #region Generic Set-up Routines and Data Members
 
@@ -44,10 +48,13 @@ namespace DynamoCoreUITests
         [TearDown]
         protected void Exit()
         {
-            if (this.Controller != null)
+            if (this.ViewModel != null)
             {
-                this.Controller.ShutDown(true);
-                this.Controller = null;
+                var shutdownParams = new DynamoViewModel.ShutdownParams(
+                    shutdownHost: false, allowCancellation: false);
+
+                this.ViewModel.PerformShutdownSequence(shutdownParams);
+                this.ViewModel = null;
                 this.commandCallback = null;
             }
 
@@ -119,7 +126,7 @@ namespace DynamoCoreUITests
         }
 
 
-        [Test, RequiresSTA, Category("Failing")]
+        [Test, RequiresSTA, Category("Failure")]
         // Create a cyclic chain of three code block nodes, and verify that a
         // warning is shown on one of the cyclic nodes.
         // Reconnect a valid value to one of the chain items, and verify that the
@@ -185,46 +192,78 @@ namespace DynamoCoreUITests
             });
         }
 
+        [Test]
+        [Category("UnitTests")]
+        public void TestSyntaxHighlightRuleForDigits()
+        {
+            string text = "{-2468.2342E+04, dfsgdfg34534, 34534.345345, 23423, -98.7, 0..10..2, -555};";
+
+            var rule = CodeBlockUtils.CreateDigitRule().Regex;
+            var matches = rule.Matches(text);
+
+            // Expected results (8):
+            // -2468.2342E+04
+            // 34534.345345
+            // 23423
+            // -98.7
+            // 0
+            // 10
+            // 2
+            // -555
+            Assert.AreEqual(8, matches.Count);
+            var actual = matches.Cast<Match>().Select(m => m.Value).ToArray();
+            string[] expected = new string[] { "-2468.2342E+04", "34534.345345", "23423", "-98.7", "0", "10", "2", "-555" };
+            Assert.IsTrue(expected.SequenceEqual(actual));
+        }
+
+
         #region Private Helper Methods
 
         protected ModelBase GetNode(string guid)
         {
             Guid id = Guid.Parse(guid);
-            return Controller.DynamoModel.CurrentWorkspace.GetModelInternal(id);
+            return ViewModel.Model.CurrentWorkspace.GetModelInternal(id);
         }
 
         protected void RunCommandsFromFile(string commandFileName,
             bool autoRun = false, CommandCallback commandCallback = null)
         {
-            string commandFilePath = DynamoTestUI.GetTestDirectory(ExecutingDirectory);
+            string commandFilePath = DynamoTestUIBase.GetTestDirectory(ExecutingDirectory);
             commandFilePath = Path.Combine(commandFilePath, @"core\recorded\");
             commandFilePath = Path.Combine(commandFilePath, commandFileName);
 
-            if (this.Controller != null)
+            if (this.ViewModel != null)
             {
-                var message = "Multiple DynamoController detected!";
+                var message = "Multiple DynamoViewModel instances detected!";
                 throw new InvalidOperationException(message);
             }
 
-            // Create the controller to run alongside the view.
-            this.Controller = DynamoController.MakeSandbox(commandFilePath);
-            var controller = this.Controller;
-            controller.DynamoViewModel.DynamicRunEnabled = autoRun;
-            DynamoController.IsTestMode = true;
+            var model = DynamoModel.Start(
+                new DynamoModel.StartConfiguration()
+                {
+                    StartInTestMode = true
+                });
+
+            ViewModel = DynamoViewModel.Start(
+                new DynamoViewModel.StartConfiguration()
+                {
+                    DynamoModel = model,
+                    CommandFilePath = commandFilePath
+                });
+
+            ViewModel.DynamicRunEnabled = autoRun;
 
             RegisterCommandCallback(commandCallback);
 
             // Create the view.
-            var dynamoView = new DynamoView();
-            dynamoView.DataContext = controller.DynamoViewModel;
-            controller.UIDispatcher = dynamoView.Dispatcher;
+            var dynamoView = new DynamoView(this.ViewModel);
             dynamoView.ShowDialog();
 
-            Assert.IsNotNull(controller);
-            Assert.IsNotNull(controller.DynamoModel);
-            Assert.IsNotNull(controller.DynamoModel.CurrentWorkspace);
-            workspace = controller.DynamoModel.CurrentWorkspace;
-            workspaceViewModel = controller.DynamoViewModel.CurrentSpaceViewModel;
+            Assert.IsNotNull(ViewModel);
+            Assert.IsNotNull(ViewModel.Model);
+            Assert.IsNotNull(ViewModel.Model.CurrentWorkspace);
+            workspace = ViewModel.Model.CurrentWorkspace;
+            workspaceViewModel = ViewModel.CurrentSpaceViewModel;
         }
 
         private void RegisterCommandCallback(CommandCallback commandCallback)
@@ -236,7 +275,7 @@ namespace DynamoCoreUITests
                 throw new InvalidOperationException("RunCommandsFromFile called twice");
 
             this.commandCallback = commandCallback;
-            var automation = this.Controller.DynamoViewModel.Automation;
+            var automation = this.ViewModel.Automation;
             automation.PlaybackStateChanged += OnAutomationPlaybackStateChanged;
         }
 
@@ -258,7 +297,7 @@ namespace DynamoCoreUITests
         }
 
         private CmdType DuplicateAndCompare<CmdType>(CmdType command)
-            where CmdType : DynamoViewModel.RecordableCommand
+            where CmdType : DynamoModel.RecordableCommand
         {
             Assert.IsNotNull(command); // Ensure we have an input command.
 
@@ -268,12 +307,247 @@ namespace DynamoCoreUITests
             Assert.IsNotNull(element);
 
             // Deserialized the XmlElement into a new instance of the command.
-            var duplicate = DynamoViewModel.RecordableCommand.Deserialize(element);
+            var duplicate = DynamoModel.RecordableCommand.Deserialize(element);
             Assert.IsNotNull(duplicate);
             Assert.IsTrue(duplicate is CmdType);
             return duplicate as CmdType;
         }
 
         #endregion
+    }
+
+    public class CodeBlockCompletionTests : DSEvaluationViewModelUnitTest
+    {
+        [Test]
+        [Category("UnitTests")]
+        public void TestCtorSignatureCompletion()
+        {
+            var libraryServices = ViewModel.Model.EngineController.LibraryServices;
+            bool libraryLoaded = false;
+            libraryServices.LibraryLoaded += (sender, e) => libraryLoaded = true;
+
+            string libraryPath = "FFITarget.dll";
+
+            // All we need to do here is to ensure that the target has been loaded
+            // at some point, so if it's already thre, don't try and reload it
+            if (!libraryServices.IsLibraryLoaded(libraryPath))
+            {
+                libraryServices.ImportLibrary(libraryPath, ViewModel.Model.Logger);
+                Assert.IsTrue(libraryLoaded);
+            }
+
+            string ffiTargetClass = "CodeCompletionClass";
+            string functionName = "CodeCompletionClass";
+            var cbnEditor = new CodeBlockEditor(ViewModel);
+
+            string code = "";
+            var overloads = cbnEditor.GetFunctionSignatures(code, functionName, ffiTargetClass);
+
+            // Expected 3 "CodeCompletionClass" ctor overloads
+            Assert.AreEqual(3, overloads.Count());
+
+            foreach (var overload in overloads)
+            {
+                Assert.AreEqual(functionName, overload.Method.MethodName);
+            }
+            Assert.AreEqual(3, overloads.ElementAt(2).Method.ArgumentList.Count());
+            Assert.AreEqual("int", overloads.ElementAt(2).Method.ArgumentList.ElementAt(0).Value);
+        }
+
+        [Test]
+        [Category("UnitTests")]
+        public void TestMethodSignatureCompletion()
+        {
+            var libraryServices = ViewModel.Model.EngineController.LibraryServices;
+            bool libraryLoaded = false;
+            libraryServices.LibraryLoaded += (sender, e) => libraryLoaded = true;
+
+            string libraryPath = "FFITarget.dll";
+
+            // All we need to do here is to ensure that the target has been loaded
+            // at some point, so if it's already thre, don't try and reload it
+            if (!libraryServices.IsLibraryLoaded(libraryPath))
+            {
+                libraryServices.ImportLibrary(libraryPath, ViewModel.Model.Logger);
+                Assert.IsTrue(libraryLoaded);
+            }
+
+            var cbnEditor = new CodeBlockEditor(ViewModel);
+
+            string functionPrefix = "a";
+            string ffiTargetClass = "CodeCompletionClass";
+            string functionName = "OverloadedAdd";
+
+            string code = string.Format("{0} : {1};", functionPrefix, ffiTargetClass);
+            var overloads = cbnEditor.GetFunctionSignatures(code, functionName, functionPrefix);
+
+            // Expected 2 "OverloadedAdd" method overloads
+            Assert.AreEqual(2, overloads.Count());
+
+            foreach (var overload in overloads)
+            {
+                Assert.AreEqual(functionName, overload.Method.MethodName);
+            }
+            Assert.AreEqual(1, overloads.ElementAt(0).Method.ArgumentList.Count());
+            Assert.AreEqual("ClassFunctionality", overloads.ElementAt(0).Method.ArgumentList.ElementAt(0).Value);
+        }
+
+        [Test]
+        [Category("UnitTests")]
+        public void TestMethodSignatureReturnTypeCompletion()
+        {
+            var libraryServices = ViewModel.Model.EngineController.LibraryServices;
+            bool libraryLoaded = false;
+            libraryServices.LibraryLoaded += (sender, e) => libraryLoaded = true;
+
+            string libraryPath = "FFITarget.dll";
+
+            // All we need to do here is to ensure that the target has been loaded
+            // at some point, so if it's already thre, don't try and reload it
+            if (!libraryServices.IsLibraryLoaded(libraryPath))
+            {
+                libraryServices.ImportLibrary(libraryPath, ViewModel.Model.Logger);
+                Assert.IsTrue(libraryLoaded);
+            }
+
+            var cbnEditor = new CodeBlockEditor(ViewModel);
+
+            string functionPrefix = "a";
+            string ffiTargetClass = "CodeCompletionClass";
+            string functionName = "AddWithValueContainer";
+
+            string code = string.Format("{0} : {1};", functionPrefix, ffiTargetClass);
+            var overloads = cbnEditor.GetFunctionSignatures(code, functionName, functionPrefix);
+
+            // Expected 1 "AddWithValueContainer" method overloads
+            Assert.AreEqual(1, overloads.Count());
+
+            foreach (var overload in overloads)
+            {
+                Assert.AreEqual(functionName, overload.Method.MethodName);
+            }
+            Assert.AreEqual(1, overloads.ElementAt(0).Method.ArgumentList.Count());
+            Assert.AreEqual("ValueContainer", overloads.ElementAt(0).Method.ArgumentList.ElementAt(0).Value);
+
+            Assert.AreEqual("ValueContainer[]",
+                overloads.ElementAt(0).Method.ReturnType.ToString().Split('.').Last());
+        }
+
+        [Test]
+        [Category("UnitTests")]
+        public void TestBuiltInMethodSignatureCompletion()
+        {
+            var cbnEditor = new CodeBlockEditor(ViewModel);
+
+            string functionPrefix = "";
+            string functionName = "Count";
+
+            string code = "";
+            var overloads = cbnEditor.GetFunctionSignatures(code, functionName, functionPrefix);
+
+            // Expected 1 "AddWithValueContainer" method overloads
+            Assert.AreEqual(1, overloads.Count());
+
+            foreach (var overload in overloads)
+            {
+                Assert.AreEqual(functionName, overload.Method.MethodName);
+            }
+            Assert.AreEqual(1, overloads.ElementAt(0).Method.ArgumentList.Count());
+            Assert.AreEqual("[]", overloads.ElementAt(0).Method.ArgumentList.ElementAt(0).Value);
+            Assert.AreEqual("int",
+                overloads.ElementAt(0).Method.ReturnType.ToString().Split('.').Last());
+        }
+
+        [Test]
+        [Category("UnitTests")]
+        public void TestStaticMethodSignatureCompletion()
+        {
+            var libraryServices = ViewModel.Model.EngineController.LibraryServices;
+            bool libraryLoaded = false;
+            libraryServices.LibraryLoaded += (sender, e) => libraryLoaded = true;
+
+            string libraryPath = "FFITarget.dll";
+
+            // All we need to do here is to ensure that the target has been loaded
+            // at some point, so if it's already thre, don't try and reload it
+            if (!libraryServices.IsLibraryLoaded(libraryPath))
+            {
+                libraryServices.ImportLibrary(libraryPath, ViewModel.Model.Logger);
+                Assert.IsTrue(libraryLoaded);
+            }
+
+            var cbnEditor = new CodeBlockEditor(ViewModel);
+
+            string ffiTargetClass = "CodeCompletionClass";
+            string functionName = "StaticFunction";
+
+            string code = "";
+            var overloads = cbnEditor.GetFunctionSignatures(code, functionName, ffiTargetClass);
+
+            // Expected 1 "StaticFunction" method overload
+            Assert.AreEqual(1, overloads.Count());
+
+            foreach (var overload in overloads)
+            {
+                Assert.AreEqual(functionName, overload.Method.MethodName);
+            }
+            Assert.AreEqual(0, overloads.ElementAt(0).Method.ArgumentList.Count());
+            Assert.AreEqual("int", overloads.ElementAt(0).Method.ReturnType.ToString());
+        }
+
+        [Test]
+        [Category("UnitTests"), Category("Failure")]
+        public void TestCompletionWhenTyping()
+        {
+            var libraryServices = ViewModel.Model.EngineController.LibraryServices;
+            // Note this test may fail if another library with class names
+            // beginning with "poi" is imported by default or if there is a change
+            // to the classes "ProtoGeometry" or "FFITarget" libraries
+            bool libraryLoaded = false;
+            libraryServices.LibraryLoaded += (sender, e) => libraryLoaded = true;
+
+            string libraryPath = "FFITarget.dll";
+
+            // All we need to do here is to ensure that the target has been loaded
+            // at some point, so if it's already thre, don't try and reload it
+            if (!libraryServices.IsLibraryLoaded(libraryPath))
+            {
+                libraryServices.ImportLibrary(libraryPath, ViewModel.Model.Logger);
+                Assert.IsTrue(libraryLoaded);
+            }
+
+            var cbnEditor = new CodeBlockEditor(ViewModel);
+            string code = "Poi";
+            var completions = cbnEditor.SearchCompletions(code, System.Guid.Empty);
+
+            // Expected 5 completion items
+            Assert.AreEqual(5, completions.Count());
+
+            string[] expected = {"Autodesk.DesignScript.Geometry.Point", "FFITarget.DesignScript.Point",
+                                    "FFITarget.Dynamo.Point", "DummyPoint", "UnknownPoint"};
+            var actual = completions.Select(x => x.Text);
+            
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test]
+        [Category("UnitTests"), Category("Failure")]
+        public void TestMethodKeywordCompletionWhenTyping()
+        {
+            var libraryServices = ViewModel.Model.EngineController.LibraryServices;
+            var cbnEditor = new CodeBlockEditor(ViewModel);
+            string code = "im";
+            var completions = cbnEditor.SearchCompletions(code, System.Guid.Empty);
+
+            // Expected 5 completion items
+            Assert.AreEqual(4, completions.Count());
+
+            string[] expected = {"Imperative", "MinimumItemByKey",
+                                    "MaximumItemByKey", "ImportFromCSV"};
+            var actual = completions.Select(x => x.Text);
+
+            Assert.AreEqual(expected, actual);
+        }
+
     }
 }

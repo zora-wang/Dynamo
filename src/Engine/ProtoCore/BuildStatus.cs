@@ -101,6 +101,8 @@ namespace ProtoCore
             public string Message;
             public int Line;
             public int Column;
+            public Guid GraphNodeGuid;
+            public int AstID;
             public string FileName;
         }
     }
@@ -463,7 +465,17 @@ namespace ProtoCore
         {
             warnings.Clear();
         }
-        
+
+        public void ClearWarningsForAst(int astID)
+        {
+            warnings.RemoveAll(w => w.AstID.Equals(astID));
+        }
+
+        public void ClearWarningsForGraph(Guid guid)
+        {
+            warnings.RemoveAll(w => w.GraphNodeGuid.Equals(guid));
+        }
+
         public void ClearErrors()
         {
             errors.Clear();
@@ -540,7 +552,12 @@ namespace ProtoCore
             throw new BuildHaltException(msg);
         }
 
-        public void LogWarning(BuildData.WarningID warningID, string message, string fileName = null, int line = -1, int col = -1)
+        public void LogWarning(BuildData.WarningID warningID, 
+                               string message, 
+                               string fileName = null, 
+                               int line = -1, 
+                               int col = -1, 
+                               AssociativeGraph.GraphNode graphNode = null)
         { 
             var entry = new BuildData.WarningEntry 
             { 
@@ -548,6 +565,8 @@ namespace ProtoCore
                 Message = message, 
                 Line = line, 
                 Column = col, 
+                GraphNodeGuid = graphNode == null ? default(Guid) : graphNode.guid,
+                AstID = graphNode == null? DSASM.Constants.kInvalidIndex : graphNode.OriginalAstID,
                 FileName = fileName 
             };
             warnings.Add(entry);

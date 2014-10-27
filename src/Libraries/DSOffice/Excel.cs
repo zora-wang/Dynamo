@@ -4,12 +4,22 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.Office.Interop.Excel;
-using Dynamo.Utilities;
+
 using Autodesk.DesignScript.Runtime;
 
 namespace DSOffice
 {
-    class ExcelInterop
+    internal class ExcelCloseEventArgs : EventArgs
+    {
+        public ExcelCloseEventArgs(bool saveWorkbooks = true)
+        {
+            this.SaveWorkbooks = saveWorkbooks;
+        }
+
+        public bool SaveWorkbooks { get; private set; }
+    }
+
+    internal class ExcelInterop
     {
         private static Microsoft.Office.Interop.Excel.Application _app;
         public static Microsoft.Office.Interop.Excel.Application App
@@ -63,7 +73,8 @@ namespace DSOffice
                 throw new Exception("Excel could not be opened.");
             }
 
-            dynSettings.Controller.DynamoModel.CleaningUp += DynamoModelOnCleaningUp;
+            // KILLDYNSETTINGS - is this safe
+            AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
 
             excel.Visible = ShowOnStartup;
 
@@ -93,7 +104,7 @@ namespace DSOffice
         /// Close all Excel workbooks and provide SaveAs dialog if needed.  Also, perform
         /// garbage collection and remove references to Excel App
         /// </summary>
-        public static void TryQuitAndCleanup(bool saveWorkbooks)
+        private static void TryQuitAndCleanup(bool saveWorkbooks)
         {
             if (HasValidExcelReference)
             {
@@ -115,11 +126,11 @@ namespace DSOffice
             }
         }
 
-        private static void DynamoModelOnCleaningUp(object sender, EventArgs eventArgs)
+        internal static void OnProcessExit(object sender, EventArgs eventArgs)
         {
             if(eventArgs != null)
             {
-                Dynamo.Nodes.ExcelCloseEventArgs args = eventArgs as Dynamo.Nodes.ExcelCloseEventArgs;
+                var args = eventArgs as ExcelCloseEventArgs;
                 if (args != null)
                 {
                     TryQuitAndCleanup(args.SaveWorkbooks);
@@ -358,19 +369,22 @@ namespace DSOffice
         internal WorkSheet (WorkBook wbook, string sheetName)
         {
             wb = wbook;
+
+            // Look for an existing worksheet
             WorkSheet wSheet = wbook.WorkSheets.FirstOrDefault(n => n.ws.Name == sheetName);
-            
+
+            // If you find one, then use it.
             if (wSheet != null)
             {
-                // Overwrite sheet
-                DSOffice.ExcelInterop.App.DisplayAlerts = false;
-                wSheet.ws.Delete();
-                DSOffice.ExcelInterop.App.DisplayAlerts = true;
+                ws = wSheet.ws;
             }
-            ws = (Worksheet)wb.Add();
-            ws.Name = sheetName;
-
-            wb.Save();
+            // If you don't find one, create one.
+            else
+            {
+                ws = (Worksheet)wb.Add();
+                ws.Name = sheetName;
+                wb.Save();
+            }
         }
 
         internal WorkSheet(Worksheet ws, WorkBook wb)
@@ -447,10 +461,23 @@ namespace DSOffice
             {
                 try
                 {
-                    Workbook workbook = ExcelInterop.App.Workbooks.Open(filePath);
-                    wb = workbook;
-                    wb.Save();
-                    
+                    // Look for an existing open workbook
+                    var workbookOpen = ExcelInterop.App.Workbooks.Cast<Workbook>()
+                        .FirstOrDefault(e => e.FullName == filePath);
+
+                    // Use the existing workbook.
+                    if (workbookOpen != null)
+                    {
+                        wb = workbookOpen;
+                    }
+                    // If you can't find an existing workbook at
+                    // the specified path, then create a new one.
+                    else
+                    {
+                        Workbook workbook = ExcelInterop.App.Workbooks.Open(filePath);
+                        wb = workbook;
+                        wb.Save();
+                    }
                 }
                 catch (Exception)
                 {

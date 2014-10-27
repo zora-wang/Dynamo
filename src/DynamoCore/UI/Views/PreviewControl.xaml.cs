@@ -1,5 +1,5 @@
 ﻿using Dynamo.Controls;
-using Dynamo.Nodes;
+using Dynamo.Interfaces;
 using Dynamo.ViewModels;
 using ProtoCore.Mirror;
 using System;
@@ -41,6 +41,8 @@ namespace Dynamo.UI.Controls
             public const string GridHeightAnimator = "gridHeightAnimator";
         }
 
+        private readonly NodeViewModel nodeViewModel;
+
         private State currentState = State.Hidden;
         private Queue<State> queuedRequest = new Queue<State>();
         private Canvas hostingCanvas = null;
@@ -64,8 +66,9 @@ namespace Dynamo.UI.Controls
 
         #region Public Class Operational Methods
 
-        public PreviewControl()
+        public PreviewControl(NodeViewModel nodeViewModel)
         {
+            this.nodeViewModel = nodeViewModel;
             InitializeComponent();
             Loaded += OnPreviewControlLoaded;
         }
@@ -238,25 +241,22 @@ namespace Dynamo.UI.Controls
                 return;
 
             cachedSmallContent = "null";
-            if (mirrorData != null && (mirrorData.IsNull == false))
+            if (mirrorData != null)
             {
-                if (mirrorData.IsCollection == false)
-                {
-                    // The following determines if we do get a CLR object before
-                    // trying to access it. For example, placing just a "+" node 
-                    // without any input will return a "null" here, in which case 
-                    // its display should remain "null".
-                    // 
-                    var clrData = mirrorData.Data;
-                    if (clrData != null)
-                        cachedSmallContent = clrData.ToString();
-                }
-                else
+                if (mirrorData.IsCollection)
                 {
                     // TODO(Ben): Can we display details of the array and 
                     // probably display the first element of the array (even 
                     // when it is multi-dimensional array)?
                     cachedSmallContent = "Array";
+                }
+                else if (mirrorData.Data == null && !mirrorData.IsNull && mirrorData.Class != null)
+                {
+                    cachedSmallContent = mirrorData.Class.ClassName;
+                }
+                else
+                {
+                    cachedSmallContent = mirrorData.StringData;
                 }
             }
 
@@ -277,7 +277,7 @@ namespace Dynamo.UI.Controls
             if (largeContentGrid.Children.Count <= 0)
             {
                 var newWatchTree = new WatchTree();
-                newWatchTree.DataContext = new WatchViewModel();
+                newWatchTree.DataContext = new WatchViewModel(nodeViewModel.DynamoViewModel.VisualizationManager);
                 largeContentGrid.Children.Add(newWatchTree);
             }
 
@@ -285,7 +285,9 @@ namespace Dynamo.UI.Controls
             var rootDataContext = watchTree.DataContext as WatchViewModel;
 
             // Associate the data context to the view before binding.
-            cachedLargeContent = Watch.Process(mirrorData, string.Empty, false);
+            cachedLargeContent = nodeViewModel.DynamoViewModel.WatchHandler.GenerateWatchViewModelForData(
+                mirrorData, string.Empty, false);
+
             rootDataContext.Children.Add(cachedLargeContent);
 
             // Establish data binding between data context and the view.
@@ -299,14 +301,29 @@ namespace Dynamo.UI.Controls
 
         private Size ComputeSmallContentSize()
         {
-            this.smallContentGrid.Measure(new Size()
-            {
+            Size maxSize = new Size(){
                 Width = Configurations.MaxCondensedPreviewWidth,
                 Height = Configurations.MaxCondensedPreviewHeight
-            });
+            };
+
+            this.smallContentGrid.Measure(maxSize);
+            Size smallContentGridSize = this.smallContentGrid.DesiredSize;
+
+            foreach (UIElement child in smallContentGrid.Children)
+            {
+                child.Measure(maxSize);
+                if (child.DesiredSize.Width > smallContentGridSize.Width)
+                {
+                    smallContentGridSize.Width = child.DesiredSize.Width + 10;
+                }
+                if (child.DesiredSize.Height > smallContentGridSize.Height)
+                {
+                    smallContentGridSize.Height = child.DesiredSize.Height + 10;
+                }
+            }
 
             // Add padding since we are sizing the centralizedGrid.
-            return ContentToControlSize(this.smallContentGrid.DesiredSize);
+            return ContentToControlSize(smallContentGridSize);
         }
 
         private Size ComputeLargeContentSize()

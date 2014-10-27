@@ -1,18 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Timers;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Media.Animation;
-using Dynamo.UI;
-using Dynamo.Utilities;
-using System.Windows.Threading;
-using Dynamo.Controls;
-using System.Collections.ObjectModel;
-using Dynamo.Core;
 
 namespace Dynamo.ViewModels
 {
@@ -62,6 +49,8 @@ namespace Dynamo.ViewModels
         }
 
         #region Properties
+
+        public DynamoViewModel DynamoViewModel { get; private set; }
 
         private double zIndex;
         public double ZIndex
@@ -144,8 +133,10 @@ namespace Dynamo.ViewModels
 
         #region Public Methods
 
-        public InfoBubbleViewModel()
+        public InfoBubbleViewModel(DynamoViewModel dynamoViewModel)
         {
+            this.DynamoViewModel = dynamoViewModel;
+
             // Default values
             limitedDirection = Direction.None;
             ConnectingDirection = Direction.None;

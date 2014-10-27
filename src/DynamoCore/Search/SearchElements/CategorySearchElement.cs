@@ -1,6 +1,4 @@
-﻿using Dynamo.Utilities;
-
-namespace Dynamo.Search.SearchElements
+﻿namespace Dynamo.Search.SearchElements
 {
     class CategorySearchElement : SearchElementBase
     {
@@ -82,12 +80,5 @@ namespace Dynamo.Search.SearchElements
             _description = "";
         }
         
-        /// <summary>
-        /// Add the name as the current search text </summary>
-        public override void Execute()
-        {
-            dynSettings.Controller.SearchViewModel.SearchText = Name + ".";
-        }
-
     }
 }

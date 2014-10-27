@@ -30,7 +30,7 @@ namespace Revit.GeometryConversion
             {
                 return Tag( InternalConvert(dynGeom), reference);
             }
-            catch (RuntimeBinderException e)
+            catch (RuntimeBinderException)
             {
                 return null; 
             }
@@ -49,6 +49,17 @@ namespace Revit.GeometryConversion
     Autodesk.Revit.DB.Reference reference)
         {
             return reference != null ? ElementFaceReference.AddTag(srf, reference) : srf;
+        }
+
+        private static IEnumerable<Autodesk.DesignScript.Geometry.Surface> Tag(IEnumerable<Autodesk.DesignScript.Geometry.Surface> srfs,
+            Autodesk.Revit.DB.Reference reference)
+        {
+            foreach (var srf in srfs)
+            {
+                Tag(srf, reference);
+            }
+
+            return srfs;
         }
 
         private static Autodesk.DesignScript.Geometry.Geometry Tag(Autodesk.DesignScript.Geometry.Geometry geo,
@@ -71,7 +82,7 @@ namespace Revit.GeometryConversion
             return (Autodesk.DesignScript.Geometry.Curve) geom.AsCurve().Convert();
         }
 
-        private static Autodesk.DesignScript.Geometry.Surface InternalConvert(Autodesk.Revit.DB.Face geom)
+        private static IEnumerable<Autodesk.DesignScript.Geometry.Surface> InternalConvert(Autodesk.Revit.DB.Face geom)
         {
             return geom.ToProtoType();
         }

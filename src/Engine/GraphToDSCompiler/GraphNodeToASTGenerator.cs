@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using ProtoCore.Utils;
 using ProtoCore.AST.AssociativeAST;
+using System.Globalization;
 
 namespace GraphToDSCompiler
 {
@@ -352,12 +353,12 @@ namespace GraphToDSCompiler
             bool flag;
             string val = node.ToScript();
             // If LiternalNode is double
-            if(Double.TryParse(val, out real))
+            if(Double.TryParse(val, NumberStyles.Number, CultureInfo.InvariantCulture, out real))
             {
                 rightNode = new DoubleNode(real); 
             }
             // If LiteralNode type is Int
-            else if (Int64.TryParse(val, out number))
+            else if (Int64.TryParse(val, NumberStyles.Number, CultureInfo.InvariantCulture, out number))
             {
             
                 rightNode = new IntNode(number);
@@ -526,8 +527,8 @@ namespace GraphToDSCompiler
 
             // Parse program statement in node.Name
             string code = node.Name + ";";
-            ProtoCore.AST.AssociativeAST.CodeBlockNode commentNode = null;
-            ProtoCore.AST.AssociativeAST.CodeBlockNode codeBlockNode = (ProtoCore.AST.AssociativeAST.CodeBlockNode)GraphUtilities.Parse(code, out commentNode);
+
+            ProtoCore.AST.AssociativeAST.CodeBlockNode codeBlockNode = (ProtoCore.AST.AssociativeAST.CodeBlockNode)ProtoCore.Utils.ParserUtils.Parse(code);
             Validity.Assert(codeBlockNode != null);
 
             List<ProtoCore.AST.AssociativeAST.AssociativeNode> astList = codeBlockNode.Body;

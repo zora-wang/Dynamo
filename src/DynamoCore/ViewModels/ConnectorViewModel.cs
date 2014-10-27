@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Diagnostics;
+
 using Dynamo.Models;
-using Dynamo.Utilities;
+
 using Point = System.Windows.Point;
 
 namespace Dynamo.ViewModels
@@ -11,6 +11,7 @@ namespace Dynamo.ViewModels
 
         #region Properties
 
+        private readonly WorkspaceViewModel workspaceViewModel;
         private PortModel _activeStartPort;
         public PortModel ActiveStartPort { get { return _activeStartPort; } internal set { _activeStartPort = value; } }
 
@@ -151,6 +152,14 @@ namespace Dynamo.ViewModels
             }
         }
 
+        public bool IsStartOrEndSelected
+        {
+            get
+            {
+                return IsStartSelected || IsEndSelected;
+            }
+        }
+
         private double _endDotSize = 6;
         public double EndDotSize
         {
@@ -170,8 +179,8 @@ namespace Dynamo.ViewModels
         {
             get
             {
-                if (dynSettings.Controller.ConnectorType == ConnectorType.BEZIER &&
-                    dynSettings.Controller.IsShowingConnectors)
+                if (workspaceViewModel.DynamoViewModel.ConnectorType == ConnectorType.BEZIER &&
+                    workspaceViewModel.DynamoViewModel.IsShowingConnectors)
                     return true;
                 return false;
             }
@@ -189,8 +198,8 @@ namespace Dynamo.ViewModels
         {
             get
             {
-                if (dynSettings.Controller.ConnectorType == ConnectorType.POLYLINE && 
-                    dynSettings.Controller.IsShowingConnectors)
+                if (workspaceViewModel.DynamoViewModel.ConnectorType == ConnectorType.POLYLINE &&
+                    workspaceViewModel.DynamoViewModel.IsShowingConnectors)
                     return true;
                 return false;
             }
@@ -206,8 +215,9 @@ namespace Dynamo.ViewModels
         /// Construct a view and start drawing.
         /// </summary>
         /// <param name="port"></param>
-        public ConnectorViewModel(PortModel port)
+        public ConnectorViewModel(WorkspaceViewModel workspace, PortModel port)
         {
+            this.workspaceViewModel = workspace;
             IsConnecting = true;
             _activeStartPort = port;
 
@@ -218,15 +228,16 @@ namespace Dynamo.ViewModels
         /// Construct a view and respond to property changes on the model. 
         /// </summary>
         /// <param name="model"></param>
-        public ConnectorViewModel(ConnectorModel model)
+        public ConnectorViewModel(WorkspaceViewModel workspace, ConnectorModel model)
         {
+            this.workspaceViewModel = workspace;
             _model = model;
 
             _model.PropertyChanged += Model_PropertyChanged;
             _model.Start.Owner.PropertyChanged += StartOwner_PropertyChanged;
             _model.End.Owner.PropertyChanged += EndOwner_PropertyChanged;
 
-            dynSettings.Controller.DynamoViewModel.PropertyChanged += DynamoViewModel_PropertyChanged;
+            workspaceViewModel.DynamoViewModel.PropertyChanged += DynamoViewModel_PropertyChanged;
 
             Redraw();
         }
@@ -242,6 +253,7 @@ namespace Dynamo.ViewModels
             {
                 case "IsSelected":
                     RaisePropertyChanged("IsStartSelected");
+                    RaisePropertyChanged("IsStartOrEndSelected");
                     break;
                 case "Position":
                     RaisePropertyChanged("CurvePoint0");
@@ -265,6 +277,7 @@ namespace Dynamo.ViewModels
             {
                 case "IsSelected":
                     RaisePropertyChanged("IsEndSelected");
+                    RaisePropertyChanged("IsStartOrEndSelected");
                     break;
                 case "Position":
                     RaisePropertyChanged("CurvePoint0");
@@ -282,7 +295,7 @@ namespace Dynamo.ViewModels
             switch (e.PropertyName)
             {
                 case "ConnectorType":
-                    if (dynSettings.Controller.ConnectorType == ConnectorType.BEZIER)
+                    if (workspaceViewModel.DynamoViewModel.ConnectorType == ConnectorType.BEZIER)
                     {
                         BezVisibility = true;
                         PlineVisibility = false;

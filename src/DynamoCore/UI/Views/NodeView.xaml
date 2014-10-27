@@ -37,8 +37,7 @@
 
         <Grid.ContextMenu>
             <ContextMenu Name="MainContextMenu"
-                         x:FieldModifier="public"
-                         ContextMenuOpening="MainContextMenu_ContextMenuOpening">
+                         x:FieldModifier="public">
                 <MenuItem Name="deleteElem_cm"
                           Header="Delete"
                           Command="{Binding Path=DeleteCommand}" />
@@ -359,6 +358,27 @@
                 </Binding>
             </Rectangle.Visibility>
         </Rectangle>
+
+        <!--DO NOT ERASE. THIS IS FOR DEBUGGING-->
+        <!--<Rectangle Name="ForceReexecBorder"
+                   Grid.Row="1"
+                   Grid.ColumnSpan="3"
+                   Grid.RowSpan="3"
+                   Fill="Transparent"
+                   Stroke="#7E43F041"
+                   StrokeThickness="8"
+                   StrokeLineJoin="Round"
+                   IsHitTestVisible="False"
+                   Canvas.ZIndex="20"
+                   Margin="-10">
+            <Rectangle.Visibility>
+                <Binding Path="WillForceReExecuteOfNode"
+                         UpdateSourceTrigger="PropertyChanged"
+                         Mode="OneWay"
+                         Converter="{StaticResource BooleanToVisibilityConverter}">
+                </Binding>
+            </Rectangle.Visibility>
+        </Rectangle>-->
 
         <Canvas Name="expansionBay"
                 Grid.Row="4"

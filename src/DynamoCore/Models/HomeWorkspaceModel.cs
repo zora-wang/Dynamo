@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Windows.Documents;
 using System.Windows.Threading;
-using Dynamo.Utilities;
 
 namespace Dynamo.Models
 {
@@ -11,18 +9,13 @@ namespace Dynamo.Models
     {
         private DispatcherTimer runExpressionTimer;
 
-        public HomeWorkspaceModel()
-            : this(new List<NodeModel>(), new List<ConnectorModel>(), 0, 0)
+        public HomeWorkspaceModel(DynamoModel dynamoModel)
+            : this(dynamoModel, new List<NodeModel>(), new List<ConnectorModel>(), 0, 0)
         {
         }
 
-        public HomeWorkspaceModel(double x, double y)
-            : this(new List<NodeModel>(), new List<ConnectorModel>(), x, y)
-        {
-        }
-
-        public HomeWorkspaceModel(IEnumerable<NodeModel> e, IEnumerable<ConnectorModel> c, double x, double y)
-            : base("Home", e, c, x, y)
+        public HomeWorkspaceModel(DynamoModel dynamoModel, IEnumerable<NodeModel> e, IEnumerable<ConnectorModel> c, double x, double y)
+            : base(dynamoModel, "Home", e, c, x, y)
         {
         }
 
@@ -30,27 +23,28 @@ namespace Dynamo.Models
         {
             (sender as DispatcherTimer).Stop();
 
-            var controller = dynSettings.Controller;
-            controller.Runner.RunExpression();
+            this.DynamoModel.RunExpression();
         }
 
         public override void Modified()
         {
             base.Modified();
 
-            var controller = dynSettings.Controller;
-            if (dynSettings.Controller.DynamoViewModel.DynamicRunEnabled)
+            // When Dynamo is shut down, the workspace is cleared, which results
+            // in Modified() being called. But, we don't want to run when we are
+            // shutting down so we check that shutdown has not been requested.
+            if (this.DynamoModel.DynamicRunEnabled && !DynamoModel.ShutdownRequested)
             {
-#if USE_DSENGINE
+
                 // This dispatch timer is to avoid updating graph too frequently.
                 // It happens when we are modifying a bunch of connections in 
                 // a short time frame. E.g., when we delete some nodes with a 
                 // bunch of connections, each deletion of connection will call 
-                // Modified(). Or, when we are modifying the content in a code 
+                // RequestSync(). Or, when we are modifying the content in a code 
                 // block. 
                 // 
-                // Each time when Modified() is called, runExpressionTimer will
-                // be reset and until no Modified events flood in, the updating
+                // Each time when RequestSync() is called, runExpressionTimer will
+                // be reset and until no RequestSync events flood in, the updating
                 // of graph will get executed. 
                 //
                 // We use DispatcherTimer so that the update of graph happens on
@@ -64,25 +58,30 @@ namespace Dynamo.Models
 
                 runExpressionTimer.Stop();
                 runExpressionTimer.Start(); // reset timer
-#else
-                //dynSettings.DynamoLogger.Log("Running Dynamically");
-                if (!controller.Running)
-                {
-                    //dynSettings.DynamoLogger.Log("Nothing currently running, now running.");
-                    controller.RunExpression(false);
-                }
-                else
-                {
-                    //dynSettings.DynamoLogger.Log("Run in progress, cancelling then running.");
-                    controller.QueueRun();
-                }
-#endif
+
             }
         }
 
-        public override void OnDisplayed()
+        protected override void ResetWorkspaceCore()
         {
-            //DynamoView bench = dynSettings.Bench; // ewwwy
+            // It is possible for a timer to be started (due to the workspace 
+            // being modified) immediately before the DynamoModel gets destroyed.
+            // This is especially true for cases where multiple DynamoModel are
+            // re-created in a single app domain (e.g. across unit test cases, 
+            // or hosted scenario). Here OnRunExpression is unregistered from the
+            // DispatcherTimer so that it will never be called anymore after the 
+            // owning WorkspaceModel is destroyed.
+            // 
+            if (runExpressionTimer != null)
+            {
+                if (runExpressionTimer.IsEnabled)
+                    runExpressionTimer.Stop();
+
+                runExpressionTimer.Tick -= OnRunExpression;
+                runExpressionTimer = null;
+            }
+
+            base.ResetWorkspaceCore();
         }
     }
 }

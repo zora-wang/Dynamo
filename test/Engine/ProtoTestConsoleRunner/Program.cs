@@ -1,5 +1,4 @@
-﻿//#define __RUN_TESTFILE
-
+﻿
 
 using System;
 using ProtoCore;
@@ -50,10 +49,11 @@ namespace ProtoTestConsoleRunner
             core.Options.DumpByteCode = false;
             core.Options.Verbose = false;
 #endif
-
             ProtoFFI.DLLFFIHandler.Register(ProtoFFI.FFILanguage.CSharp, new ProtoFFI.CSModuleHelper());
             ProtoScriptTestRunner runner = new ProtoScriptTestRunner();
-            ExecutionMirror mirror = runner.LoadAndExecute(@"c:\project\github\test.ds", core);
+
+            // Assuming current directory in test/debug mode is "...\Dynamo\bin\AnyCPU\Debug"
+            ExecutionMirror mirror = runner.LoadAndExecute(@"..\..\..\test\core\dsevaluation\DSFiles\test.ds", core);
 
             long ms = sw.ElapsedMilliseconds;
             sw.Stop();

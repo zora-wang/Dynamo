@@ -1,6 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
-using Dynamo.Utilities;
+using System.Linq;
+
 using Dynamo.ViewModels;
 using DynamoUnits;
 using ProtoCore.Mirror;
@@ -9,94 +12,141 @@ namespace Dynamo.Interfaces
 {
     /// <summary>
     /// An object implementing the IWatchHandler interface is registered 
-    /// on the controller at startup, and defines the methods for processing
+    /// on the ViewModel at startup, and defines the methods for processing
     /// objects into string representations for visualizing in the Watch.
     /// To create a custom watch visualization scheme, you can create a simply
     /// replace this WatchHandler with one of your own creation.
     /// </summary>
     public interface IWatchHandler
     {
-        WatchViewModel Process(dynamic value, string tag, bool showRawData = true);
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="tag"></param>
+        /// <param name="showRawData"></param>
+        /// <param name="callback"></param>
+        /// <returns></returns>
+        WatchViewModel Process(dynamic value, string tag, bool showRawData, WatchHandlerCallback callback);
+    }
+
+    public delegate WatchViewModel WatchHandlerCallback(dynamic value, string tag, bool showRawData);
+
+    public static class WatchHandler
+    {
+        public static WatchViewModel GenerateWatchViewModelForData(this IWatchHandler handler, dynamic value, string tag, bool showRawData = true)
+        {
+            return handler.Process(value, tag, showRawData, new WatchHandlerCallback(handler.GenerateWatchViewModelForData));
+        }
     }
 
     /// <summary>
-    /// The default watch handler.
+    ///     The default watch handler.
     /// </summary>
     public class DefaultWatchHandler : IWatchHandler
     {
-        internal WatchViewModel ProcessThing(object value, string tag, bool showRawData = true)
+        public const string NULL_STRING = "null";
+
+        private readonly IPreferences preferences;
+        private readonly IVisualizationManager visualizationManager;
+
+        public DefaultWatchHandler(IVisualizationManager manager, IPreferences preferences)
+        {
+            visualizationManager = manager;
+            this.preferences = preferences;
+        }
+
+        private WatchViewModel ProcessThing(object value, string tag, bool showRawData, WatchHandlerCallback callback)
         {
             WatchViewModel node;
 
             if (value is IEnumerable)
             {
-                node = new WatchViewModel("List", tag);
+                var list = (value as IEnumerable).Cast<dynamic>().ToList();
 
-                var enumerable = value as IEnumerable;
-                foreach (var obj in enumerable)
+                node = new WatchViewModel(visualizationManager, list.Count == 0 ? "Empty List" : "List", tag, true);
+                foreach (var e in list.Select((element, idx) => new { element, idx }))
                 {
-                    node.Children.Add(ProcessThing(obj, tag));
+                    node.Children.Add(callback(e.element, tag + ":" + e.idx, showRawData));
                 }
             }
             else
             {
-                node = new WatchViewModel(ToString(value), tag);
+                node = new WatchViewModel(visualizationManager, ToString(value), tag);
             }
 
             return node;
         }
 
-        internal WatchViewModel ProcessThing(SIUnit unit, string tag, bool showRawData = true)
+        private WatchViewModel ProcessThing(SIUnit unit, string tag, bool showRawData, WatchHandlerCallback callback)
         {
-            if (showRawData)
-                return new WatchViewModel(unit.Value.ToString(dynSettings.Controller.PreferenceSettings.NumberFormat, CultureInfo.InvariantCulture), tag);
-
-            return new WatchViewModel(unit.ToString(), tag);
+            return showRawData
+                ? new WatchViewModel(
+                    visualizationManager,
+                    unit.Value.ToString(preferences.NumberFormat, CultureInfo.InvariantCulture),
+                    tag)
+                : new WatchViewModel(visualizationManager, unit.ToString(), tag);
         }
 
-        internal WatchViewModel ProcessThing(double value, string tag, bool showRawData = true)
+        private WatchViewModel ProcessThing(double value, string tag, bool showRawData, WatchHandlerCallback callback)
         {
-            return new WatchViewModel(value.ToString(dynSettings.Controller.PreferenceSettings.NumberFormat, CultureInfo.InvariantCulture), tag);
+            return new WatchViewModel(visualizationManager, value.ToString(preferences.NumberFormat, CultureInfo.InvariantCulture), tag);
         }
 
-        internal WatchViewModel ProcessThing(string value, string tag, bool showRawData = true)
+        private WatchViewModel ProcessThing(string value, string tag, bool showRawData, WatchHandlerCallback callback)
         {
-            return new WatchViewModel(value, tag);
+            return new WatchViewModel(visualizationManager, value, tag);
         }
 
-        internal WatchViewModel ProcessThing(MirrorData data, string tag, bool showRawData = true)
+        private WatchViewModel ProcessThing(MirrorData data, string tag, bool showRawData, WatchHandlerCallback callback)
         {
-            //If the input data is an instance of a class, create a watch node
-            //with the class name and let WatchHandler process the underlying CLR data
-            var classMirror = data.Class;
-            if (null != classMirror)
+            if (data.IsCollection)
             {
-                if (data.Data == null && !data.IsNull) //Must be a DS Class instance.
-                    return ProcessThing(classMirror.ClassName, tag); //just show the class name.
-                return ProcessThing(data.Data as dynamic, tag, showRawData);
+                var list = data.GetElements();
+
+                var node = new WatchViewModel(visualizationManager, list.Count == 0 ? "Empty List" : "List", tag, true);
+                foreach (var e in list.Select((element, idx) => new { element, idx }))
+                {
+                    node.Children.Add(ProcessThing(e.element, tag + ":" + e.idx, showRawData, callback));
+                }
+
+                return node;
             }
 
-            // MAGN-3494: If "data.Data" is null, then return a "null" string 
-            // representation instead of casting it as dynamic (that leads to 
-            // a crash).
             if (data.Data == null)
-                return new WatchViewModel("null", tag);
+            {
+                // MAGN-3494: If "data.Data" is null, then return a "null" string 
+                // representation instead of casting it as dynamic (that leads to 
+                // a crash).
+                if (data.IsNull)
+                    return new WatchViewModel(visualizationManager, NULL_STRING, tag);
+                
+                //If the input data is an instance of a class, create a watch node
+                //with the class name and let WatchHandler process the underlying CLR data
+                var classMirror = data.Class;
+                if (null != classMirror)
+                {
+                    //just show the class name.
+                    return ProcessThing(classMirror.ClassName, tag, showRawData, callback);
+                }
+            }
 
             //Finally for all else get the string representation of data as watch content.
-            return ProcessThing(data.Data as dynamic, tag, showRawData);
+            return callback(data.Data, tag, showRawData);
         }
 
-        private string ToString(object obj)
+        private static string ToString(object obj)
         {
-            return obj != null ? obj.ToString() : "null";
+            return ReferenceEquals(obj, null)
+                ? NULL_STRING
+                : (obj is bool ? obj.ToString().ToLower() : obj.ToString());
         }
 
-        public WatchViewModel Process(dynamic value, string tag, bool showRawData = true)
+        public WatchViewModel Process(dynamic value, string tag, bool showRawData, WatchHandlerCallback callback)
         {
-            if(value == null)
-                return new WatchViewModel("null", tag);
-
-            return ProcessThing(value, tag, showRawData);
+            return Object.ReferenceEquals(value, null)
+                ? new WatchViewModel(visualizationManager, NULL_STRING, tag)
+                : ProcessThing(value, tag, showRawData, callback);
         }
     }
 }

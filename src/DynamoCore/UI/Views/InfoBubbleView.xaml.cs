@@ -1,23 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
-using System.Windows.Controls.Primitives;
 using System.Windows.Media.Animation;
 using InfoBubbleViewModel = Dynamo.ViewModels.InfoBubbleViewModel;
 using Dynamo.ViewModels;
 using Dynamo.Utilities;
-using System.Diagnostics;
-using Dynamo.Core;
 using Dynamo.UI;
 
 namespace Dynamo.Controls
@@ -236,13 +226,13 @@ namespace Dynamo.Controls
                 }
             });
 
-            if (dynSettings.Controller != null &&
-                dynSettings.Controller.UIDispatcher != null)
+            if (this.ViewModel.DynamoViewModel.UIDispatcher != null &&
+                this.ViewModel.DynamoViewModel.UIDispatcher != null)
             {
-                if (dynSettings.Controller.UIDispatcher.CheckAccess())
+                if (this.ViewModel.DynamoViewModel.UIDispatcher.CheckAccess())
                     propertyChanged();
                 else
-                    dynSettings.Controller.UIDispatcher.BeginInvoke(propertyChanged);
+                    this.ViewModel.DynamoViewModel.UIDispatcher.BeginInvoke(propertyChanged);
             }
         }
 
@@ -526,7 +516,7 @@ namespace Dynamo.Controls
                 pointCollection.Add(new Point((estimatedWidth / 2) + (arrowWidth / 2), estimatedHeight - arrowHeight));
                 pointCollection.Add(new Point(estimatedWidth, estimatedHeight - arrowHeight));
             }
-            else if (ViewModel.TargetBotRight.X + estimatedWidth <= dynSettings.Controller.DynamoViewModel.WorkspaceActualWidth)
+            else if (ViewModel.TargetBotRight.X + estimatedWidth <= this.ViewModel.DynamoViewModel.WorkspaceActualWidth)
             {
                 ViewModel.LimitedDirection = InfoBubbleViewModel.Direction.Top;
                 contentMargin = Configurations.NodeTooltipContentMarginLeft;
@@ -556,7 +546,7 @@ namespace Dynamo.Controls
 
         private PointCollection GetFramePoints_NodeTooltipConnectLeft(double estimatedHeight, double estimatedWidth)
         {
-            if (ViewModel.TargetBotRight.X + estimatedWidth > dynSettings.Controller.DynamoViewModel.WorkspaceActualWidth)
+            if (ViewModel.TargetBotRight.X + estimatedWidth > this.ViewModel.DynamoViewModel.WorkspaceActualWidth)
             {
                 ViewModel.LimitedDirection = InfoBubbleViewModel.Direction.Right;
                 contentMargin = Configurations.NodeTooltipContentMarginRight;
@@ -778,8 +768,8 @@ namespace Dynamo.Controls
             if (this.IsDisconnected)
                 return;
 
-            if (dynSettings.Controller.DynamoViewModel.IsMouseDown ||
-                !dynSettings.Controller.DynamoViewModel.CurrentSpaceViewModel.CanShowInfoBubble)
+            if (this.ViewModel.DynamoViewModel.IsMouseDown ||
+                !this.ViewModel.DynamoViewModel.CurrentSpaceViewModel.CanShowInfoBubble)
                 return;
 
             fadeOutStoryBoard.Stop(this);

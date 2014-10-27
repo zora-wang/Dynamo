@@ -6,6 +6,11 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Xml;
+
+using DSCore;
+
+using DSCoreNodesUI;
+
 using Dynamo;
 using Dynamo.Controls;
 using Dynamo.Models;
@@ -13,6 +18,8 @@ using Dynamo.Nodes;
 using Dynamo.UI;
 using Dynamo.UI.Prompts;
 using Dynamo.Utilities;
+using Dynamo.ViewModels;
+
 using DynamoUnits;
 using ProtoCore.AST.AssociativeAST;
 
@@ -21,6 +28,8 @@ namespace UnitsUI
     public abstract class MeasurementInputBase : NodeModel, IWpfNode
     {
         protected SIUnit _measure;
+
+        protected MeasurementInputBase(WorkspaceModel workspaceModel) : base(workspaceModel) { }
 
         public double Value
         {
@@ -76,9 +85,12 @@ namespace UnitsUI
         {
             //add an edit window option to the 
             //main context window
-            var editWindowItem = new System.Windows.Controls.MenuItem();
-            editWindowItem.Header = "Edit...";
-            editWindowItem.IsCheckable = false;
+            var editWindowItem = new System.Windows.Controls.MenuItem()
+            {
+                Header = "Edit...",
+                IsCheckable = false,
+                Tag = nodeUI.ViewModel.DynamoViewModel
+            };
 
             nodeUI.MainContextMenu.Items.Add(editWindowItem);
 
@@ -105,7 +117,7 @@ namespace UnitsUI
 
             tb.OnChangeCommitted += delegate { RequiresRecalc = true; };
 
-            ((PreferenceSettings)dynSettings.Controller.PreferenceSettings).PropertyChanged += PreferenceSettings_PropertyChanged;
+            (nodeUI.ViewModel.DynamoViewModel.Model.PreferenceSettings).PropertyChanged += PreferenceSettings_PropertyChanged;
         }
 
         void PreferenceSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -134,7 +146,8 @@ namespace UnitsUI
 
         private void editWindowItem_Click(object sender, RoutedEventArgs e)
         {
-            var editWindow = new EditWindow() { DataContext = this };
+            var viewModel = GetDynamoViewModelFromMenuItem(sender as MenuItem);
+            var editWindow = new EditWindow(viewModel) { DataContext = this };
             editWindow.BindToProperty(null, new System.Windows.Data.Binding("Value")
             {
                 Mode = BindingMode.TwoWay,
@@ -156,7 +169,7 @@ namespace UnitsUI
     [IsDesignScriptCompatible]
     public class LengthFromString : MeasurementInputBase
     {
-        public LengthFromString()
+        public LengthFromString(WorkspaceModel ws) : base(ws)
         {
             _measure = Length.FromDouble(0.0);
             OutPortData.Add(new PortData("length", "The length. Stored internally as decimal meters."));
@@ -175,7 +188,7 @@ namespace UnitsUI
                     if (child.Attributes != null && child.Attributes.Count > 0)
                     {
                         var valueAttrib = child.Attributes["value"];
-                        valueAttrib.Value = (double.Parse(valueAttrib.Value) / SIUnit.ToFoot).ToString(CultureInfo.InvariantCulture);
+                        valueAttrib.Value = (double.Parse(valueAttrib.Value) / Length.ToFoot).ToString(CultureInfo.InvariantCulture);
                     }
                 }
             }
@@ -196,7 +209,7 @@ namespace UnitsUI
     [IsDesignScriptCompatible]
     public class AreaFromString : MeasurementInputBase
     {
-        public AreaFromString()
+        public AreaFromString(WorkspaceModel workspaceModel) : base(workspaceModel) 
         {
             _measure = Area.FromDouble(0.0);
             OutPortData.Add(new PortData("area", "The area. Stored internally as decimal meters squared."));
@@ -218,7 +231,7 @@ namespace UnitsUI
     [IsDesignScriptCompatible]
     public class VolumeFromString : MeasurementInputBase
     {
-        public VolumeFromString()
+        public VolumeFromString(WorkspaceModel workspaceModel) : base(workspaceModel)
         {
             _measure = Volume.FromDouble(0.0);
             OutPortData.Add(new PortData("volume", "The volume. Stored internally as decimal meters cubed."));
@@ -229,6 +242,24 @@ namespace UnitsUI
         {
             var doubleNode = AstFactory.BuildDoubleNode(Value);
             var functionCall = AstFactory.BuildFunctionCall(new Func<double, Volume>(Volume.FromDouble), new List<AssociativeNode> { doubleNode });
+            return new[] { AstFactory.BuildAssignment(GetAstIdentifierForOutputIndex(0), functionCall) };
+        }
+    }
+
+    [NodeName("Unit Types")]
+    [NodeCategory("Units")]
+    [NodeDescription("Select a unit of measurement.")]
+    [NodeSearchTags("units")]
+    [IsDesignScriptCompatible]
+    public class UnitTypes : AllChildrenOfType<SIUnit>
+    {
+        public UnitTypes(WorkspaceModel workspace) : base(workspace) { }
+
+        public override IEnumerable<AssociativeNode> BuildOutputAst(List<AssociativeNode> inputAstNodes)
+        {
+            var typeName = AstFactory.BuildStringNode(Items[SelectedIndex].Name);
+            var assemblyName = AstFactory.BuildStringNode("DynamoUnits");
+            var functionCall = AstFactory.BuildFunctionCall(new Func<string, string, object>(Types.FindTypeByNameInAssembly), new List<AssociativeNode>() { typeName, assemblyName });
             return new[] { AstFactory.BuildAssignment(GetAstIdentifierForOutputIndex(0), functionCall) };
         }
     }

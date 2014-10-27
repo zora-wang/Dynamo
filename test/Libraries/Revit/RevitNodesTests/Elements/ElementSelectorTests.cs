@@ -4,7 +4,7 @@ using NUnit.Framework;
 using RevitServices.Persistence;
 using RTF.Framework;
 
-namespace DSRevitNodesTests.Elements
+namespace RevitTestServices.Elements
 {
     [TestFixture]
     public class ElementSelectorTests : RevitNodeTestBase
@@ -105,37 +105,37 @@ namespace DSRevitNodesTests.Elements
             Assert.NotNull(ele);
         }
 
-        [Test]
+        [Test, Ignore]
         public void ReferencePointByElementId_ValidArgs()
         {
             Assert.Inconclusive();
         }
 
-        [Test]
+        [Test, Ignore]
         public void ReferencePointByUniqueId_ValidArgs()
         {
             Assert.Inconclusive();
         }
 
-        [Test]
+        [Test, Ignore, Category("Failure")]
         public void FamilyInstanceByElementId_ValidArgs()
         {
             Assert.Inconclusive();
         }
 
-        [Test]
+        [Test, Ignore, Category("Failure")]
         public void FamilyInstanceByUniqueId_ValidArgs()
         {
             Assert.Inconclusive();
         }
 
-        [Test]
+        [Test, Ignore, Category("Failure")]
         public void DividedPathByElementId_ValidArgs()
         {
             Assert.Inconclusive();
         }
 
-        [Test]
+        [Test, Ignore, Category("Failure")]
         public void DividedSurfaceByUniqueId_ValidArgs()
         {
             Assert.Inconclusive();

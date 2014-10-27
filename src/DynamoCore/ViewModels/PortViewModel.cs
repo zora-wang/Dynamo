@@ -1,17 +1,16 @@
-﻿using System;
-using System.Diagnostics;
-using System.Windows;
-using System.Linq;
+﻿using System.Windows;
+
 using Dynamo.Models;
-using Dynamo.Utilities;
-using System.Collections.Generic;
 
 namespace Dynamo.ViewModels
 {
     public partial class PortViewModel : ViewModelBase
     {
+
+        #region Properties/Fields
+
         private readonly PortModel _port;
-        private readonly NodeModel _node;
+        private readonly NodeViewModel _node;
 
         public PortModel PortModel
         {
@@ -87,7 +86,9 @@ namespace Dynamo.ViewModels
             get { return _port.MarginThickness; }
         }
 
-        public PortViewModel(PortModel port, NodeModel node)
+        #endregion
+
+        public PortViewModel(NodeViewModel node, PortModel port)
         {
             _node = node;
             _port = port;
@@ -146,7 +147,7 @@ namespace Dynamo.ViewModels
 
         private void Connect(object parameter)
         {
-            DynamoViewModel dynamoViewModel = dynSettings.Controller.DynamoViewModel;
+            DynamoViewModel dynamoViewModel = this._node.DynamoViewModel;
             WorkspaceViewModel workspaceViewModel = dynamoViewModel.CurrentSpaceViewModel;
             workspaceViewModel.HandlePortClicked(this);
         }

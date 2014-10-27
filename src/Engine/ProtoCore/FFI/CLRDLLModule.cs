@@ -467,8 +467,8 @@ namespace ProtoFFI
         static readonly MethodInfo mDisposeMethod;
         private static void Dispose()
         {
-            //Do nothing.
-        }
+             //Do nothing.
+       }
 
         private static bool isEmpty(CLRModuleType type)
         {
@@ -624,7 +624,7 @@ namespace ProtoFFI
             func.Signature = new ProtoCore.AST.AssociativeAST.ArgumentSignatureNode();
             func.ReturnType = CLRModuleType.GetProtoCoreType(f.FieldType, Module);
             func.FunctionBody = null;
-            func.access = ProtoCore.DSASM.AccessSpecifier.kPublic;
+            func.access = ProtoCore.Compiler.AccessSpecifier.kPublic;
             func.IsDNI = false;
             func.IsExternLib = true;
             func.ExternLibName = Module.Name;
@@ -677,7 +677,7 @@ namespace ProtoFFI
             }
             func.ReturnType = retype;
             func.FunctionBody = null;
-            func.access = ProtoCore.DSASM.AccessSpecifier.kPublic;
+            func.access = ProtoCore.Compiler.AccessSpecifier.kPublic;
             func.IsDNI = false;
             func.IsExternLib = true;
             func.ExternLibName = Module.Name;
@@ -759,7 +759,7 @@ namespace ProtoFFI
             constr.Signature = ParseArgumentSignature(method);
             constr.ReturnType = returnType;
             constr.FunctionBody = null;
-            constr.access = ProtoCore.DSASM.AccessSpecifier.kPublic;
+            constr.access = ProtoCore.Compiler.AccessSpecifier.kPublic;
             constr.IsExternLib = true;
             constr.ExternLibName = Module.Name;
 
@@ -804,7 +804,7 @@ namespace ProtoFFI
         {
             ProtoCore.AST.AssociativeAST.VarDeclNode varDeclNode = new ProtoCore.AST.AssociativeAST.VarDeclNode();
             varDeclNode.memregion = ProtoCore.DSASM.MemoryRegion.kMemStack;
-            varDeclNode.access = ProtoCore.DSASM.AccessSpecifier.kPublic;
+            varDeclNode.access = ProtoCore.Compiler.AccessSpecifier.kPublic;
 
             ProtoCore.AST.AssociativeAST.IdentifierNode identifierNode = new ProtoCore.AST.AssociativeAST.IdentifierNode
                                                                              {
@@ -1123,10 +1123,8 @@ namespace ProtoFFI
             if (!mModules.TryGetValue(name, out module))
             {
                 //see if it is a c# dll or native dll and create correct appropriate module and then query the module for function pointers.
-                string extension = System.IO.Path.GetExtension(name);
                 string filename = System.IO.Path.GetFileName(name);
 
-                bool isDLL = string.Compare(extension, ".dll", StringComparison.OrdinalIgnoreCase) == 0;
                 try
                 {
                     Assembly theAssembly = FFIExecutionManager.Instance.LoadAssembly(name);

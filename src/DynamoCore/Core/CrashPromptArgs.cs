@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Dynamo.Core
 {
@@ -22,7 +19,7 @@ namespace Dynamo.Core
 
         // Default Crash Prompt
         public CrashPromptArgs(string details, string overridingText = null, string filePath = null)
-        {
+        {  
             if (details != null)
             {
                 Details = details;

@@ -1,13 +1,15 @@
 ﻿using System.Windows;
 using Dynamo.Core;
 using Dynamo.Services;
-using Dynamo.Utilities;
+
 using System.Windows.Controls;
 using System.IO;
 using System.Xml;
 using System.Windows.Documents;
 using System.Windows.Markup;
 using System.Diagnostics;
+
+using Dynamo.ViewModels;
 
 namespace Dynamo.Nodes.Prompts
 {
@@ -35,6 +37,7 @@ namespace Dynamo.Nodes.Prompts
         {
             InitializeComponent();
 
+            InstrumentationLogger.LogAnonymousEvent("CrashPrompt", "Stability");
             StabilityTracking.GetInstance().NotifyCrash();
 
             if (args.HasDetails())
@@ -90,7 +93,7 @@ namespace Dynamo.Nodes.Prompts
 
         private void PostOnGithub_Click(object sender, RoutedEventArgs e)
         {
-            dynSettings.Controller.ReportABug(null);
+            DynamoViewModel.ReportABug(null);
         }
 
         private void Details_Click(object sender, RoutedEventArgs e)

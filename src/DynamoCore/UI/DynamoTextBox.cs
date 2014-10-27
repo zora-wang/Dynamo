@@ -1,18 +1,24 @@
 ﻿using System;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+
+using Dynamo.Controls;
 using Dynamo.Interfaces;
 using Dynamo.Models;
-using Dynamo.Selection;
 using Dynamo.UI;
 using Dynamo.Utilities;
 using Dynamo.ViewModels;
-using DynCmd = Dynamo.ViewModels.DynamoViewModel;
+
+using DynCmd = Dynamo.Models.DynamoModel;
 using System.Windows.Controls.Primitives;
+using ICSharpCode.AvalonEdit;
+using ICSharpCode.AvalonEdit.Highlighting.Xshd;
+using System.Xml;
+using ICSharpCode.AvalonEdit.Highlighting;
+using ICSharpCode.AvalonEdit.Rendering;
+using ICSharpCode.AvalonEdit.Editing;
 
 namespace Dynamo.Nodes
 {
@@ -62,10 +68,32 @@ namespace Dynamo.Nodes
 
     public class DynamoTextBox : ClickSelectTextBox
     {
+        public event RequestReturnFocusToSearchHandler RequestReturnFocusToSearch;
+        public delegate void RequestReturnFocusToSearchHandler();
+        protected void OnRequestReturnFocusToSearch()
+        {
+            if (RequestReturnFocusToSearch != null)
+                RequestReturnFocusToSearch();
+        }
+
         public event Action OnChangeCommitted;
 
         private static Brush clear = new SolidColorBrush(System.Windows.Media.Color.FromArgb(100, 255, 255, 255));
         private static Brush highlighted = new SolidColorBrush(System.Windows.Media.Color.FromArgb(200, 255, 255, 255));
+
+        private NodeViewModel nodeViewModel;
+        private NodeViewModel NodeViewModel
+        {
+            get
+            {
+                if (this.nodeViewModel != null) return this.nodeViewModel;
+
+                var f = WPF.FindUpVisualTree<dynNodeView>(this);
+                if (f != null) this.nodeViewModel = f.ViewModel;
+
+                return this.nodeViewModel;
+            }
+        }
 
         #region Class Operational Methods
 
@@ -87,6 +115,15 @@ namespace Dynamo.Nodes
             this.Pending = false;
             Style = (Style)SharedDictionaryManager.DynamoModernDictionary["SZoomFadeTextBox"];
             MinHeight = 20;
+
+            RequestReturnFocusToSearch += TryFocusSearch;
+        }
+
+        private void TryFocusSearch()
+        {
+            if (this.NodeViewModel == null) return;
+
+            this.NodeViewModel.DynamoViewModel.ReturnFocusToSearch();
         }
 
         public void BindToProperty(System.Windows.Data.Binding binding)
@@ -145,7 +182,7 @@ namespace Dynamo.Nodes
         {
             if (e.Key == Key.Return || e.Key == Key.Enter)
             {
-                dynSettings.ReturnFocusToSearch();
+                OnRequestReturnFocusToSearch();
             }
         }
 
@@ -163,6 +200,8 @@ namespace Dynamo.Nodes
             if (this.Pending)
             {
                 var expr = GetBindingExpression(TextProperty);
+
+                var nvm = NodeViewModel;
                 if (expr != null)
                 {
                     // There are two ways in which the bound data source can be 
@@ -175,22 +214,21 @@ namespace Dynamo.Nodes
                     // which case undo recording has to be done. It is in the 
                     // second case a command is being sent to actually update the 
                     // data source (also record the update for undo).
-                    // 
-                    NodeModel nodeModel = GetBoundModel(expr.DataItem);
+
                     if (false == recordForUndo)
                         expr.UpdateSource();
-                    else
+                    else if (nvm != null)
                     {
                         string propName = expr.ParentBinding.Path.Path;
-                        dynSettings.Controller.DynamoViewModel.ExecuteCommand(
+                        nvm.DynamoViewModel.ExecuteCommand(
                             new DynCmd.UpdateModelValueCommand(
-                                nodeModel.GUID, propName, this.Text));
+                                nvm.NodeModel.GUID, propName, this.Text));
                     }
                 }
 
                 if (OnChangeCommitted != null)
                     OnChangeCommitted();
-
+                
                 Pending = false;
             }
         }
@@ -214,6 +252,7 @@ namespace Dynamo.Nodes
 
     public class StringTextBox : DynamoTextBox
     {
+
         #region Class Event Handlers
 
         protected override void OnPreviewKeyDown(System.Windows.Input.KeyEventArgs e)
@@ -233,11 +272,12 @@ namespace Dynamo.Nodes
         {
             nodeModel = model;
         }
+
         #region Event Handlers
         protected override void OnThumbDragStarted(System.Windows.Controls.Primitives.DragStartedEventArgs e)
         {
             base.OnThumbDragStarted(e);
-            nodeModel.WorkSpace.RecordModelForModification(nodeModel);
+            nodeModel.Workspace.RecordModelForModification(nodeModel);
             (nodeModel as IBlockingModel).OnBlockingStarted(EventArgs.Empty);
         }
 
@@ -252,91 +292,11 @@ namespace Dynamo.Nodes
         {
             base.OnPreviewMouseLeftButtonDown(e);
             if (e.OriginalSource is System.Windows.Shapes.Rectangle)
-                nodeModel.WorkSpace.RecordModelForModification(nodeModel);
+                nodeModel.Workspace.RecordModelForModification(nodeModel);
         }
         #endregion
     }
 
-    public class CodeNodeTextBox : DynamoTextBox
-    {
-        bool shift, enter;
-        public CodeNodeTextBox(string s)
-            : base(s)
-        {
-            shift = enter = false;
-
-            //Remove the select all when focused feature
-            RemoveHandler(GotKeyboardFocusEvent, focusHandler);
-
-            //Allow for event processing after textbook has been focused to
-            //help set the Caret position
-            selectAllWhenFocused = false;
-
-            //Set style for Watermark
-            this.SetResourceReference(TextBox.StyleProperty, "CodeBlockNodeTextBox");
-            this.Tag = "Your code goes here";
-        }
-
-        /// <summary>
-        /// To allow users to remove focus by pressing Shift Enter. Uses two bools (shift / enter)
-        /// and sets them when pressed/released
-        /// </summary>
-        #region Key Press Event Handlers
-        protected override void OnPreviewKeyDown(System.Windows.Input.KeyEventArgs e)
-        {
-            if (e.Key == Key.LeftShift || e.Key == Key.RightShift)
-            {
-                shift = true;
-            }
-            else if (e.Key == Key.Enter || e.Key == Key.Return)
-            {
-                enter = true;
-            }
-            else if (e.Key == Key.Escape)
-            {
-                HandleEscape();
-            }
-            if (shift == true && enter == true)
-            {
-                dynSettings.ReturnFocusToSearch();
-                shift = enter = false;
-            }
-        }
-        protected override void OnPreviewKeyUp(KeyEventArgs e)
-        {
-            if (e.Key == Key.LeftShift || e.Key == Key.RightShift)
-            {
-                shift = false;
-            }
-            else if (e.Key == Key.Enter || e.Key == Key.Return)
-            {
-                enter = false;
-            }
-        }
-        #endregion
-
-        protected override void OnTextChanged(TextChangedEventArgs e)
-        {
-            e.Handled = true; //hide base
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        protected override void OnLostFocus(RoutedEventArgs e)
-        {
-            Pending = true;
-            base.OnLostFocus(e);
-        }
-
-        private void HandleEscape()
-        {
-            if (this.Text.Equals((DataContext as CodeBlockNodeModel).Code))
-                dynSettings.ReturnFocusToSearch();
-            else
-                (this as TextBox).Text = (DataContext as CodeBlockNodeModel).Code;
-        }
-    }
 }
 
 namespace Dynamo.UI.Controls

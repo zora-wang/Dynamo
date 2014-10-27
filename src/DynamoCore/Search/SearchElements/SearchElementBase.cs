@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Windows.Input;
-using Dynamo.Nodes.Search;
-using Dynamo.Utilities;
+﻿using Dynamo.Nodes.Search;
 
 namespace Dynamo.Search.SearchElements
 {
@@ -9,7 +6,6 @@ namespace Dynamo.Search.SearchElements
     /// A base class for elements found in search </summary>
     public abstract class SearchElementBase : BrowserInternalElement
     {
-
         /// <summary>
         /// Searchable property </summary>
         /// <value>
@@ -41,10 +37,19 @@ namespace Dynamo.Search.SearchElements
         /// Higher = closer to the top of search results </value>
         public abstract double Weight { get; set; }
 
-        /// <summary>
-        /// What the SearchElement does when execcuted from
-        /// the SearchView </summary>
-        public abstract void Execute();
+        public virtual void Execute()
+        {
+            this.OnExecuted();
+        }
 
+        public delegate void SearchElementHandler(SearchElementBase ele);
+        internal event SearchElementHandler Executed;
+        protected void OnExecuted()
+        {
+            if (Executed != null)
+            {
+                Executed(this);
+            }
+        }
     }
 }

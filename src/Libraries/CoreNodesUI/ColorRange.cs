@@ -28,7 +28,8 @@ namespace DSCoreNodesUI
                 RequestChangeColorRange(sender, e);
         }
 
-        public ColorRange()
+        public ColorRange(WorkspaceModel workspace)
+            : base(workspace)
         {
             InPortData.Add(new PortData("start", "The start color."));
             InPortData.Add(new PortData("end", "The end color."));
@@ -71,6 +72,8 @@ namespace DSCoreNodesUI
                 Height = 200
             };
 
+            var dm = this.Workspace.DynamoModel;
+
             view.inputGrid.Children.Add(drawPlane);
 
             RequestChangeColorRange += delegate
@@ -85,28 +88,44 @@ namespace DSCoreNodesUI
                     var startId = colorStartNode.GetAstIdentifierForOutputIndex(startIndex).Name;
                     var endId = colorEndNode.GetAstIdentifierForOutputIndex(endIndex).Name;
 
-                    var startMirror = dynSettings.Controller.EngineController.GetMirror(startId);
-                    var endMirror = dynSettings.Controller.EngineController.GetMirror(endId);
+                    var startMirror = dm.EngineController.GetMirror(startId);
+                    var endMirror = dm.EngineController.GetMirror(endId);
 
                     object start = null;
                     object end = null;
 
-                    if (startMirror.GetData().IsCollection)
+                    if (startMirror == null)
                     {
-                        start = startMirror.GetData().GetElements().Select(x => x.Data).FirstOrDefault();
+                        start = Color.ByARGB(255, 192, 192, 192);
                     }
                     else
                     {
-                        start = startMirror.GetData().Data;
+                        if (startMirror.GetData().IsCollection)
+                        {
+                            start = startMirror.GetData().GetElements().
+                                Select(x => x.Data).FirstOrDefault();
+                        }
+                        else
+                        {
+                            start = startMirror.GetData().Data;
+                        }
                     }
 
-                    if (endMirror.GetData().IsCollection)
+                    if (endMirror == null)
                     {
-                        end = endMirror.GetData().GetElements().Select(x => x.Data).FirstOrDefault();
+                        end = Color.ByARGB(255, 64, 64, 64);
                     }
                     else
                     {
-                        end = endMirror.GetData().Data;
+                        if (endMirror.GetData().IsCollection)
+                        {
+                            end = endMirror.GetData().GetElements().
+                                Select(x => x.Data).FirstOrDefault();
+                        }
+                        else
+                        {
+                            end = endMirror.GetData().Data;
+                        }
                     }
 
                     Color startColor = start as Color;

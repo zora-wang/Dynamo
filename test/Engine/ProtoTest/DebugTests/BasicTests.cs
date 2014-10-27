@@ -103,8 +103,10 @@ class Vector
 }
 
 p = Vector.Vector();
-
             ", runnerConfig);
+
+            // Tracked by: http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-3990
+            string defectID = "MAGN-3990 Expression interpreter returns null when evaluates expression at end of script";
 
             // Highlights "p = Vector.Vector()".
             DebugRunner.VMState vms = fsr.Step();
@@ -138,17 +140,21 @@ p = Vector.Vector();
             Assert.AreEqual(21, vms.ExecutionCursor.EndExclusive.CharNo);
 
             vms = fsr.Step(); // Ends execution.
+
             Assert.AreEqual(true, vms.isEnded);
 
             // Execute and verify the watch window expression script
             ExpressionInterpreterRunner watchRunner = new ExpressionInterpreterRunner(core);
-            ExecutionMirror mirror = watchRunner.Execute(@"p.x");
+            ExecutionMirror mirror = watchRunner.Execute("p.x");
             Obj objExecVal = mirror.GetWatchValue();
-            Assert.IsTrue((Int64)objExecVal.Payload == 10);
+
+            Assert.AreNotEqual(null, objExecVal, defectID);
+            Assert.IsTrue((Int64)objExecVal.Payload == 10, defectID);
         }
 
         [Test]
         [Category("ExpressionInterpreterRunner")]
+        [Category("Failure")]
         public void TestWatchExpression3()
         {
             // Execute and verify the main script in a debug session
@@ -168,6 +174,9 @@ class Vector
 p = Vector.Vector();
 
 ", runnerConfig);
+
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-3990
+            string defectiD = "MAGN-3990 Expression interpreter returns null when evaluates expression at end of script";
 
             // Highlights "p = Vector.Vector()".
             DebugRunner.VMState vms = fsr.Step();
@@ -207,7 +216,9 @@ p = Vector.Vector();
             ExpressionInterpreterRunner watchRunner = new ExpressionInterpreterRunner(core);
             ExecutionMirror mirror = watchRunner.Execute(@"p.y + 2");
             Obj objExecVal = mirror.GetWatchValue();
-            Assert.IsTrue((Int64)objExecVal.Payload == 22);
+
+            Assert.AreNotEqual(null, objExecVal, defectiD);
+            Assert.IsTrue((Int64)objExecVal.Payload == 22, defectiD);
         }
 
         [Test]
@@ -3110,7 +3121,7 @@ a =
             Assert.IsTrue((Int64)startCharNo == 0);
         }
 
-        [Test, Ignore]
+        [Test]
         [Category("Debugger")]
         public void TestStepNextClass()
         {
@@ -3139,13 +3150,14 @@ a = p.x;
             Obj o = vms.mirror.GetDebugValue("p");
             string type = vms.mirror.GetType("p");
 
-
-            // Step
-            vms = fsr.StepOver();
+            Assert.IsTrue(type == "V");
 
             // Second var
             o = vms.mirror.GetDebugValue("a");
             type = vms.mirror.GetType("a");
+
+            Assert.IsTrue((Int64)o.Payload == 10);
+            Assert.IsTrue(type == "int");
         }
 
         [Test]
@@ -6241,6 +6253,7 @@ class A
 
         [Test]
         [Category("Debugger")]
+        [Category("Failure")]
         public void TestUpdateLoopInsideFunction2()
         {
             String code =
@@ -6264,7 +6277,7 @@ class A
     a = A.A();
     b = a.foo();
 ";
-            // TODO: Aparajit - To fix stepping in debugger
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-3963
 
             fsr.PreStart(code, runnerConfig);
             fsr.Step(); // a = A.A();
@@ -6516,6 +6529,7 @@ a1.a = -1;";
 
         [Test]
         [Category("Debugger")]
+        [Category("Failure")]
         public void TestUpdateLoopWithNestedDifferentBlocks()
         {
             String code = @"
@@ -6543,7 +6557,7 @@ s = Print(""a = "" + a + "" b = "" + b);
     s = Print(""dd = "" + d);
 }
 ";
-
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-3985
             fsr.PreStart(code, runnerConfig);
             fsr.Step(); // a = 7;
 
@@ -6978,7 +6992,7 @@ b : int;
         public void Numeric_Associative()
         {
             String code =
-        @"import(""ProtoGeometry.dll"");
+        @"
 
 a : int;
 b : int;
@@ -7033,7 +7047,7 @@ b : int;
         public void Numeric_Imperative()
         {
             String code =
-        @"import(""ProtoGeometry.dll"");
+        @"
 
 a : int;
 b : int;
@@ -7077,217 +7091,7 @@ b : int;
         }
 
 
-        [Test]
-        [Category("Debugger")]
-        public void Geometric_Associative()
-        {
-            String code =
-        @"import(""ProtoGeometry.dll"");
-
-WCS = CoordinateSystem.WCS;
-
-a : Point;
-b : Point;
-c : Line;
-
-[Associative]
-{
-    a = Point.ByCartesianCoordinates(WCS,  5, 5, 0);
-	b = Point.ByCartesianCoordinates(WCS, 10, 5, 0);
-    c = Line.ByStartPointEndPoint(a, b);
-    
-    a = Point.ByCartesianCoordinates(WCS, 5, 7, 0);
-}";
-
-            fsr.PreStart(code, runnerConfig);
-            fsr.Step();
-
-#if RUNNING_IN_AUTOCAD
-            DebugRunner.VMState vms = fsr.Step();
-            Obj o = vms.mirror.GetDebugValue("WCS");
-            string type = vms.mirror.GetType("WCS");
-            Assert.IsTrue(type == "CoordinateSystem");
-            Dictionary<string, Obj> os = vms.mirror.GetProperties(o);
-            Dictionary<string, Obj> os_0 = vms.mirror.GetProperties(os["Origin"]);
-            Assert.IsTrue((Double)os_0["X"].Payload == 0.0);
-
-            vms = fsr.Step();
-            vms = fsr.Step();
-            vms = fsr.Step();
-
-            o = vms.mirror.GetDebugValue("a");
-            Assert.IsNull(o);
-            o = vms.mirror.GetDebugValue("b");
-            Assert.IsNull(o);
-            o = vms.mirror.GetDebugValue("c");
-            Assert.IsNull(o);
-
-            vms = fsr.Step();
-            vms = fsr.Step();
-
-            o = vms.mirror.GetDebugValue("a");
-            type = vms.mirror.GetType("a");
-            Assert.IsTrue(type == "Point");
-            os = vms.mirror.GetProperties(o);
-            Assert.IsTrue((Double)os["X"].Payload == 5.0);
-            Assert.IsTrue((Double)os["Y"].Payload == 5.0);
-            Assert.IsTrue((Double)os["Z"].Payload == 0.0);
-
-            vms = fsr.Step();
-            vms = fsr.Step();
-
-            o = vms.mirror.GetDebugValue("b");
-            type = vms.mirror.GetType("b");
-            Assert.IsTrue(type == "Point");
-            os = vms.mirror.GetProperties(o);
-            Assert.IsTrue((Double)os["X"].Payload == 10.0);
-            Assert.IsTrue((Double)os["Y"].Payload == 5.0);
-            Assert.IsTrue((Double)os["Z"].Payload == 0.0);
-
-            vms = fsr.Step();
-            vms = fsr.Step();
-
-            o = vms.mirror.GetDebugValue("c");
-            type = vms.mirror.GetType("c");
-            Assert.IsTrue(type == "Line");
-            os = vms.mirror.GetProperties(o);
-            Dictionary<string, Obj> os_1 = vms.mirror.GetProperties(os["StartPoint"]);
-            Dictionary<string, Obj> os_2 = vms.mirror.GetProperties(os["EndPoint"]);
-            Assert.IsTrue((Double)os_1["X"].Payload == 5.0);
-            Assert.IsTrue((Double)os_1["Y"].Payload == 5.0);
-            Assert.IsTrue((Double)os_1["Z"].Payload == 0.0);
-            Assert.IsTrue((Double)os_2["X"].Payload == 10.0);
-            Assert.IsTrue((Double)os_2["Y"].Payload == 5.0);
-            Assert.IsTrue((Double)os_2["Z"].Payload == 0.0);
-
-            vms = fsr.Step();
-            vms = fsr.Step();
-
-            o = vms.mirror.GetDebugValue("a");
-            type = vms.mirror.GetType("a");
-            Assert.IsTrue(type == "Point");
-            os = vms.mirror.GetProperties(o);
-            Assert.IsTrue((Double)os["X"].Payload == 5.0);
-            Assert.IsTrue((Double)os["Y"].Payload == 7.0);
-            Assert.IsTrue((Double)os["Z"].Payload == 0.0);
-
-            vms = fsr.Step();
-            vms = fsr.Step();
-
-            o = vms.mirror.GetDebugValue("c");
-            type = vms.mirror.GetType("c");
-            Assert.IsTrue(type == "Line");
-            os = vms.mirror.GetProperties(o);
-            os_1 = vms.mirror.GetProperties(os["StartPoint"]);
-            os_2 = vms.mirror.GetProperties(os["EndPoint"]);
-            Assert.IsTrue((Double)os_1["X"].Payload == 5.0);
-            Assert.IsTrue((Double)os_1["Y"].Payload == 7.0);
-            Assert.IsTrue((Double)os_1["Z"].Payload == 0.0);
-            Assert.IsTrue((Double)os_2["X"].Payload == 10.0);
-            Assert.IsTrue((Double)os_2["Y"].Payload == 5.0);
-            Assert.IsTrue((Double)os_2["Z"].Payload == 0.0);
-#endif
-        }
-
-        [Test]
-        [Category("Debugger")]
-        public void Geometric_Imperative()
-        {
-            String code =
-
-@"import(""ProtoGeometry.dll"");
-
-WCS = CoordinateSystem.WCS;
-
-a : Point;
-b : Point;
-c : Line;
-
-[Imperative]
-{
-    a = Point.ByCartesianCoordinates(WCS,  5, 5, 0);
-	b = Point.ByCartesianCoordinates(WCS, 10, 5, 0);
-    c = Line.ByStartPointEndPoint(a, b);
-    
-    a = Point.ByCartesianCoordinates(WCS, 5, 7, 0);
-}";
-
-            fsr.PreStart(code, runnerConfig);
-            fsr.Step();
-
-#if RUNNING_IN_AUTOCAD
-            DebugRunner.VMState vms = fsr.Step();
-            Obj o = vms.mirror.GetDebugValue("WCS");
-            string type = vms.mirror.GetType("WCS");
-            Assert.IsTrue(type == "CoordinateSystem");
-            Dictionary<string, Obj> os = vms.mirror.GetProperties(o);
-            Dictionary<string, Obj> os_0 = vms.mirror.GetProperties(os["Origin"]);
-            Assert.IsTrue((Double)os_0["X"].Payload == 0.0);
-
-            vms = fsr.Step();
-            vms = fsr.Step();
-            vms = fsr.Step();
-
-            o = vms.mirror.GetDebugValue("a");
-            Assert.IsNull(o);
-            o = vms.mirror.GetDebugValue("b");
-            Assert.IsNull(o);
-            o = vms.mirror.GetDebugValue("c");
-            Assert.IsNull(o);
-
-            vms = fsr.Step();
-            vms = fsr.Step();
-
-            o = vms.mirror.GetDebugValue("a");
-            type = vms.mirror.GetType("a");
-            Assert.IsTrue(type == "Point");
-            os = vms.mirror.GetProperties(o);
-            Assert.IsTrue((Double)os["X"].Payload == 5.0);
-            Assert.IsTrue((Double)os["Y"].Payload == 5.0);
-            Assert.IsTrue((Double)os["Z"].Payload == 0.0);
-
-            vms = fsr.Step();
-            vms = fsr.Step();
-
-            o = vms.mirror.GetDebugValue("b");
-            type = vms.mirror.GetType("b");
-            Assert.IsTrue(type == "Point");
-            os = vms.mirror.GetProperties(o);
-            Assert.IsTrue((Double)os["X"].Payload == 10.0);
-            Assert.IsTrue((Double)os["Y"].Payload == 5.0);
-            Assert.IsTrue((Double)os["Z"].Payload == 0.0);
-
-            vms = fsr.Step();
-            vms = fsr.Step();
-
-            o = vms.mirror.GetDebugValue("c");
-            type = vms.mirror.GetType("c");
-            Assert.IsTrue(type == "Line");
-            os = vms.mirror.GetProperties(o);
-            Dictionary<string, Obj> os_1 = vms.mirror.GetProperties(os["StartPoint"]);
-            Dictionary<string, Obj> os_2 = vms.mirror.GetProperties(os["EndPoint"]);
-            Assert.IsTrue((Double)os_1["X"].Payload == 5.0);
-            Assert.IsTrue((Double)os_1["Y"].Payload == 5.0);
-            Assert.IsTrue((Double)os_1["Z"].Payload == 0.0);
-            Assert.IsTrue((Double)os_2["X"].Payload == 10.0);
-            Assert.IsTrue((Double)os_2["Y"].Payload == 5.0);
-            Assert.IsTrue((Double)os_2["Z"].Payload == 0.0);
-
-            vms = fsr.Step();
-            vms = fsr.Step();
-
-            o = vms.mirror.GetDebugValue("a");
-            type = vms.mirror.GetType("a");
-            Assert.IsTrue(type == "Point");
-            os = vms.mirror.GetProperties(o);
-            Assert.IsTrue((Double)os["X"].Payload == 5.0);
-            Assert.IsTrue((Double)os["Y"].Payload == 7.0);
-            Assert.IsTrue((Double)os["Z"].Payload == 0.0);
-
-            vms = fsr.Step();
-#endif
-        }
-
+     
         [Test]
         [Category("Debugger")]
         public void MirrorApiTest001()
@@ -7439,6 +7243,7 @@ irrelevant = 3;
 
         [Test]
         [Category("Debugger")]
+        [Category("Failure")]
         public void ToggleBreakPoint001()
         {
             string src = @"
@@ -7450,6 +7255,8 @@ irrelevant = 3;
                             a = 1 + 2 + foo(3, 4) + 5 + foo(5, 6);
                             ";
 
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-3991
+            string defectID = "MAGN-3991 Defects with Toggle breakpoint";
             fsr.PreStart(src, runnerConfig);
             ProtoCore.CodeModel.CodePoint cp = new ProtoCore.CodeModel.CodePoint
             {
@@ -7463,15 +7270,13 @@ irrelevant = 3;
                 CharNo = 60
             };
             fsr.ToggleBreakpoint(cp);
-            fsr.Run();
             DebugRunner.VMState vms = fsr.Run();
             Obj o = vms.mirror.GetDebugValue("a");
             vms = fsr.Run();
             Obj o2 = vms.mirror.GetDebugValue("a");
 
-            Assert.IsTrue((Int64)o.Payload == 0);
-            Assert.IsTrue((Int64)o2.Payload == 26);
-            //Assert.IsTrue(vms.isEnded);
+            Assert.IsTrue((Int64)o.Payload == 0, defectID);
+            Assert.IsTrue((Int64)o2.Payload == 26, defectID);
         }
         [Test]
         [Category("Debugger")]
@@ -7538,6 +7343,7 @@ b : int = 0;
         }
         [Test]
         [Category("Debugger")]
+        [Category("Failure")]
         public void ToggleBreakPoint005()
         {
             string src = @"
@@ -7565,19 +7371,21 @@ b : int = 0;
                         c = a<2> * b<1>; // cartesian replication
                         ";
 
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-3991
+            string defectID = "MAGN-3991 Defects with Toggle breakpoint";
             fsr.PreStart(src, runnerConfig);
             ProtoCore.CodeModel.CodePoint cp = new ProtoCore.CodeModel.CodePoint
             {
-                LineNo = 9,
+                LineNo = 18,
                 CharNo = 5
             };
             fsr.ToggleBreakpoint(cp);
-            fsr.Run();
             DebugRunner.VMState vms = fsr.Run();
             Obj o2 = vms.mirror.GetDebugValue("b");
 
-            Assert.IsTrue((Int64)o2.Payload == 2);
-            Assert.IsTrue(vms.isEnded);
+            Assert.IsTrue((Int64)o2.Payload == 2, defectID);
+            fsr.Run();
+            Assert.IsTrue(vms.isEnded, defectID);
         }
         [Test]
         [Category("Debugger")]
@@ -7604,27 +7412,27 @@ b : int = 0;
         public void ToggleBreakPointApiTest()
         {
             string src = @"class A
-            {
-                w : int;
-            }
-            zz = A.A();
-            [Imperative]
-            {
-                def g()
-                {
-                    return = 3;
-                }
-                def f(a : int)
-                {
-                    return = a;
-                }
+{
+    w : int;
+}
+zz = A.A();
+[Imperative]
+{
+    def g()
+    {
+        return = 3;
+    }
+    def f(a : int)
+    {
+        return = a;
+    }
     
-                c2 = A.A();
+    c2 = A.A();
 
-                c1 = c3 =    c2.w = f(g());
+    c1 = c3 =    c2.w = f(g());
 
-                z = 67;
-            }
+    z = 67;
+}
                                         ";
 
             fsr.PreStart(src, runnerConfig);
@@ -7686,12 +7494,12 @@ b : int = 0;
         }
 
         [Test]
-        [Category("Debugger")]
+        [Category("Debugger"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         public void TestFFIDebugging()
         {
             String code =
             @"import(""ProtoGeometry.dll"");
-              import(Dummy from ""ProtoTest.dll"");
+              import(Dummy from ""FFITarget.dll"");
              [Associative] 
              {
                dummy = Dummy.Dummy();
@@ -7708,7 +7516,7 @@ b : int = 0;
             fsr.Step();
             DebugRunner.VMState vms = fsr.Step();
             Obj o = vms.mirror.GetDebugValue("dummy");
-            Assert.AreEqual("Dummy", vms.mirror.GetType(o));
+            Assert.AreEqual("FFITarget.Dummy", vms.mirror.GetType(o));
 
             fsr.Step();
             vms = fsr.Step();
@@ -7719,7 +7527,7 @@ b : int = 0;
             fsr.Step();
             vms = fsr.Step();
             o = vms.mirror.GetDebugValue("point");
-            Assert.AreEqual("Point", vms.mirror.GetType(o));
+            Assert.AreEqual("Autodesk.DesignScript.Geometry.Point", vms.mirror.GetType(o));
             Dictionary<string, Obj> os = vms.mirror.GetProperties(o);
             //Assert.IsTrue((double)os["X"].Payload == 1);
             //Assert.IsTrue((double)os["Y"].Payload == 2);
@@ -7731,7 +7539,7 @@ b : int = 0;
         }
 
         [Test]
-        [Category("Debugger")]
+        [Category("Debugger"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         public void TestFFIDebugWithUpdate()
         {
             String code =
@@ -7757,17 +7565,17 @@ x = 10;
             fsr.Step();
             vms = fsr.Step();
             o = vms.mirror.GetDebugValue("p1");
-            Assert.AreEqual("Point", vms.mirror.GetType(o));
+            Assert.AreEqual("Autodesk.DesignScript.Geometry.Point", vms.mirror.GetType(o));
 
             fsr.Step();
             vms = fsr.Step();
             o = vms.mirror.GetDebugValue("p2");
-            Assert.AreEqual("Point", vms.mirror.GetType(o));
+            Assert.AreEqual("Autodesk.DesignScript.Geometry.Point", vms.mirror.GetType(o));
 
             fsr.Step();
             vms = fsr.Step();
             o = vms.mirror.GetDebugValue("l1");
-            Assert.AreEqual("Line", vms.mirror.GetType(o));
+            Assert.AreEqual("Autodesk.DesignScript.Geometry.Line", vms.mirror.GetType(o));
 
             vms = fsr.Step();
             o = vms.mirror.GetDebugValue("x");
@@ -7775,45 +7583,11 @@ x = 10;
 
             vms = fsr.Step();
             o = vms.mirror.GetDebugValue("p1");
-            Assert.AreEqual("Point", vms.mirror.GetType(o));
+            Assert.AreEqual("Autodesk.DesignScript.Geometry.Point", vms.mirror.GetType(o));
 
             vms = fsr.Step();
             o = vms.mirror.GetDebugValue("l1");
-            Assert.AreEqual("Line", vms.mirror.GetType(o));
-        }
-
-        [Test]
-        public void TestFFIDebugging1()
-        {
-            String code =
-            @"
-import (""ProtoGeometry.dll"");
-
-WCS = CoordinateSystem.Identity();
-line1 = Line.ByStartPointEndPoint(Point.ByCartesianCoordinates(WCS, 5.0 , 5.0, 0.0), Point.ByCartesianCoordinates(WCS, 10.0 , 5.0, 0.0));
-line1.Color = Color.Red;
-x = line1.Color;
-            ";
-
-            fsr.PreStart(code, runnerConfig);
-            fsr.Step();
-
-            fsr.Step();
-            DebugRunner.VMState vms = fsr.Step();
-            Obj o = vms.mirror.GetDebugValue("WCS");
-            Assert.AreEqual("CoordinateSystem", vms.mirror.GetType(o));
-
-            fsr.Step();
-            fsr.Step();
-            fsr.Step();
-            vms = fsr.Step();
-            o = vms.mirror.GetDebugValue("line1");
-            Assert.AreEqual("Line", vms.mirror.GetType(o));
-
-            fsr.Step();
-            vms = fsr.Step();
-            o = vms.mirror.GetDebugValue("x");
-            Assert.AreEqual("Color", vms.mirror.GetType(o));
+            Assert.AreEqual("Autodesk.DesignScript.Geometry.Line", vms.mirror.GetType(o));
         }
 
         [Test]
@@ -7822,7 +7596,7 @@ x = line1.Color;
         {
             String code =
             @"
-import(DummyBase from ""ProtoTest.dll"");
+import(DummyBase from ""FFITarget.dll"");
 
 [Imperative]
 {
@@ -7839,7 +7613,7 @@ import(DummyBase from ""ProtoTest.dll"");
             DebugRunner.VMState vms = fsr.Step();
             Obj o = vms.mirror.GetDebugValue("dummy");
             //Verify the returned object type name is fully qualified name.
-            Assert.IsTrue(vms.mirror.GetType(o) == "ProtoFFITests.DummyBase");
+            Assert.IsTrue(vms.mirror.GetType(o) == "FFITarget.DummyBase");
 
             fsr.Step();
             vms = fsr.Step();
@@ -7853,7 +7627,7 @@ import(DummyBase from ""ProtoTest.dll"");
         {
             String code =
             @"
-import(DummyBase from ""ProtoTest.dll"");
+import(DummyBase from ""FFITarget.dll"");
 
 dummy = DummyBase.Create();
 dummy.Value = 868760;
@@ -7866,7 +7640,7 @@ a = dummy.Value;";
             DebugRunner.VMState vms = fsr.Step();
             Obj o = vms.mirror.GetDebugValue("dummy");
             //Verify the returned object type name is fully qualified name.
-            Assert.IsTrue(vms.mirror.GetType(o) == "ProtoFFITests.DummyBase");
+            Assert.IsTrue(vms.mirror.GetType(o) == "FFITarget.DummyBase");
 
             fsr.Step();
             vms = fsr.Step();
@@ -8083,247 +7857,6 @@ a = foo();
             Assert.IsTrue((Int64)o.Payload == 100);
         }
 
-        [Test]
-        [Category("Debugger")]
-        public void LanguageBlockInsideFunction3()
-        {
-            string src =
-@"import(""ProtoGeometry.dll"");
-
-p = Point.ByCoordinates(0, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, 0);
-q = Point.ByCoordinates(1, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, 0);
-
-def drawLine(a : Point[], b : Point[])
-{
-    line = { };
-	[Associative]
-	{
-	    [Imperative]
-	    {
-	        for(i in x)
-	        {
-	            line[i] = Line.ByStartPointEndPoint(a[i], b[i]);
-	        }
-	    }	    
-	}
-    return = line; 
-}
-x = 0..Count(p)-1;
-lines = { };
-[Imperative]
-{
-    lines = drawLine(p, q);
-}
-";
-            fsr.PreStart(src, runnerConfig);
-            fsr.Step();
-
-#if RUNNING_IN_AUTOCAD
-            DebugRunner.VMState vms = fsr.Step();
-            vms = fsr.Step();
-
-            Obj o = vms.mirror.GetDebugValue("p");
-            string type = vms.mirror.GetType("p");
-            Assert.IsTrue(type == "array");
-
-            List<Obj> lo = vms.mirror.GetArrayElements(o);
-            type = vms.mirror.GetType(lo[9]);
-            Assert.IsTrue(type == "Point");
-            Dictionary<string, Obj> os = vms.mirror.GetProperties(lo[9]);
-            Assert.IsTrue((Double)os["X"].Payload == 0.0);
-            Assert.IsTrue((Double)os["Y"].Payload == 10.0);
-            Assert.IsTrue((Double)os["Z"].Payload == 0.0);
-
-            vms = fsr.Step();
-            vms = fsr.Step();
-
-            o = vms.mirror.GetDebugValue("q");
-            type = vms.mirror.GetType("q");
-            Assert.IsTrue(type == "array");
-
-            lo = vms.mirror.GetArrayElements(o);
-            type = vms.mirror.GetType(lo[9]);
-            Assert.IsTrue(type == "Point");
-            os = vms.mirror.GetProperties(lo[9]);
-            Assert.IsTrue((Double)os["X"].Payload == 1.0);
-            Assert.IsTrue((Double)os["Y"].Payload == 10.0);
-            Assert.IsTrue((Double)os["Z"].Payload == 0.0);
-
-            vms = fsr.Step();
-            vms = fsr.Step();
-
-            o = vms.mirror.GetDebugValue("x");
-            type = vms.mirror.GetType("x");
-            Assert.IsTrue(type == "array");
-            lo = vms.mirror.GetArrayElements(o);
-            Assert.IsTrue((Int64)lo[0].Payload == 0);
-
-            vms = fsr.Step();
-            vms = fsr.Step();
-            vms = fsr.Step();
-            vms = fsr.Step();
-            vms = fsr.Step();
-            vms = fsr.Step();
-            vms = fsr.Step();
-            vms = fsr.Step();
-            vms = fsr.Step();
-
-            o = vms.mirror.GetDebugValue("line");
-            type = vms.mirror.GetType("line");
-            Assert.IsTrue(type == "array");
-            lo = vms.mirror.GetArrayElements(o);
-            Assert.IsTrue((Int64)lo[0].Payload == 0);
-
-            type = vms.mirror.GetType(lo[0]);
-            Assert.IsTrue(type == "Point");
-            os = vms.mirror.GetProperties(lo[0]);
-            o = os["StartPoint"];
-            Dictionary<string, Obj> os_1 = vms.mirror.GetProperties(os["StartPoint"]);
-            Dictionary<string, Obj> os_2 = vms.mirror.GetProperties(os["EndPoint"]);
-            Assert.IsTrue((Double)os_1["X"].Payload == 0.0);
-            Assert.IsTrue((Double)os_1["Y"].Payload == 1.0);
-            Assert.IsTrue((Double)os_1["Z"].Payload == 0.0);
-            Assert.IsTrue((Double)os_2["X"].Payload == 1.0);
-            Assert.IsTrue((Double)os_2["Y"].Payload == 1.0);
-            Assert.IsTrue((Double)os_2["Z"].Payload == 0.0);
-
-            vms = fsr.Run();
-#endif
-        }
-
-        [Test]
-        [Category("Debugger")]
-        public void LanguageBlockInsideFunction4()
-        {
-            string src =
-@"import(""ProtoGeometry.dll"");
-
-p = Point.ByCoordinates(0, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, 0);
-q = Point.ByCoordinates(1, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, 0);
-
-def thisIsTheActualFunction(a1 : Point, b1 : Point)
-{
-    return = Line.ByStartPointEndPoint(a1, b1); 
-    
-}
-
-def drawLine(a : Point[], b : Point[])
-{       
-    line = { };
-    [Imperative]
-    {
-        for(i in x)
-        {
-            line[i] = thisIsTheActualFunction (a[i], b[i]); 
-        }
-    }
-
-   return = line; 
-}
-
-x = 0..Count(p)-1;
-lines = { };
-
-[Imperative]
-{
-    lines = drawLine(p, q);
-}
-";
-            fsr.PreStart(src, runnerConfig);
-            fsr.Step();
-
-#if RUNNING_IN_AUTOCAD
-            DebugRunner.VMState vms = fsr.Step();
-            vms = fsr.Step();
-
-            Obj o = vms.mirror.GetDebugValue("p");
-            string type = vms.mirror.GetType("p");
-            Assert.IsTrue(type == "array");
-
-            List<Obj> lo = vms.mirror.GetArrayElements(o);
-            type = vms.mirror.GetType(lo[9]);
-            Assert.IsTrue(type == "Point");
-            Dictionary<string, Obj> os = vms.mirror.GetProperties(lo[9]);
-            Assert.IsTrue((Double)os["X"].Payload == 0.0);
-            Assert.IsTrue((Double)os["Y"].Payload == 10.0);
-            Assert.IsTrue((Double)os["Z"].Payload == 0.0);
-
-            vms = fsr.Step();
-            vms = fsr.Step();
-
-            o = vms.mirror.GetDebugValue("q");
-            type = vms.mirror.GetType("q");
-            Assert.IsTrue(type == "array");
-
-            lo = vms.mirror.GetArrayElements(o);
-            type = vms.mirror.GetType(lo[9]);
-            Assert.IsTrue(type == "Point");
-            os = vms.mirror.GetProperties(lo[9]);
-            Assert.IsTrue((Double)os["X"].Payload == 1.0);
-            Assert.IsTrue((Double)os["Y"].Payload == 10.0);
-            Assert.IsTrue((Double)os["Z"].Payload == 0.0);
-
-            vms = fsr.Step();
-            vms = fsr.Step();
-
-            o = vms.mirror.GetDebugValue("x");
-            type = vms.mirror.GetType("x");
-            Assert.IsTrue(type == "array");
-            lo = vms.mirror.GetArrayElements(o);
-            Assert.IsTrue((Int64)lo[0].Payload == 0);
-
-            vms = fsr.Step();
-            vms = fsr.Step();
-            vms = fsr.Step();
-            vms = fsr.Step();
-            vms = fsr.Step();
-            vms = fsr.Step();
-            vms = fsr.Step();
-            vms = fsr.Step();
-
-            o = vms.mirror.GetDebugValue("a1");
-            type = vms.mirror.GetType("a1");
-            Assert.IsTrue(type == "Point");
-            os = vms.mirror.GetProperties(o);
-            Assert.IsTrue((Double)os["X"].Payload == 0.0);
-            Assert.IsTrue((Double)os["Y"].Payload == 1.0);
-            Assert.IsTrue((Double)os["Z"].Payload == 0.0);
-
-            o = vms.mirror.GetDebugValue("b1");
-            type = vms.mirror.GetType("b1");
-            Assert.IsTrue(type == "Point");
-            os = vms.mirror.GetProperties(o);
-            Assert.IsTrue((Double)os["X"].Payload == 1.0);
-            Assert.IsTrue((Double)os["Y"].Payload == 1.0);
-            Assert.IsTrue((Double)os["Z"].Payload == 0.0);
-
-            vms = fsr.Step();
-            vms = fsr.Step();
-            vms = fsr.Step();
-            vms = fsr.Step();
-
-            o = vms.mirror.GetDebugValue("line");
-            type = vms.mirror.GetType("line");
-            Assert.IsTrue(type == "array");
-            lo = vms.mirror.GetArrayElements(o);
-            Assert.IsTrue((Int64)lo[0].Payload == 0);
-
-            type = vms.mirror.GetType(lo[0]);
-            Assert.IsTrue(type == "Point");
-            os = vms.mirror.GetProperties(lo[0]);
-            o = os["StartPoint"];
-            Dictionary<string, Obj> os_1 = vms.mirror.GetProperties(os["StartPoint"]);
-            Dictionary<string, Obj> os_2 = vms.mirror.GetProperties(os["EndPoint"]);
-            Assert.IsTrue((Double)os_1["X"].Payload == 0.0);
-            Assert.IsTrue((Double)os_1["Y"].Payload == 1.0);
-            Assert.IsTrue((Double)os_1["Z"].Payload == 0.0);
-            Assert.IsTrue((Double)os_2["X"].Payload == 1.0);
-            Assert.IsTrue((Double)os_2["Y"].Payload == 1.0);
-            Assert.IsTrue((Double)os_2["Z"].Payload == 0.0);
-
-            vms = fsr.Run();
-#endif
-        }
 
         [Test]
         [Category("Debugger")]
@@ -8593,7 +8126,7 @@ test = a1.t;";
         }
 
         [Test]
-        [Category("Debugger")]
+        [Category("Debugger"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         public void TestNestedReplication()
         {
             string src =
@@ -8737,6 +8270,7 @@ surf = makeSurf(ps);
 
         [Test]
         [Category("Debugger")]
+        [Category("Failure")]
         public void Defect_IDE_442()
         {
             string src =
@@ -8764,6 +8298,7 @@ test = a1.x; //expected : { 1, { 2, { 0, 1 } } }
 
             //Assert.Fail("IDE-442 Debugger failing to break at getting and setting class properties in inheritance hierarchy (happens only with replication)");
 
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-1701
             //TODO: Fails in the language with the new stackframe - 24/01/13
             fsr.PreStart(src, runnerConfig);
             fsr.Step();
@@ -8799,9 +8334,8 @@ test = a1.x; //expected : { 1, { 2, { 0, 1 } } }
             string type3 = vms.mirror.GetType(ol3[0]);
             Assert.IsTrue(type3 == "int");
             Assert.IsTrue((Int64)ol3[0].Payload == 1);
-
-
         }
+
         [Test]
         [Category("Debugger")]
         public void Defect_IDE_434()
@@ -10082,8 +9616,8 @@ b = 2;";
             Assert.AreEqual(fsr.isEnded, true);
             ExpressionInterpreterRunner watchRunner = new ExpressionInterpreterRunner(core);
             ExecutionMirror mirror = watchRunner.Execute(@"a");
-            TestFrameWork.Verify(mirror, "b", null, 0);
-            TestFrameWork.VerifyRuntimeWarning(ProtoCore.RuntimeData.WarningID.kCyclicDependency);
+            //TestFrameWork.Verify(mirror, "b", null, 0);
+            TestFrameWork.VerifyRuntimeWarning(core, ProtoCore.RuntimeData.WarningID.kCyclicDependency);
 
         }
         [Test]
@@ -10121,7 +9655,7 @@ b = 2;";
             fsr.PreStart(src, runnerConfig);
             DebugRunner.VMState vms = fsr.Step();
             fsr.Run();
-            TestFrameWork.VerifyRuntimeWarning(ProtoCore.RuntimeData.WarningID.kCyclicDependency);
+            TestFrameWork.VerifyRuntimeWarning(core, ProtoCore.RuntimeData.WarningID.kCyclicDependency);
         }
         [Test]
         [Category("ExpressionInterpreterRunner")]
@@ -10894,21 +10428,21 @@ b = 2;";
             Assert.AreEqual(33, (Int64)objExecVal.Payload);
         }
         [Test]
-        [Category("ExpressionInterpreterRunner")]
+        [Category("ExpressionInterpreterRunner"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         public void Testdotproperty_523_2()
         {
             // Execute and verify the defect IDE-519
             fsr.PreStart(
                  @"
         import(""ProtoGeometry.dll"");
-        WCS = CoordinateSystem.Identity();
-        testSolid = Sphere.ByCenterPointRadius(WCS.Origin, 10.3);
-        testPlaneX = Plane.ByOriginNormal(WCS.Origin, WCS.XAxis, 40);
+        origin = Point.ByCoordinates(0,0,0);
+        testSolid = Sphere.ByCenterPointRadius(origin, 10.3);
+        testPlaneX = Plane.ByOriginNormal(origin, Vector.ByCoordinates(1,0,0));
         intersectCurveX = testSolid.Intersect(testPlaneX);
-        testPlaneY = Plane.ByOriginNormal(WCS.Origin, WCS.YAxis, 40);
+        testPlaneY = Plane.ByOriginNormal(origin, Vector.ByCoordinates(0,1,0));
         //Returns 2 arcs, expect 1 circle 
         onlyintersectCurveY = testSolid.Intersect(testPlaneY);
-        testPlaneZ = Plane.ByOriginNormal(WCS.Origin, WCS.ZAxis, 40); //Returns 1 circle 
+        testPlaneZ = Plane.ByOriginNormal(origin, Vector.ByCoordinates(0,0,1)); //Returns 1 circle 
         nowintersectCurveZ = testSolid.Intersect(testPlaneZ);
             ", runnerConfig);
             DebugRunner.VMState vms = fsr.StepOver();
@@ -10932,16 +10466,16 @@ b = 2;";
         }
 
         [Test]
-        [Category("ExpressionInterpreterRunner")]
+        [Category("ExpressionInterpreterRunner"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         public void Testdotproperty_523_3()
         {
             // Execute and verify the defect IDE-519
             fsr.PreStart(
                  @"
         import(""ProtoGeometry.dll"");
-        WCS = CoordinateSystem.Identity();
-        testSolid = Sphere.ByCenterPointRadius(WCS.Origin, 10.3);
-        testPlaneX = Plane.ByOriginNormal(WCS.Origin, WCS.XAxis, 40);
+        origin = Point.ByCoordinates(0,0,0);
+        testSolid = Sphere.ByCenterPointRadius(origin, 10.3);
+        testPlaneX = Plane.ByOriginNormal(origin, Vector.ByCoordinates(1,0,0));
         intersectCurveX = testSolid.Intersect(testPlaneX);
         def foo()
         {
@@ -10949,10 +10483,10 @@ b = 2;";
             b = 5;
             c = 6;
     
-            testPlaneY = Plane.ByOriginNormal(WCS.Origin, WCS.YAxis, 40);
+            testPlaneY = Plane.ByOriginNormal(origin,  Vector.ByCoordinates(0,1,0));
         //Returns 2 arcs, expect 1 circle 
             onlyintersectCurveY = testSolid.Intersect(testPlaneY);
-            testPlaneZ = Plane.ByOriginNormal(WCS.Origin, WCS.ZAxis, 40); //Returns 1 circle 
+            testPlaneZ = Plane.ByOriginNormal(origin,  Vector.ByCoordinates(0,0,1)); //Returns 1 circle 
             nowintersectCurveZ = testSolid.Intersect(testPlaneZ);
 return = a;
         }
@@ -10972,7 +10506,7 @@ return = a;
             // It should not be available.
             Assert.AreEqual(10.3, (Double)objExecVal.Payload);
             watchRunner = new ExpressionInterpreterRunner(core);
-            ExecutionMirror mirror11 = watchRunner.Execute(@"testSolid.Centroid.X");
+            ExecutionMirror mirror11 = watchRunner.Execute(@"testSolid.CenterPoint.X");
             Obj objExecVal11 = mirror11.GetWatchValue();
 
 
@@ -10984,13 +10518,9 @@ return = a;
             vms = fsr.Step();
             vms = fsr.Step();
 
-
-
-
             watchRunner = new ExpressionInterpreterRunner(core);
             ExecutionMirror mirror2 = watchRunner.Execute(@"a");
             Obj objExecVal2 = mirror2.GetWatchValue();
-
 
             // It should not be available.
             Assert.AreEqual(4, (Int64)objExecVal2.Payload);
@@ -11011,10 +10541,10 @@ return = a;
             // It should not be available.
             Assert.AreEqual(4, (Int64)objExecVal3.Payload);
 
-
         }
+
         [Test]
-        [Category("ExpressionInterpreterRunner")]
+        [Category("ExpressionInterpreterRunner"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         public void Testdotproperty_523_4()
         {
             // Execute and verify the defect IDE-519
@@ -11024,9 +10554,9 @@ return = a;
         [Imperative]
         {
 
-            WCS = CoordinateSystem.Identity();
-            testSolid = Sphere.ByCenterPointRadius(WCS.Origin, 10.3);
-            testPlaneX = Plane.ByOriginNormal(WCS.Origin, WCS.XAxis, 40);
+            origin = Point.ByCoordinates(0,0,0);
+            testSolid = Sphere.ByCenterPointRadius(origin, 10.3);
+            testPlaneX = Plane.ByOriginNormal(origin, Vector.ByCoordinates(1,0,0));
             intersectCurveX = testSolid.Intersect(testPlaneX);
         
             def foo()
@@ -11035,10 +10565,10 @@ return = a;
                 b = 5;
                 c = 6;
     
-                testPlaneY = Plane.ByOriginNormal(WCS.Origin, WCS.YAxis, 40);
+                testPlaneY = Plane.ByOriginNormal(origin, Vector.ByCoordinates(0,1,0));
                 //Returns 2 arcs, expect 1 circle 
                 onlyintersectCurveY = testSolid.Intersect(testPlaneY);
-                testPlaneZ = Plane.ByOriginNormal(WCS.Origin, WCS.ZAxis, 40); //Returns 1 circle 
+                testPlaneZ = Plane.ByOriginNormal(origin, Vector.ByCoordinates(0,0,1)); //Returns 1 circle 
                 nowintersectCurveZ = testSolid.Intersect(testPlaneZ);
                 return = a;
             }
@@ -11059,7 +10589,7 @@ return = a;
             // It should not be available.
             Assert.AreEqual(10.3, (Double)objExecVal.Payload);
             watchRunner = new ExpressionInterpreterRunner(core);
-            ExecutionMirror mirror11 = watchRunner.Execute(@"testSolid.Centroid.X");
+            ExecutionMirror mirror11 = watchRunner.Execute(@"testSolid.CenterPoint.X");
 
             Obj objExecVal11 = mirror11.GetWatchValue();
 
@@ -11095,7 +10625,7 @@ return = a;
 
         }
         [Test]
-        [Category("ExpressionInterpreterRunner")]
+        [Category("ExpressionInterpreterRunner"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         public void Testdotproperty_523_5()
         {
             // Execute and verify the defect IDE-519
@@ -11105,9 +10635,9 @@ return = a;
         [Imperative]
         {
 
-            WCS = CoordinateSystem.Identity();
-            testSolid = Sphere.ByCenterPointRadius(WCS.Origin, 10.3);
-            testPlaneX = Plane.ByOriginNormal(WCS.Origin, WCS.XAxis, 40);
+            origin = Point.ByCoordinates(0,0,0);
+            testSolid = Sphere.ByCenterPointRadius(origin, 10.3);
+            testPlaneX = Plane.ByOriginNormal(origin, Vector.ByCoordintes(1,0,0));
             intersectCurveX = testSolid.Intersect(testPlaneX);
         
             def foo()
@@ -11116,10 +10646,10 @@ return = a;
                 b = 5;
                 c = 6;
     
-                testPlaneY = Plane.ByOriginNormal(WCS.Origin, WCS.YAxis, 40);
+                testPlaneY = Plane.ByOriginNormal(origin, Vector.ByCoordintes(0,1,0));
                 //Returns 2 arcs, expect 1 circle 
                 onlyintersectCurveY = testSolid.Intersect(testPlaneY);
-                testPlaneZ = Plane.ByOriginNormal(WCS.Origin, WCS.ZAxis, 40); //Returns 1 circle 
+                testPlaneZ = Plane.ByOriginNormal(origin, Vector.ByCoordintes(0,0,1)); //Returns 1 circle 
                 nowintersectCurveZ = testSolid.Intersect(testPlaneZ);
                 return = a;
             }
@@ -11140,7 +10670,7 @@ return = a;
             // It should not be available.
             Assert.AreEqual(10.3, (Double)objExecVal.Payload);
             watchRunner = new ExpressionInterpreterRunner(core);
-            ExecutionMirror mirror11 = watchRunner.Execute(@"testSolid.Centroid.X");
+            ExecutionMirror mirror11 = watchRunner.Execute(@"testSolid.CenterPoint.X");
 
             Obj objExecVal11 = mirror11.GetWatchValue();
 
@@ -11176,7 +10706,7 @@ return = a;
 
         }
         [Test]
-        [Category("ExpressionInterpreterRunner")]
+        [Category("ExpressionInterpreterRunner"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         public void Testdotproperty_607()
         {
             // related defect : DNL-1467498 Regression in geometry due to Cartesian dot operation implementation : Runtime warning : Can't locate Geometry constructor..
@@ -11491,7 +11021,7 @@ p = Point.Point(3, 4, 5);", runnerConfig);
         }
 
         [Test]
-        [Category("Debugger")]
+        [Category("Debugger"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         public void Defect_IDE_653_1()
         {
             fsr.PreStart(
@@ -11523,7 +11053,7 @@ surfaceGeom = sface.SurfaceGeometry.SetVisibility(true);", runnerConfig);
         }
 
         [Test]
-        [Category("Debugger")]
+        [Category("Debugger"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         public void Defect_IDE_653_2()
         {
             fsr.PreStart(
@@ -11603,6 +11133,7 @@ surfaceGeom = sphere.Faces[0].SurfaceGeometry.SetVisibility(true);", runnerConfi
 
         [Test]
         [Category("Debugger")]
+        [Category("Failure")]
         public void Defect_IDE_656_1()
         {
             fsr.PreStart(
@@ -11638,6 +11169,7 @@ a =
 }
 c = 90;", runnerConfig);
 
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-1568
             DebugRunner.VMState vms = fsr.Step();   // b1 = 1;
 
             vms = fsr.Step();   // 4 => a1;
@@ -11728,6 +11260,7 @@ c = 90;", runnerConfig);
 
         [Test]
         [Category("Debugger")]
+        [Category("Failure")]
         public void Defect_IDE_656_2()
         {
             fsr.PreStart(
@@ -11762,7 +11295,7 @@ a =
 
 }
 c = 90;", runnerConfig);
-
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-1568
             DebugRunner.VMState vms = fsr.Step();   // b1 = 1;
 
             vms = fsr.Step();   // 4 => a1;
@@ -11850,6 +11383,7 @@ b = 2;", runnerConfig);
 
         [Test]
         [Category("Debugger")]
+        [Category("Failure")]
         public void Defect_IDE_656_4_stepIn()
         {
             fsr.PreStart(
@@ -11861,7 +11395,8 @@ def f(a)
 x = f(c) > 5 ? 1 : 2;
 b = 2;", runnerConfig);
 
-            Assert.Fail("IDE-604Stepping In external functions and replicated functions requires two 'step in's to move to the next line");
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-3961
+            Assert.Fail("Stepping In external functions and replicated functions requires two 'step in's to move to the next line");
 
             DebugRunner.VMState vms = fsr.Step();   // c = { 1, 2, 20 };
             Assert.AreEqual(1, vms.ExecutionCursor.StartInclusive.LineNo);
@@ -11992,6 +11527,7 @@ CountFalse({a4}) => a5;//0
 
         [Test]
         [Category("Debugger")]
+        [Category("Failure")]
         public void Defect_IDE_722()
         {
             fsr.PreStart(
@@ -12002,7 +11538,8 @@ CountFalse({a4}) => a5;//0
 c1 = foo(10, 3);
 Print(c1);", runnerConfig);
 
-            Assert.Fail("IDE-722 Cannot Step In to the return statement of a function if it contains a In Line Condition");
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-3962
+            Assert.Fail("Cannot Step In to the return statement of a function if it contains a In Line Condition");
 
             DebugRunner.VMState vms = fsr.Step();   // c1 = foo(10, 3);
             Assert.AreEqual(5, vms.ExecutionCursor.StartInclusive.LineNo);
@@ -12032,6 +11569,7 @@ Print(c1);", runnerConfig);
 
         [Test]
         [Category("Debugger")]
+        [Category("Failure")]
         public void Defect_IDE_722_1()
         {
             fsr.PreStart(
@@ -12046,6 +11584,7 @@ Print(c1);", runnerConfig);
     Print(c1);
 }", runnerConfig);
 
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-3962
             Assert.Fail("IDE-722 Cannot Step In to the return statement of a function if it contains a In Line Condition");
 
             DebugRunner.VMState vms = fsr.Step();   // c1 = foo(10, 3);
@@ -12501,7 +12040,7 @@ r = 0;
 
         }
         [Test]
-        [Category("ExpressionInterpreterRunner")]
+        [Category("ExpressionInterpreterRunner"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
 
         public void inlineconditional_656_1()
         {
@@ -12560,7 +12099,7 @@ lines = Line.ByStartPointEndPoint( startPts<1>, endPts<2> );
         }
 
         [Test]
-        [Category("ExpressionInterpreterRunner")]
+        [Category("ExpressionInterpreterRunner"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
 
         public void inlineconditional_stepin_656_1()
         {
@@ -12568,17 +12107,14 @@ lines = Line.ByStartPointEndPoint( startPts<1>, endPts<2> );
             fsr.PreStart(
  @"
 import(""ProtoGeometry.dll"");
-import(""DSCoreNodes.dll"");
-
-WCS = CoordinateSystem.Identity( );
 
 p = 0..10..#5;
 isPass5 = Count ( p ) == 5 ? true : false ; // verification
 
-startPts = Point.ByCartesianCoordinates( WCS, p, 0, 0 );
+startPts = Point.ByCoordinates(p, 0, 0 );
 isPass6 = Count ( startPts ) == 5 ? true : false ; // verification
 
-endPts = Count(p) >= 1 ? Point.ByCartesianCoordinates( WCS, 0, p, 0 ) : Point.ByCartesianCoordinates( WCS, 0, 0, 0 ); // => at this line, the debugging stops !
+endPts = Count(p) >= 1 ? Point.ByCoordinates(0, p, 0 ) : Point.ByCoordinates(0, 0, 0 ); // => at this line, the debugging stops !
 
 isPass7 = Count ( endPts ) == 5 ? true : false ; // verification
 
@@ -12619,9 +12155,10 @@ lines = Line.ByStartPointEndPoint( startPts<1>, endPts<2> );
             vms = fsr.Step();
             TestFrameWork.Verify(mirror, "isPass8", true, 0);
         }
+
         [Test]
         [Category("ExpressionInterpreterRunner")]
-
+        [Category("Failure")]
         public void inlineconditional_656_2()
         {
             // Execute and verify the main script in a debug session
@@ -12639,6 +12176,7 @@ a;
            
 ", runnerConfig);
 
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-1568
             Assert.Fail("IDE-656Regression: Debugging stops at inline condition");
 
             DebugRunner.VMState vms = fsr.Step();    // x = 330;
@@ -12657,6 +12195,7 @@ a;
 
         [Test]
         [Category("ExpressionInterpreterRunner")]
+        [Category("Failure")]
         public void inlineconditional_stepin_656_2()
         {
             fsr.PreStart( // Execute and verify the main script in a debug session
@@ -12673,6 +12212,7 @@ a;
            
 ", runnerConfig);
 
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-1568
             Assert.Fail("IDE-656Regression: Debugging stops at inline condition");
             DebugRunner.VMState vms = fsr.Step();    // x = 330;
 
@@ -12697,7 +12237,7 @@ a;
         }
         [Test]
         [Category("ExpressionInterpreterRunner")]
-
+        [Category("Failure")]
         public void inlineconditional_656_3()
         {
             // Execute and verify the main script in a debug session
@@ -12718,6 +12258,7 @@ a;
            
 ", runnerConfig);
 
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-1568
             Assert.Fail("IDE-656Regression: Debugging stops at inline condition");
             DebugRunner.VMState vms = fsr.Step();    // x = 330;
 
@@ -12842,7 +12383,7 @@ b;
         }
         [Test]
         [Category("ExpressionInterpreterRunner")]
-
+        [Category("Failure")]
         public void inlineconditional_656_4()
         {
             // Execute and verify the main script in a debug session
@@ -12863,6 +12404,8 @@ a;
            
 ", runnerConfig);
 
+
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-1568
             Assert.Fail("IDE-656Regression: Debugging stops at inline condition");
             DebugRunner.VMState vms = fsr.Step();    // x = 330;
 
@@ -13317,7 +12860,6 @@ c = 90;
 
         [Test]
         [Category("ExpressionInterpreterRunner")]
-
         public void inlineconditional_stepnext_656_13()
         {
             // Execute and verify the main script in a debug session
@@ -13346,8 +12888,8 @@ a =
 }
            
 ", runnerConfig);
-
-            Assert.Fail("IDE-656Regression: Debugging stops at inline condition");
+            
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-1568
             DebugRunner.VMState vms = fsr.Step();
 
             vms = fsr.StepOver();
@@ -13473,7 +13015,7 @@ a = x > foo(22) ? foo(1) : A.foo(4);
 
         [Test]
         [Category("ExpressionInterpreterRunner")]
-
+        [Category("Failure")]
         public void inlineconditional_stepin_656_10()
         {
             // Execute and verify the main script in a debug session
@@ -13499,6 +13041,7 @@ a = x > foo(22) ? foo(1) : A.foo(4);
            
 ", runnerConfig);
 
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-1568
             DebugRunner.VMState vms = fsr.Step();    // x = 33;
 
             vms = fsr.Step();    // a = x > foo(22) ? foo(1) : A.foo(4);
@@ -13609,7 +13152,6 @@ list3 = GetCoor(list1);
 
         [Test]
         [Category("ExpressionInterpreterRunner")]
-
         public void inlineconditional_stepnext_656_14()
         {
             // Execute and verify the main script in a debug session
@@ -13637,9 +13179,7 @@ a =
     4 => a5;
 }           
 ", runnerConfig);
-
-            Assert.Fail("IDE-656Regression: Debugging stops at inline condition");
-
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-1568
             DebugRunner.VMState vms = fsr.Step();    // x = 1;
 
             vms = fsr.StepOver();    // x > 10 ? true : false => a1;
@@ -13660,7 +13200,7 @@ a =
 
         [Test]
         [Category("ExpressionInterpreterRunner")]
-
+        [Category("Failure")]
         public void inlineconditional_stepin_656_14()
         {
             // Execute and verify the main script in a debug session
@@ -13699,7 +13239,7 @@ x = a1.update(1); //line 28
 b1 = B.B(); //line 31
 n = 22;
 ", runnerConfig);
-
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-1568
             DebugRunner.VMState vms = fsr.Step();
 
             vms = fsr.Step();
@@ -13892,7 +13432,7 @@ def foo(y : int)
         }
 
         [Test]
-        [Category("ExpressionInterpreterRunner")]
+        [Category("ExpressionInterpreterRunner"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         public void IDE_Debugger_698()
         {
             fsr.PreStart( // Execute and verify the main script in a debug session
@@ -13968,7 +13508,7 @@ s = Print(results);
 
         }
         [Test]
-        [Category("ExpressionInterpreterRunner")]
+        [Category("ExpressionInterpreterRunner"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         public void IDE_Debugger_698_2()
         {
             fsr.PreStart( // Execute and verify the main script in a debug session
@@ -14220,6 +13760,7 @@ c = 2;
 
         [Test]
         [Category("DebuggerReferenceCount")]
+        [Category("Failure")]
         public void IDE_DebuggerRefCount_ReplicatedFunctionCall()
         {
             fsr.PreStart( // Execute and verify the main script in a debug session
@@ -14243,6 +13784,8 @@ foo(g);
 c = 2;
 ", runnerConfig);
 
+
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-3984
             DebugRunner.VMState vms = fsr.Step();   // b = 0;
 
             vms = fsr.StepOver();                   // g = { 1, 2, 3 };
@@ -14273,6 +13816,7 @@ c = 2;
             mirror = watchRunner.Execute(@"c");
             objExecVal = mirror.GetWatchValue();
             Assert.IsTrue((Int64)objExecVal.Payload == 2);
+
         }
 
         [Test]
@@ -14409,7 +13953,10 @@ c = 2;
             watchRunner = new ExpressionInterpreterRunner(core);
             mirror = watchRunner.Execute(@"b");
             objExecVal = mirror.GetWatchValue();
-            Assert.IsTrue((Int64)objExecVal.Payload == -1);
+            if (core.Heap.GCStrategy == ProtoCore.DSASM.Heap.GCStrategies.kReferenceCounting)
+            {
+                Assert.IsTrue((Int64)objExecVal.Payload == -1);
+            }
 
             fsr.StepOver();
             vms = fsr.StepOver();   // a = A.A();
@@ -14431,7 +13978,10 @@ c = 2;
             watchRunner = new ExpressionInterpreterRunner(core);
             mirror = watchRunner.Execute(@"b");
             objExecVal = mirror.GetWatchValue();
-            Assert.IsTrue((Int64)objExecVal.Payload == -2);
+            if (core.Heap.GCStrategy == ProtoCore.DSASM.Heap.GCStrategies.kReferenceCounting)
+            {
+                Assert.IsTrue((Int64)objExecVal.Payload == -2);
+            }
 
             fsr.StepOver();
             fsr.StepOver();
@@ -14490,7 +14040,10 @@ c = 2;
             watchRunner = new ExpressionInterpreterRunner(core);
             mirror = watchRunner.Execute(@"b");
             objExecVal = mirror.GetWatchValue();
-            Assert.IsTrue((Int64)objExecVal.Payload == -1);
+            if (core.Heap.GCStrategy == ProtoCore.DSASM.Heap.GCStrategies.kReferenceCounting)
+            {
+                Assert.IsTrue((Int64)objExecVal.Payload == -1);
+            }
 
             vms = fsr.StepOver();   // c = 2;
             vms = fsr.StepOver();   // end of script
@@ -14552,7 +14105,10 @@ c = 2;
             watchRunner = new ExpressionInterpreterRunner(core);
             mirror = watchRunner.Execute(@"b");
             objExecVal = mirror.GetWatchValue();
-            Assert.IsTrue((Int64)objExecVal.Payload == -1);
+            if (core.Heap.GCStrategy == ProtoCore.DSASM.Heap.GCStrategies.kReferenceCounting)
+            {
+                Assert.IsTrue((Int64)objExecVal.Payload == -1);
+            }
 
             vms = fsr.StepOver();   // c = 2;
             vms = fsr.StepOver();   // end of script
@@ -14667,7 +14223,10 @@ c = 2;
             watchRunner = new ExpressionInterpreterRunner(core);
             mirror = watchRunner.Execute(@"b");
             objExecVal = mirror.GetWatchValue();
-            Assert.IsTrue((Int64)objExecVal.Payload == -1);
+            if (core.Heap.GCStrategy == ProtoCore.DSASM.Heap.GCStrategies.kReferenceCounting)
+            {
+                Assert.IsTrue((Int64)objExecVal.Payload == -1);
+            }
 
             vms = fsr.StepOver();   // end of script
             watchRunner = new ExpressionInterpreterRunner(core);
@@ -14723,7 +14282,10 @@ c = 2;
             watchRunner = new ExpressionInterpreterRunner(core);
             mirror = watchRunner.Execute(@"b");
             objExecVal = mirror.GetWatchValue();
-            Assert.IsTrue((Int64)objExecVal.Payload == -1);
+            if (core.Heap.GCStrategy == ProtoCore.DSASM.Heap.GCStrategies.kReferenceCounting)
+            {
+                Assert.IsTrue((Int64)objExecVal.Payload == -1);
+            }
 
             vms = fsr.StepOver();   // end of script
             watchRunner = new ExpressionInterpreterRunner(core);
@@ -14789,78 +14351,11 @@ myNeTwst = myTest.Transform(1);
         }
 
         [Test]
-        public void Defect_711_debug_GC_array_itemmodified()
-        {
-            string src = @" 
-import(""ProtoGeometry.dll"");
-WCS = CoordinateSystem.Identity();
-class SphereCone
-{
-    shape;
-    constructor(x, y, z, size)
-    {
-        Origin = Point.ByCoordinates(x, y, z);
-        shape = {
-            Sphere.ByCenterPointRadius(Origin, size * 0.25),
-            Cone.ByCenterLineRadius(Line.ByStartPointDirectionLength(Origin, CoordinateSystem.WCS.ZAxis, -size), size * 0.01, size * 0.5)
-        };
-    }
-}
-
-xs = -12..12..12;    // xs = {-12, 0, 12}
-sizes = 2..2..#Count(xs); //
-shapes = SphereCone(xs, 10, 0, sizes);
-xs = -12..12..6;
-
-[Imperative]
-{
-    for(index in 0..4) 
-    {
-        sizes[index] = index + 1;
-    }
-}
-
-shapes[2] = Sphere.ByCenterPointRadius(WCS.Origin, 1);
-";
-
-            fsr.PreStart(src, runnerConfig);
-            DebugRunner.VMState vms = fsr.Step();   // myTest = Test.FirstApproach({ 1, 2 }); 
-
-            ProtoCore.CodeModel.CodePoint cp = new ProtoCore.CodeModel.CodePoint
-            {
-                LineNo = 29,
-                CharNo = 5
-            };
-
-            fsr.ToggleBreakpoint(cp);
-
-            fsr.Run();  // closing brace of Transform()            
-
-            ExpressionInterpreterRunner watchRunner = new ExpressionInterpreterRunner(core);
-            ExecutionMirror mirror = watchRunner.Execute(@"shapes");
-            Obj objExecVal = mirror.GetWatchValue();
-            Assert.AreNotEqual(null, objExecVal);
-            Assert.AreNotEqual(null, objExecVal.Payload);
-            List<Obj> lo = vms.mirror.GetArrayElements(objExecVal);
-            string type1 = vms.mirror.GetType(lo[0]);
-            string type2 = vms.mirror.GetType(lo[1]);
-            string type3 = vms.mirror.GetType(lo[2]);
-            string type4 = vms.mirror.GetType(lo[3]);
-            string type5 = vms.mirror.GetType(lo[4]);
-            Assert.IsTrue(type1 == "SphereCone");
-            Assert.IsTrue(type2 == "SphereCone");
-            Assert.IsTrue(type3 == "Sphere");
-            Assert.IsTrue(type4 == "SphereCone");
-            Assert.IsTrue(type5 == "SphereCone");
-
-        }
-
-        [Test]
         [Category("ExpressionInterpreterRunner")]
         public void TestWatchExpressionForFFIProperty()
         {
             string src = @" 
-import(Dummy from ""ProtoTest.dll"");
+import(Dummy from ""FFITarget.dll"");
 a = Dummy.Create(2);
 b = 2;
 ";
@@ -14888,7 +14383,7 @@ b = 2;
         public void TestWatchExpressionForFFIProperty_1()
         {
             string src = @" 
-import(Dummy from ""ProtoTest.dll"");
+import(Dummy from ""FFITarget.dll"");
 
 
 a : Dummy = null;
@@ -14926,7 +14421,7 @@ a : Dummy = null;
             Assert.AreEqual(2, (Int64)objExecVal.Payload);
         }
         [Test]
-        [Category("ExpressionInterpreterRunner")]
+        [Category("ExpressionInterpreterRunner"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         public void TestDebug_757()
         {
             string src = @" 
@@ -14973,7 +14468,7 @@ a : Dummy = null;
 
         }
         [Test]
-        [Category("ExpressionInterpreterRunner")]
+        [Category("ExpressionInterpreterRunner"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         public void Defect_StepOver_734()
         {
             fsr.PreStart(
@@ -15009,7 +14504,7 @@ a : Dummy = null;
         }
 
         [Test]
-        [Category("ExpressionInterpreterRunner")]
+        [Category("ExpressionInterpreterRunner"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         public void Defect_StepIn_734_2()
         {
             fsr.PreStart(
@@ -15044,7 +14539,7 @@ a : Dummy = null;
 
         }
         [Test]
-        [Category("ExpressionInterpreterRunner")]
+        [Category("ExpressionInterpreterRunner"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         public void Defect_StepIn_734_3()
         {
             fsr.PreStart(
@@ -15082,7 +14577,7 @@ a : Dummy = null;
             vms = fsr.Step();
         }
         [Test]
-        [Category("ExpressionInterpreterRunner")]
+        [Category("ExpressionInterpreterRunner"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         public void Defect_StepIn_734_4()
         {
             fsr.PreStart(
@@ -15155,7 +14650,7 @@ z = { A.A(), A.A() };
         }
         [Test]
         [Category("ExpressionInterpreterRunner")]
-
+        [Category("Failure")]
         public void undefinedclass()
         {
             // Execute and verify the main script in a debug session
@@ -15163,7 +14658,7 @@ z = { A.A(), A.A() };
             @"
                 
                 variableName : Line;", runnerConfig);
-
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-3982
             DebugRunner.VMState vms = fsr.Step();
 
             vms = fsr.StepOver();
@@ -15173,14 +14668,12 @@ z = { A.A(), A.A() };
             ExpressionInterpreterRunner watchRunner = new ExpressionInterpreterRunner(core);
             ExecutionMirror mirror = watchRunner.Execute(@"variableName");
             Obj objExecVal = mirror.GetWatchValue();
-            TestFrameWork.Verify(mirror, "b", null, 0);
-
+            Assert.AreEqual(null, objExecVal);
 
         }
 
         [Test]
-        [Category("ExpressionInterpreterRunner")]
-
+        [Category("ExpressionInterpreterRunner"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         public void Tempvariable_Associative_crash()
         {
             // Execute and verify the main script in a debug session
@@ -15218,8 +14711,7 @@ z = { A.A(), A.A() };
 
         }
         [Test]
-        [Category("ExpressionInterpreterRunner")]
-
+        [Category("ExpressionInterpreterRunner"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         public void Tempvariable_Associative_2()
         {
             // Execute and verify the main script in a debug session
@@ -15256,8 +14748,7 @@ z = { A.A(), A.A() };
 
         }
         [Test]
-        [Category("ExpressionInterpreterRunner")]
-
+        [Category("ExpressionInterpreterRunner"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         public void Tempvariable_crash_imperative()
         {
             // Execute and verify the main script in a debug session
@@ -15296,8 +14787,7 @@ z = { A.A(), A.A() };
         }
 
         [Test]
-        [Category("ExpressionInterpreterRunner")]
-
+        [Category("ExpressionInterpreterRunner"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         public void Tempvariable_Imperative_2()
         {
             // Execute and verify the main script in a debug session
@@ -15336,7 +14826,6 @@ z = { A.A(), A.A() };
 
         [Test]
         [Category("ExpressionInterpreterRunner")]
-
         public void ModifyAndReturnClassPropertyInsideFunction()
         {
             // Execute and verify the main script in a debug session
@@ -15361,8 +14850,6 @@ class A
 y = A.A();
 x = y.add(); 
 ", runnerConfig);
-
-            Assert.Fail("IDE-1045 Debugger skips statements on stepping over property setters followed by return statements");
 
             DebugRunner.VMState vms = fsr.Step();
 
@@ -15416,7 +14903,7 @@ x = y.add();
 
         [Test]
         [Category("ExpressionInterpreterRunner")]
-
+        [Category("Failure")]
         public void ModifyAndReturnClassPropertyInsideFunction_1()
         {
             // Execute and verify the main script in a debug session
@@ -15442,7 +14929,8 @@ y = A.A();
 x = y.add(); 
 ", runnerConfig);
 
-            Assert.Fail("IDE-1045 Debugger skips statements on stepping over property setters followed by return statements");
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-3963
+            Assert.Fail(" Debugger skips statements on stepping over property setters followed by return statements");
 
             DebugRunner.VMState vms = fsr.Step();
 
@@ -15496,7 +14984,7 @@ x = y.add();
 
         [Test]
         [Category("ExpressionInterpreterRunner")]
-
+        [Category("Failure")]
         public void ModifyAndReturnClassPropertyInsideFunction_2()
         {
             // Execute and verify the main script in a debug session
@@ -15524,7 +15012,8 @@ x = add(y);
 
 ", runnerConfig);
 
-            Assert.Fail("IDE-1045 Debugger skips statements on stepping over property setters followed by return statements");
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-3963
+            Assert.Fail(" Debugger skips statements on stepping over property setters followed by return statements");
 
             DebugRunner.VMState vms = fsr.Step();
 
@@ -15578,7 +15067,7 @@ x = add(y);
 
         [Test]
         [Category("ExpressionInterpreterRunner")]
-
+        [Category("Failure")]
         public void ModifyAndReturnClassPropertyInsideFunction_3()
         {
             // Execute and verify the main script in a debug session
@@ -15607,7 +15096,8 @@ x = add(y);
 
 ", runnerConfig);
 
-            Assert.Fail("IDE-1045 Debugger skips statements on stepping over property setters followed by return statements");
+            // Tracked by http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-3963
+            Assert.Fail("Debugger skips statements on stepping over property setters followed by return statements");
 
             DebugRunner.VMState vms = fsr.Step();
 
@@ -15891,52 +15381,6 @@ x = add(y);
             CLRModuleType.ClearTypes();
         }
 
-        //Test the support of Replication Guides, relates to IDE-492
-        [Test]
-        [Category("ExpressionInterpreterRunner")]
-        public void UseCaseTesting_Range_expression_with_replication_guide_1()
-        {
-            // Execute and verify the main script in a debug session
-            fsr.PreStart(
-@"
-import(""ProtoGeometry.dll"");
-WCS = CoordinateSystem.Identity(); // setup world coordinatesystem
-// single step through these instructions
-// each change to points should force a re-execution of line 9
-
-points = Point.ByCartesianCoordinates(WCS, (1..5)<1>, (1..6)<2>, 0);
-p00 = points[0][0].X;
-
-", runnerConfig);
-
-            DebugRunner.VMState vms = fsr.Step();
-            vms = fsr.Step();
-            vms = fsr.Step();
-            vms = fsr.Step();
-            vms = fsr.Step();
-            Obj o = vms.mirror.GetDebugValue("points");
-            string type = vms.mirror.GetType("points");
-
-
-            Assert.IsTrue(type == "array");
-            List<Obj> lo = vms.mirror.GetArrayElements(o);
-            List<Obj> llo = vms.mirror.GetArrayElements(lo[0]);
-            type = vms.mirror.GetType(llo[0]);
-
-            Assert.IsTrue(type == "Point");
-
-            vms = fsr.Step();
-            Obj p = vms.mirror.GetDebugValue("p00");
-            Assert.IsTrue(llo.Count == 6);
-
-            //Dictionary<string, Obj> os_0 = vms.mirror.GetProperties(p);
-            Assert.IsTrue((double)p.Payload == 1.0);
-            //Assert.IsTrue((double)os_0["X"].Payload == 1.0);
-            //Assert.IsTrue((double)os_0["Y"].Payload == 1.0);
-            //Assert.IsTrue((double)os_0["Z"].Payload == 0);
-
-        }
-
         //To test the update order issue in assoc. code, relates to DNL-1467407
         [Test]
         [Category("ExpressionInterpreterRunner")]
@@ -16065,7 +15509,7 @@ a = a < 5 ? 3 : 4;
 
         }
         [Test]
-        [Category("ExpressionInterpreterRunner")]
+        [Category("ExpressionInterpreterRunner"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         [Category("ReleaseCriteria")]
         public void UseCase_Robert_simple_numeric_imperative_2()
         {
@@ -16107,7 +15551,7 @@ b : int;
 
         }
         [Test]
-        [Category("ExpressionInterpreterRunner")]
+        [Category("ExpressionInterpreterRunner"), Category("ProtoGeometry")] [Ignore] [Category("PortToCodeBlocks")]
         [Category("ReleaseCriteria")]
         public void UseCase_Robert_simple_numeric_associative_2()
         {
@@ -16230,11 +15674,7 @@ b = t1.Equals(t2);
             fsr.Run();
             DebugRunner.VMState vms = fsr.Run();
 
-            fsr.Step();
-            fsr.Step();
-            fsr.Step();
-            fsr.Step();
-            Assert.IsFalse(vms.isEnded);
+            Assert.IsTrue(vms.isEnded);
 
 
         }

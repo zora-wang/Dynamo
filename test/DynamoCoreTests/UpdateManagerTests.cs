@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
+using System.Reflection;
+
 using Dynamo.UpdateManager;
-using Dynamo.Utilities;
+using DynUpdateManager = Dynamo.UpdateManager.UpdateManager;
 using Moq;
 using NUnit.Framework;
 
@@ -10,75 +13,151 @@ namespace Dynamo.Tests
     /// <summary>
     /// Test cases to mock return values.
     /// </summary>
-    public class UpdateManagerTestNotUpToDate : DynamoUnitTest
+    public class UpdateManagerTestNotUpToDate
     {
+        private const string DOWNLOAD_SOURCE_PATH_S = "http://downloadsourcepath/";
+        private const string SIGNATURE_SOURCE_PATH_S = "http://SignatureSourcePath/";
+
+        private static void InjectField(object instance, string fieldName, object value)
+        {
+            FieldInfo info = instance.GetType()
+                .GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.IsNotNull(info);
+
+            info.SetValue(instance, value);
+        }
+
         [Test]
+        [Category("UnitTests")]
         public void UpdateCheckReturnsInfoWhenNewerVersionAvaialable()
         {
             var updateRequest = new Mock<IAsynchronousRequest>();
             updateRequest.Setup(ur => ur.Data).Returns(UpdateManagerTestHelpers.updateAvailableData);
-            dynSettings.Controller.UpdateManager.UpdateDataAvailable(updateRequest.Object);
 
-            Assert.NotNull(Controller.UpdateManager.UpdateInfo);
+            UpdateManager.UpdateManager.Instance.CheckNewerDailyBuilds = false;
+            UpdateManager.UpdateManager.Instance.UpdateDataAvailable(updateRequest.Object);
+
+            Assert.NotNull(UpdateManager.UpdateManager.Instance.UpdateInfo);
         }
 
         [Test]
+        [Category("UnitTests")]
         public void UpdateCheckReturnsInfoWhenNewerDailyBuildAvailable()
         {
-            var um = dynSettings.Controller.UpdateManager;
-
             var updateRequest = new Mock<IAsynchronousRequest>();
             updateRequest.Setup(ur => ur.Data).Returns(UpdateManagerTestHelpers.dailyBuildAvailableData);
 
-            um.CheckNewerDailyBuilds = true;
-            um.UpdateDataAvailable(updateRequest.Object);
+            UpdateManager.UpdateManager.Instance.CheckNewerDailyBuilds = true;
+            UpdateManager.UpdateManager.Instance.UpdateDataAvailable(updateRequest.Object);
             
-            Assert.NotNull(Controller.UpdateManager.UpdateInfo);
+            Assert.NotNull(UpdateManager.UpdateManager.Instance.UpdateInfo);
         }
 
         [Test]
+        [Category("UnitTests")]
         public void UpdateCheckReturnsCorrectVersionWhenAvailable()
         {
+            var um = UpdateManager.UpdateManager.Instance as DynUpdateManager;
+            Assert.IsNotNull(um);
+
             var updateRequest = new Mock<IAsynchronousRequest>();
             updateRequest.Setup(ur => ur.Data).Returns(UpdateManagerTestHelpers.updateAvailableData);
-            dynSettings.Controller.UpdateManager.UpdateDataAvailable(updateRequest.Object);
+            um.UpdateDataAvailable(updateRequest.Object);
 
-            Assert.NotNull(Controller.UpdateManager.UpdateInfo);
-            Assert.AreEqual(Controller.UpdateManager.AvailableVersion.ToString(), "9.9.9.0");
+            // Spoof a download completion by setting the downloaded update info to the update info
+            um.DownloadedUpdateInfo = um.UpdateInfo;
+            Assert.NotNull(um.UpdateInfo);
+            Assert.AreEqual(um.AvailableVersion.ToString(), "9.9.9.0");
+        }
+
+        [Test, Category("UnitTests")]
+        public void ConfigurationSerialization()
+        {
+            var config = new UpdateManagerConfiguration()
+            {
+                DownloadSourcePath = DOWNLOAD_SOURCE_PATH_S,
+                SignatureSourcePath = SIGNATURE_SOURCE_PATH_S
+            };
+            
+            //save to a temp file.
+            var tempFile = Path.GetTempFileName();
+            Assert.DoesNotThrow(() => config.Save(tempFile, null));
+            
+            //read from a temp file.
+            UpdateManagerConfiguration savedConfig = null;
+            Assert.DoesNotThrow(() => savedConfig = UpdateManagerConfiguration.Load(tempFile, null));
+            
+            //Compare parameters.
+            Assert.IsNotNull(savedConfig);
+            Assert.AreEqual(config.CheckNewerDailyBuild, savedConfig.CheckNewerDailyBuild);
+            Assert.AreEqual(config.SignatureSourcePath, savedConfig.SignatureSourcePath);
+            Assert.AreEqual(config.DownloadSourcePath, savedConfig.DownloadSourcePath);
+            Assert.AreEqual(config.ForceUpdate, savedConfig.ForceUpdate);
         }
 
         [Test]
+        [Category("UnitTests")]
+        public void ConfigurationRedirection()
+        {
+            var um = DynUpdateManager.Instance as DynUpdateManager;
+            Assert.IsNotNull(um);
+
+            //Inject test config to UpdateManager instance, using reflection.
+            var config = new UpdateManagerConfiguration()
+            {
+                DownloadSourcePath = DOWNLOAD_SOURCE_PATH_S,
+                SignatureSourcePath = SIGNATURE_SOURCE_PATH_S
+            };
+            InjectField(um, "configuration", config);
+            
+            var updateRequest = new Mock<IAsynchronousRequest>();
+            updateRequest.Setup(ur => ur.Data).Returns(UpdateManagerTestHelpers.updateAvailableData);
+            um.UpdateDataAvailable(updateRequest.Object);
+
+            // Spoof a download completion by setting the downloaded update info to the update info
+            um.DownloadedUpdateInfo = um.UpdateInfo;
+            Assert.NotNull(um.UpdateInfo);
+            Assert.AreEqual("9.9.9.0", um.AvailableVersion.ToString());
+            Assert.AreEqual(DOWNLOAD_SOURCE_PATH_S, um.UpdateInfo.VersionInfoURL);
+            Assert.AreEqual(SIGNATURE_SOURCE_PATH_S + @"DynamoInstall9.9.9.sig", um.UpdateInfo.SignatureURL);
+        }
+
+        [Test]
+        [Category("UnitTests")]
         public void UpdateCheckReturnsNothingWhenNoNewerVersionAvailable()
         {
             var updateRequest = new Mock<IAsynchronousRequest>();
             updateRequest.Setup(ur => ur.Data).Returns(UpdateManagerTestHelpers.noUpdateAvailableData);
-            dynSettings.Controller.UpdateManager.UpdateDataAvailable(updateRequest.Object);
+            UpdateManager.UpdateManager.Instance.UpdateDataAvailable(updateRequest.Object);
 
-            Assert.Null(Controller.UpdateManager.UpdateInfo);
+            Assert.Null(UpdateManager.UpdateManager.Instance.UpdateInfo);
         }
 
         [Test]
+        [Category("UnitTests")]
         public void UpdateCheckReturnsNothingWhenNoVersionsAvailable()
         {
             var updateRequest = new Mock<IAsynchronousRequest>();
             updateRequest.Setup(ur => ur.Data).Returns(UpdateManagerTestHelpers.noData);
-            dynSettings.Controller.UpdateManager.UpdateDataAvailable(updateRequest.Object);
+            UpdateManager.UpdateManager.Instance.UpdateDataAvailable(updateRequest.Object);
 
-            Assert.Null(Controller.UpdateManager.UpdateInfo);
+            Assert.Null(UpdateManager.UpdateManager.Instance.UpdateInfo);
         }
 
         [Test]
+        [Category("UnitTests")]
         public void UpdateCheckReturnsNothingWhenNotConnected()
         {
             var updateRequest = new Mock<IAsynchronousRequest>();
             updateRequest.Setup(ur => ur.Data).Returns(string.Empty);
 
-            Controller.UpdateManager.CheckForProductUpdate(updateRequest.Object);
+            UpdateManager.UpdateManager.Instance.CheckForProductUpdate(updateRequest.Object);
 
-            Assert.Null(Controller.UpdateManager.UpdateInfo);
+            Assert.Null(UpdateManager.UpdateManager.Instance.UpdateInfo);
         }
 
         [Test]
+        [Category("UnitTests")]
         public void ShouldRecognizeStableInstallerWithProperName()
         {
             var test =
@@ -87,6 +166,7 @@ namespace Dynamo.Tests
         }
 
         [Test]
+        [Category("UnitTests")]
         public void ShouldRecognizeOldDailyBuilds()
         {
             var test =
@@ -95,6 +175,7 @@ namespace Dynamo.Tests
         }
 
         [Test]
+        [Category("UnitTests")]
         public void ShouldRecognizeDailyInstallerWithProperName()
         {
             var test =
@@ -106,6 +187,7 @@ namespace Dynamo.Tests
         }
 
         [Test]
+        [Category("UnitTests")]
         public void ShouldGetBinaryVersionFromInstaller()
         {
             var version = UpdateManager.UpdateManager.GetBinaryVersionFromFilePath("DynamoInstall", "DynamoInstall0.7.1.exe");
@@ -119,6 +201,7 @@ namespace Dynamo.Tests
         }
 
         [Test]
+        [Category("UnitTests")]
         public void ShouldGetDateTimeFromDailyInstaller()
         {
             var dateTime = UpdateManager.UpdateManager.GetBuildTimeFromFilePath("DynamoInstall", "DynamoInstall0.7.1.20140625T0009.exe");

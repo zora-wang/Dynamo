@@ -6,25 +6,41 @@ using System.Xml;
 using Autodesk.Revit.DB;
 using DSCore;
 using DSCoreNodesUI;
+
+using Dynamo.Applications.Models;
+using Dynamo.DSEngine;
 using Dynamo.Models;
 using Dynamo.Nodes;
 using Dynamo.Utilities;
 using ProtoCore.AST.AssociativeAST;
+
+using Revit.Elements;
+
 using RevitServices.Persistence;
 using Category = Revit.Elements.Category;
+using Element = Autodesk.Revit.DB.Element;
+using Family = Autodesk.Revit.DB.Family;
+using FamilyInstance = Autodesk.Revit.DB.FamilyInstance;
+using FamilySymbol = Autodesk.Revit.DB.FamilySymbol;
+using Level = Autodesk.Revit.DB.Level;
+using Parameter = Autodesk.Revit.DB.Parameter;
 
 namespace DSRevitNodesUI
 {
     public abstract class RevitDropDownBase : DSDropDownBase
     {
-        protected RevitDropDownBase(string value) : base(value)
+
+        protected RevitDropDownBase(WorkspaceModel workspaceModel, string value) : base(workspaceModel, value)
         {
-            dynRevitSettings.Controller.RevitDocumentChanged += Controller_RevitDocumentChanged;
+            var revModel = workspaceModel.DynamoModel as RevitDynamoModel;
+            if (revModel != null) 
+                revModel.RevitDocumentChanged += Controller_RevitDocumentChanged;
         }
 
         void Controller_RevitDocumentChanged(object sender, EventArgs e)
         {
             PopulateItems();
+
             if (Items.Any())
             {
                 SelectedIndex = 0;
@@ -40,7 +56,8 @@ namespace DSRevitNodesUI
     {
         private const string noFamilyTypes = "No family types available.";
 
-        public FamilyTypes():base("Family Type"){ }
+        public FamilyTypes(WorkspaceModel workspaceModel) : base(workspaceModel, "Family Type")
+        {}
         
         protected override void PopulateItems()
         {
@@ -101,7 +118,8 @@ namespace DSRevitNodesUI
         private Element element;
         private ElementId storedId = null;
 
-        public FamilyInstanceParameters() : base("Parameter") 
+        public FamilyInstanceParameters(WorkspaceModel workspaceModel)
+            : base(workspaceModel, "Parameter") 
         {
             this.AddPort(PortType.INPUT, new PortData("f", "Family Symbol or Instance"), 0);
             this.PropertyChanged += OnPropertyChanged;
@@ -200,7 +218,7 @@ namespace DSRevitNodesUI
             var index = InPorts[0].Connectors[0].Start.Index;
             
             var identifier = inputNode.GetAstIdentifierForOutputIndex(index).Name;
-            var data = dynSettings.Controller.EngineController.GetMirror(identifier).GetData();
+            var data = this.Workspace.DynamoModel.EngineController.GetMirror(identifier).GetData();
             object family = null;
             if (data.IsCollection)
                 family = data.GetElements().FirstOrDefault();
@@ -279,7 +297,8 @@ namespace DSRevitNodesUI
     {
         private const string noFloorTypes = "No floor types available.";
 
-        public FloorTypes() : base("Floor Type") { }
+        public FloorTypes(WorkspaceModel workspaceModel)
+            : base(workspaceModel, "Floor Type") { }
 
         protected override void PopulateItems()
         {
@@ -333,7 +352,8 @@ namespace DSRevitNodesUI
     {
         private const string noWallTypes = "No wall types available.";
 
-        public WallTypes() : base("Wall Type") { }
+        public WallTypes(WorkspaceModel workspaceModel)
+            : base(workspaceModel, "Wall Type") { }
 
         protected override void PopulateItems()
         {
@@ -384,6 +404,12 @@ namespace DSRevitNodesUI
     [IsDesignScriptCompatible]
     public class Categories : EnumBase<BuiltInCategory>
     {
+        public Categories(WorkspaceModel workspace) : base(workspace)
+        {
+            OutPorts[0].PortName = "Category";
+            OutPortData[0].ToolTipString = "The selected Category.";
+        }
+
         protected override void PopulateItems()
         {
             Items.Clear();
@@ -417,14 +443,8 @@ namespace DSRevitNodesUI
     {
         private const string noLevels = "No levels available.";
 
-        public Levels():base("Levels"){}
-        //{
-        //    OutPortData.Add(new PortData("Level", "The level."));
-
-        //    RegisterAllPorts();
-
-        //    PopulateItems();
-        //}
+        public Levels(WorkspaceModel workspaceModel)
+            : base(workspaceModel, "Levels"){}
 
         protected override void PopulateItems()
         {
@@ -475,14 +495,8 @@ namespace DSRevitNodesUI
     {
         private const string noFraming = "No structural framing types available.";
 
-        public StructuralFramingTypes():base("Framing Types"){}
-        //{
-        //    OutPortData.Add(new PortData("type", "The selected structural framing type."));
-
-        //    RegisterAllPorts();
-
-        //    PopulateItems();
-        //}
+        public StructuralFramingTypes(WorkspaceModel workspaceModel)
+            : base(workspaceModel, "Framing Types"){}
 
         protected override void PopulateItems()
         {
@@ -532,7 +546,9 @@ namespace DSRevitNodesUI
     [NodeCategory(BuiltinNodeCategories.GEOMETRY_CURVE_DIVIDE)]
     [NodeDescription("A spacing rule layout for calculating divided paths.")]
     [IsDesignScriptCompatible]
-    public class SpacingRuleLayouts : EnumAsInt<SpacingRuleLayout> { }
+    public class SpacingRuleLayouts : EnumAsInt<SpacingRuleLayout> {
+        public SpacingRuleLayouts(WorkspaceModel workspace) : base(workspace) { }
+    }
 
     [NodeName("Element Types")]
     [NodeCategory(BuiltinNodeCategories.REVIT_SELECTION)]
@@ -540,12 +556,64 @@ namespace DSRevitNodesUI
     [IsDesignScriptCompatible]
     public class ElementTypes : AllChildrenOfType<Element>
     {
+        public ElementTypes(WorkspaceModel workspace) : base(workspace) { }
+
         public override IEnumerable<AssociativeNode> BuildOutputAst(List<AssociativeNode> inputAstNodes)
         {
             var typeName = AstFactory.BuildStringNode(Items[SelectedIndex].Name);
             var assemblyName = AstFactory.BuildStringNode("RevitAPI");
             var functionCall = AstFactory.BuildFunctionCall(new Func<string,string,object>(Types.FindTypeByNameInAssembly) , new List<AssociativeNode>(){typeName, assemblyName});
             return new []{AstFactory.BuildAssignment(GetAstIdentifierForOutputIndex(0), functionCall)};
+        }
+    }
+
+    [NodeName("Views")]
+    [NodeCategory(BuiltinNodeCategories.REVIT_SELECTION)]
+    [NodeDescription("All views available in the current document.")]
+    [IsDesignScriptCompatible]
+    public class Views : RevitDropDownBase
+    {
+        public Views(WorkspaceModel workspaceModel) : base(workspaceModel, "Views") { }
+
+        protected override void PopulateItems()
+        {
+            var fec = new FilteredElementCollector(DocumentManager.Instance.CurrentDBDocument);
+            var views = fec.OfClass(typeof(View)).ToElements();
+
+            foreach (var v in views)
+            {
+                Items.Add(new DynamoDropDownItem(v.Name, v));
+            }
+        }
+
+        public override IEnumerable<AssociativeNode> BuildOutputAst(List<AssociativeNode> inputAstNodes)
+        {
+            AssociativeNode node;
+
+            if (SelectedIndex == -1)
+            {
+                node = AstFactory.BuildNullNode();
+            }
+            else
+            {
+                var view = Items[SelectedIndex].Item as View;
+                if (view == null)
+                {
+                    node = AstFactory.BuildNullNode();
+                }
+                else
+                {
+                    var idNode = AstFactory.BuildStringNode(view.UniqueId);
+                    var falseNode = AstFactory.BuildBooleanNode(true);
+                    
+                    node =
+                        AstFactory.BuildFunctionCall(
+                            new Func<string, bool, object>(ElementSelector.ByUniqueId),
+                            new List<AssociativeNode>() { idNode, falseNode });
+                }
+            }
+
+            return new []{AstFactory.BuildAssignment(GetAstIdentifierForOutputIndex(0), node)};
         }
     }
 }

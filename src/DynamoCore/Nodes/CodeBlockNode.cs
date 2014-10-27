@@ -3,19 +3,15 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Globalization;
 using System.Linq;
-using System.Text;
 using System.Xml;
-using GraphToDSCompiler;
 using ProtoCore.AST.AssociativeAST;
-using Dynamo.Core;
 using Dynamo.Models;
 using Dynamo.Utilities;
 using ProtoCore.BuildData;
 using ArrayNode = ProtoCore.AST.AssociativeAST.ArrayNode;
 using Node = ProtoCore.AST.Node;
 using Operator = ProtoCore.DSASM.Operator;
-using System.Windows.Media;
-using System.Windows;
+using ProtoCore.Utils;
 using Dynamo.UI;
 
 namespace Dynamo.Nodes
@@ -32,29 +28,37 @@ namespace Dynamo.Nodes
         private List<string> tempVariables = new List<string>();
         private string previewVariable = null;
         private bool shouldFocus = true;
+        public bool ShouldFocus { get { return shouldFocus; } }
+        private readonly DynamoLogger logger;
 
         private struct Formatting
         {
-            public const double InitialMargin = 7;
-            public const double VerticalMargin = 26;
+            public const double InitialMargin = 0;
             public const string ToolTipForTempVariable = "Statement Output";
         }
 
         #region Public Methods
 
-        public CodeBlockNodeModel()
+        public CodeBlockNodeModel(WorkspaceModel workspace)
+            : base(workspace)
         {
             ArgumentLacing = LacingStrategy.Disabled;
         }
 
-        public CodeBlockNodeModel(string userCode, Guid guid, WorkspaceModel workSpace, double XPos, double YPos)
+        public CodeBlockNodeModel(WorkspaceModel workspace, string userCode) 
+            : this(workspace)
+        {
+            code = userCode;
+            ProcessCodeDirect();
+        }
+
+        public CodeBlockNodeModel(string userCode, Guid guid, WorkspaceModel workspace, double xPos, double yPos) : base(workspace)
         {
             ArgumentLacing = LacingStrategy.Disabled;
-            this.X = XPos;
-            this.Y = YPos;
+            this.X = xPos;
+            this.Y = yPos;
             this.code = userCode;
             this.GUID = guid;
-            this.WorkSpace = workSpace;
             this.shouldFocus = false;
             ProcessCodeDirect();
         }
@@ -65,8 +69,6 @@ namespace Dynamo.Nodes
         /// <param name="errorMessage"> Error message to be displayed </param>
         private void ProcessError()
         {
-            dynSettings.DynamoLogger.Log("Error in Code Block Node");
-
             previewVariable = null;
         }
 
@@ -157,9 +159,9 @@ namespace Dynamo.Nodes
                         string warningMessage = string.Empty;
 
                         DisableReporting();
-                        {
-                            WorkSpace.UndoRecorder.BeginActionGroup();
 
+                        using (Workspace.UndoRecorder.BeginActionGroup())
+                        {
                             var inportConnections = new OrderedDictionary();
                             var outportConnections = new OrderedDictionary();
                             //Save the connectors so that we can recreate them at the correct positions
@@ -167,30 +169,30 @@ namespace Dynamo.Nodes
 
                             if (string.IsNullOrEmpty(code))
                             {
-                                WorkSpace.UndoRecorder.PopFromUndoGroup();
-                                WorkSpace.UndoRecorder.RecordCreationForUndo(this);
+                                Workspace.UndoRecorder.PopFromUndoGroup();
+                                Workspace.UndoRecorder.RecordCreationForUndo(this);
                             }
                             else
-                                WorkSpace.UndoRecorder.RecordModificationForUndo(this);
+                                Workspace.UndoRecorder.RecordModificationForUndo(this);
                             code = value;
                             ProcessCode(ref errorMessage, ref warningMessage);
 
                             //Recreate connectors that can be reused
                             LoadAndCreateConnectors(inportConnections, outportConnections);
-                            WorkSpace.UndoRecorder.EndActionGroup();
                         }
+
                         RaisePropertyChanged("Code");
                         RequiresRecalc = true;
                         ReportPosition();
 
-                        if (WorkSpace != null)
+                        if (Workspace != null)
                         {
-                            WorkSpace.Modified();
+                            Workspace.Modified();
                         }
 
                         EnableReporting();
 
-                        ClearError();
+                        ClearRuntimeError();
                         if (!string.IsNullOrEmpty(errorMessage))
                         {
                             Error(errorMessage);
@@ -240,7 +242,7 @@ namespace Dynamo.Nodes
             if (name == "Code")
             {
                 //Remove the UpdateValue's recording
-                this.WorkSpace.UndoRecorder.PopFromUndoGroup();
+                this.Workspace.UndoRecorder.PopFromUndoGroup();
 
                 //Since an empty Code Block Node should not exist, this checks for such instances.
                 // If an empty Code Block Node is found, it is deleted. Since the creation and deletion of 
@@ -251,13 +253,13 @@ namespace Dynamo.Nodes
                 {
                     if (this.Code == "")
                     {
-                        this.WorkSpace.UndoRecorder.PopFromUndoGroup();
+                        this.Workspace.UndoRecorder.PopFromUndoGroup();
                         Dynamo.Selection.DynamoSelection.Instance.Selection.Remove(this);
-                        this.WorkSpace.Nodes.Remove(this);
+                        this.Workspace.Nodes.Remove(this);
                     }
                     else
                     {
-                        this.WorkSpace.RecordAndDeleteModels(new System.Collections.Generic.List<ModelBase>() { this });
+                        this.Workspace.RecordAndDeleteModels(new System.Collections.Generic.List<ModelBase>() { this });
                     }
                 }
                 else
@@ -380,12 +382,12 @@ namespace Dynamo.Nodes
             RaisePropertyChanged("Code");
             RequiresRecalc = true;
 
-            if (WorkSpace != null)
+            if (Workspace != null)
             {
-                WorkSpace.Modified();
+                Workspace.Modified();
             }
 
-            ClearError();
+            ClearRuntimeError();
             if (!string.IsNullOrEmpty(errorMessage))
             {
                 Error(errorMessage);
@@ -407,7 +409,7 @@ namespace Dynamo.Nodes
             try
             {
                 ParseParam parseParam = new ParseParam(this.GUID, code);
-                if (GraphToDSCompiler.GraphUtilities.PreCompileCodeBlock(parseParam))
+                if (Workspace.DynamoModel.EngineController.TryParseCode(ref parseParam))
                 {
                     if (parseParam.ParsedNodes != null)
                     {
@@ -584,10 +586,12 @@ namespace Dynamo.Nodes
                     tooltip = Formatting.ToolTipForTempVariable;
 
                 double portCoordsY = Formatting.InitialMargin;
-                portCoordsY += visualIndex * Formatting.VerticalMargin;
+                portCoordsY += visualIndex * Configurations.CodeBlockPortHeightInPixels;
+                
                 OutPortData.Add(new PortData(string.Empty, tooltip)
                 {
-                    VerticalMargin = portCoordsY - prevPortBottom
+                    VerticalMargin = portCoordsY - prevPortBottom,
+                    Height = Configurations.CodeBlockPortHeightInPixels
                 });
 
                 // Since we compute the "delta" between the top of the current 
@@ -595,7 +599,7 @@ namespace Dynamo.Nodes
                 // down the bottom coordinate value before proceeding to the next 
                 // port.
                 // 
-                prevPortBottom = portCoordsY + Formatting.VerticalMargin;
+                prevPortBottom = portCoordsY + Configurations.CodeBlockPortHeightInPixels;
             }
         }
 
@@ -617,7 +621,7 @@ namespace Dynamo.Nodes
                     foreach (ConnectorModel connector in portModel.Connectors)
                     {
                         (inportConnections[portName] as List<PortModel>).Add(connector.Start);
-                        WorkSpace.UndoRecorder.RecordDeletionForUndo(connector);
+                        Workspace.UndoRecorder.RecordDeletionForUndo(connector);
                     }
                 }
                 else
@@ -646,7 +650,7 @@ namespace Dynamo.Nodes
                     foreach (ConnectorModel connector in portModel.Connectors)
                     {
                         (outportConnections[portName] as List<PortModel>).Add(connector.End);
-                        WorkSpace.UndoRecorder.RecordDeletionForUndo(connector);
+                        Workspace.UndoRecorder.RecordDeletionForUndo(connector);
                     }
                 }
                 else
@@ -682,10 +686,9 @@ namespace Dynamo.Nodes
                         {
                             PortType p;
                             NodeModel startNode = startPortModel.Owner;
-                            ConnectorModel connector = ConnectorModel.Make(startNode, this,
-                                startNode.GetPortIndexAndType(startPortModel, out p), i, PortType.INPUT);
-                            this.WorkSpace.Connectors.Add(connector);
-                            this.WorkSpace.UndoRecorder.RecordCreationForUndo(connector);
+                            ConnectorModel connector = this.Workspace.AddConnection(startNode, this,
+                                startNode.GetPortIndexAndType(startPortModel, out p), i);
+                            this.Workspace.UndoRecorder.RecordCreationForUndo(connector);
                         }
                         outportConnections[varName] = null;
                     }
@@ -713,10 +716,9 @@ namespace Dynamo.Nodes
                         {
                             PortType p;
                             NodeModel endNode = endPortModel.Owner;
-                            ConnectorModel connector = ConnectorModel.Make(this, endNode, i,
+                            var connector = this.Workspace.AddConnection(this, endNode, i,
                                 endNode.GetPortIndexAndType(endPortModel, out p), PortType.INPUT);
-                            this.WorkSpace.Connectors.Add(connector);
-                            this.WorkSpace.UndoRecorder.RecordCreationForUndo(connector);
+                            this.Workspace.UndoRecorder.RecordCreationForUndo(connector);
                         }
                         outportConnections[varName] = null;
                     }
@@ -743,10 +745,9 @@ namespace Dynamo.Nodes
                     {
                         PortType p;
                         NodeModel endNode = endPortModel.Owner;
-                        ConnectorModel connector = ConnectorModel.Make(this, endNode, index,
+                        var connector = this.Workspace.AddConnection(this, endNode, index,
                             endNode.GetPortIndexAndType(endPortModel, out p), PortType.INPUT);
-                        WorkSpace.Connectors.Add(connector);
-                        WorkSpace.UndoRecorder.RecordCreationForUndo(connector);
+                        Workspace.UndoRecorder.RecordCreationForUndo(connector);
                     }
                     outportConnections[index] = null;
                     undefinedIndices.Remove(index);
@@ -773,14 +774,13 @@ namespace Dynamo.Nodes
                 {
                     PortType p;
                     NodeModel endNode = endPortModel.Owner;
-                    ConnectorModel connector = ConnectorModel.Make(
+                    ConnectorModel connector = this.Workspace.AddConnection(
                         this,
                         endNode,
                         undefinedIndices[0],
                         endNode.GetPortIndexAndType(endPortModel, out p),
                         PortType.INPUT);
-                    WorkSpace.Connectors.Add(connector);
-                    WorkSpace.UndoRecorder.RecordCreationForUndo(connector);
+                    Workspace.UndoRecorder.RecordCreationForUndo(connector);
                 }
                 undefinedIndices.RemoveAt(0);
                 unusedConnections.RemoveAt(0);

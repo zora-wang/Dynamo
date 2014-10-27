@@ -10,6 +10,7 @@ using System.Xml.Serialization;
 using System.Text;
 using System.IO;
 using System.Xml;
+using System.Linq;
 
 namespace ProtoFFI
 {
@@ -327,6 +328,26 @@ namespace ProtoFFI
         }
 
         /// <summary>
+        /// Marshal an object to a StackValue
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="context"></param>
+        /// <param name="dsi"></param>
+        /// <returns></returns>
+        protected StackValue MarshalToStackValue(object obj, ProtoCore.Runtime.Context context, Interpreter dsi)
+        {
+            if (obj is StackValue)
+            {
+                return (StackValue)obj;
+            }
+            else
+            {
+                ProtoCore.Type dsType = GetApproxDSType(obj);
+                return primitiveMarshaler.Marshal(obj, context, dsi, dsType);
+            }
+        }
+
+        /// <summary>
         /// 
         /// </summary>
         /// <param name="collection"></param>
@@ -341,13 +362,12 @@ namespace ProtoFFI
 
             foreach (var item in collection)
             {
-                ProtoCore.Type dsType = GetApproxDSType(item);
-                StackValue value = primitiveMarshaler.Marshal(item, context, dsi, dsType);
-                sv[index] = value;
+                sv[index] = MarshalToStackValue(item, context, dsi);
+                dsi.runtime.rmem.Heap.IncRefCount(sv[index]);
                 ++index;
             }
 
-            var retVal = dsi.runtime.rmem.BuildArray(sv);
+            var retVal = dsi.runtime.rmem.Heap.AllocateArray(sv);
             return retVal;
         }
 
@@ -357,12 +377,12 @@ namespace ProtoFFI
 
             foreach (var item in enumerable)
             {
-                ProtoCore.Type dsType = GetApproxDSType(item);
-                StackValue value = primitiveMarshaler.Marshal(item, context, dsi, dsType);
-                svs.Add(value);
+                svs.Add(MarshalToStackValue(item, context, dsi));
             }
 
-            var retVal = dsi.runtime.rmem.BuildArray(svs.ToArray());
+            var heap = dsi.runtime.rmem.Heap;
+            svs.ForEach(sv => heap.IncRefCount(sv));
+            var retVal = heap.AllocateArray(svs);
             return retVal;
         }
 
@@ -370,7 +390,7 @@ namespace ProtoFFI
         {
             var core = dsi.runtime.Core;
 
-            var array = dsi.runtime.rmem.BuildArray(new StackValue[] { });
+            var array = dsi.runtime.rmem.Heap.AllocateArray(Enumerable.Empty<StackValue>());
             HeapElement ho = ArrayUtils.GetHeapElement(array, core);
             ho.Dict = new Dictionary<StackValue, StackValue>(new StackValueComparer(core));
 
@@ -378,12 +398,10 @@ namespace ProtoFFI
             {
                 var value = dictionary[key];
 
-                ProtoCore.Type keyType = GetApproxDSType(key);
-                StackValue dsKey = primitiveMarshaler.Marshal(key, context, dsi, keyType);
+                StackValue dsKey = MarshalToStackValue(key, context, dsi);
                 GCUtils.GCRetain(dsKey, core);
 
-                ProtoCore.Type valueType = GetApproxDSType(value);
-                StackValue dsValue = primitiveMarshaler.Marshal(value, context, dsi, valueType);
+                StackValue dsValue = MarshalToStackValue(value, context, dsi);
                 GCUtils.GCRetain(dsValue, core);
 
                 ho.Dict[dsKey] = dsValue;
@@ -405,25 +423,28 @@ namespace ProtoFFI
         /// <returns></returns>
         protected T[] UnMarshal<T>(StackValue dsObject, ProtoCore.Runtime.Context context, Interpreter dsi)
         {
-            StackValue[] arr = dsi.runtime.rmem.GetArrayElements(dsObject);
-            int count = arr.Length;
-            T[] array = new T[count];
+            var dsElements = ArrayUtils.GetValues(dsObject, dsi.runtime.Core);
+            var result = new List<T>();
             Type objType = typeof(T);
-            for (int idx = 0; idx < count; ++idx)
+
+            foreach (var elem in dsElements)
             {
-                object obj = primitiveMarshaler.UnMarshal(arr[idx], context, dsi, objType);
+                object obj = primitiveMarshaler.UnMarshal(elem, context, dsi, objType);
                 if (null == obj)
                 {
                     if (objType.IsValueType)
-                        throw new System.InvalidCastException(string.Format("Null value cannot be cast to {0}", objType.Name));
+                        throw new System.InvalidCastException(
+                            string.Format("Null value cannot be cast to {0}", objType.Name));
 
-                    array[idx] = default(T);
+                    result.Add(default(T));
                 }
                 else
-                    array[idx] = (T)obj;
+                {
+                    result.Add((T)obj);
+                }
             }
 
-            return array;
+            return result.ToArray();
         }
 
         /// <summary>
@@ -455,9 +476,7 @@ namespace ProtoFFI
                 }
             }
 
-            int ptr = (int)dsObject.opdata;
-            HeapElement hs = dsi.runtime.rmem.Heap.Heaplist[ptr];
-            int count = hs.VisibleSize;
+            HeapElement hs = dsi.runtime.rmem.Heap.GetHeapElement(dsObject);
 
             //  use arraylist instead of object[], this allows us to correctly capture 
             //  the type of objects being passed
@@ -466,9 +485,9 @@ namespace ProtoFFI
             var elementType = arrayType.GetElementType();
             if (elementType == null)
                 elementType = typeof(object);
-            for (int idx = 0; idx < count; ++idx)
+            foreach (var sv in hs.VisibleItems)
             {
-                object obj = primitiveMarshaler.UnMarshal(hs.Stack[idx], context, dsi, elementType);
+                object obj = primitiveMarshaler.UnMarshal(sv, context, dsi, elementType);
                 arrList.Add(obj);
             }
 
@@ -965,22 +984,11 @@ namespace ProtoFFI
                     type = classTable.IndexOf(GetTypeName(objType));
             }
 
-            int ptr = ProtoCore.DSASM.Constants.kInvalidPointer;
-            lock (core.Heap.cslock)
-            {
-                ptr = core.Heap.Allocate(classTable.ClassNodes[type].size);
-            }
-
             MetaData metadata;
             metadata.type = type;
-            StackValue retval = StackValue.BuildPointer(ptr, metadata);
+            StackValue retval = core.Heap.AllocatePointer(classTable.ClassNodes[type].size, metadata);
             BindObjects(obj, retval);
             dsi.runtime.Core.FFIPropertyChangedMonitor.AddFFIObject(obj);
-
-            //If we are in debug mode, populate primary properties if there is any.
-            //if (core.Options.IDEDebugMode)
-            //    PopulatePrimaryProperties(obj, retval, context, dsi, type);
-
             return retval;
         }
 
@@ -1000,7 +1008,7 @@ namespace ProtoFFI
                 return;
 
             var core = dsi.runtime.Core;
-            StackValue[] svs = core.Heap.Heaplist[(int)dsObject.opdata].Stack;
+            StackValue[] svs = core.Heap.GetHeapElement(dsObject).Stack;
             for (int ix = 0; ix < svs.Length; ++ix)
             {
                 SymbolNode symbol = core.ClassTable.ClassNodes[classIndex].symbols.symbolList[ix];

@@ -11,12 +11,12 @@ using NUnit.Framework;
 namespace Dynamo.Tests
 {
     [TestFixture]
-    class FileWritingTests : DSEvaluationUnitTest
+    class FileWritingTests : DSEvaluationViewModelUnitTest
     {
         [Test]
         public void FileWriter()
         {
-            var model = dynSettings.Controller.DynamoModel;
+            var model = ViewModel.Model;
 
             string openPath = Path.Combine(GetTestDirectory(), @"core\files\FileWriter.dyn");
             RunModel(openPath);
@@ -29,7 +29,7 @@ namespace Dynamo.Tests
             string fullPath = Path.Combine(TempFolder, "filewriter.txt");
             path.Value = fullPath;
 
-            Controller.RunExpression(null);
+            ViewModel.Model.RunExpression();
 
             AssertPreviewValue("48c04164-6435-4124-9fe6-b3319ef177da", true);
         }
@@ -37,7 +37,7 @@ namespace Dynamo.Tests
         [Test]
         public void ImageFileWriter()
         {
-            var model = dynSettings.Controller.DynamoModel;
+            var model = ViewModel.Model;
 
             string openPath = Path.Combine(GetTestDirectory(), @"core\files\ImageFileWriter.dyn");
             RunModel(openPath);
@@ -51,9 +51,30 @@ namespace Dynamo.Tests
             var path = model.CurrentWorkspace.NodeFromWorkspace<Dynamo.Nodes.StringInput>("84693240-90f3-45f3-9cb3-88207499f0bc");
             path.Value = TempFolder;
 
-            Controller.RunExpression(null);
+            ViewModel.Model.RunExpression();
 
             AssertPreviewValue("48c04164-6435-4124-9fe6-b3319ef177da", true);
+        }
+    }
+
+    [TestFixture]
+    public class ZeroTouchMigrationFileTests : DSEvaluationViewModelUnitTest
+    {
+        [Test]
+        public void TestZeroTouchMigrationFile()
+        {
+            var model = ViewModel.Model;
+
+            string openPath = Path.Combine(GetTestDirectory(), @"core\files\MigrationHintGetClosestPoint.dyn");
+            RunModel(openPath);
+
+            // check all the nodes and connectors are loaded
+            Assert.AreEqual(15, model.CurrentWorkspace.Connectors.Count);
+            Assert.AreEqual(9, model.CurrentWorkspace.Nodes.Count);
+
+            ViewModel.Model.RunExpression();
+
+            AssertPreviewValue("8527c4f5-f8e1-491e-b446-64c495fa1848", 4.54606056566195);
         }
     }
 }
