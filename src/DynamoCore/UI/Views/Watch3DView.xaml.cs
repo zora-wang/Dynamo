@@ -21,7 +21,6 @@ using System.Windows.Threading;
 using Autodesk.DesignScript.Geometry;
 
 using Dynamo.DSEngine;
-using Dynamo.Utilities;
 using Dynamo.ViewModels;
 
 using DynamoUtilities;
@@ -80,7 +79,7 @@ namespace Dynamo.Controls
         private List<BillboardTextItem> _text = new List<BillboardTextItem>();
         private BitmapImage colorMap;
         private string colorMapPath;
-        private Dictionary<Color,Point> colorDictionary;
+        private Dictionary<System.Drawing.Color,Point> colorDictionary;
 
         #endregion
 
@@ -246,10 +245,11 @@ namespace Dynamo.Controls
             Debug.WriteLine("Watch 3D view unloaded.");
 
             //check this for null so the designer can load the preview
-            if (dynSettings.Controller != null)
+            if (DataContext is DynamoViewModel)
             {
-                dynSettings.Controller.VisualizationManager.RenderComplete -= VisualizationManagerRenderComplete;
-                dynSettings.Controller.VisualizationManager.ResultsReadyToVisualize -= VisualizationManager_ResultsReadyToVisualize;
+                var vm = DataContext as DynamoViewModel;
+                vm.VisualizationManager.RenderComplete -= VisualizationManagerRenderComplete;
+                vm.VisualizationManager.ResultsReadyToVisualize -= VisualizationManager_ResultsReadyToVisualize;
             }
         }
 
@@ -260,16 +260,12 @@ namespace Dynamo.Controls
             MouseRightButtonUp += new MouseButtonEventHandler(view_MouseRightButtonUp);
             PreviewMouseRightButtonDown += new MouseButtonEventHandler(view_PreviewMouseRightButtonDown);
 
-            var mi = new MenuItem { Header = "Zoom to Fit" };
-            mi.Click += new RoutedEventHandler(mi_Click);
-
-            MainContextMenu.Items.Add(mi);
-
             //check this for null so the designer can load the preview
-            if (dynSettings.Controller != null)
+            if (DataContext is DynamoViewModel)
             {
-                dynSettings.Controller.VisualizationManager.RenderComplete += VisualizationManagerRenderComplete;
-                dynSettings.Controller.VisualizationManager.ResultsReadyToVisualize += VisualizationManager_ResultsReadyToVisualize;
+                var vm = DataContext as DynamoViewModel;
+                vm.VisualizationManager.RenderComplete += VisualizationManagerRenderComplete;
+                vm.VisualizationManager.ResultsReadyToVisualize += VisualizationManager_ResultsReadyToVisualize;
             }
 
             DrawGrid();
@@ -282,9 +278,13 @@ namespace Dynamo.Controls
         /// <param name="e"></param>
         private void VisualizationManager_ResultsReadyToVisualize(object sender, VisualizationEventArgs e)
         {
-            //Dispatcher.Invoke(new Action<VisualizationEventArgs>(RenderDrawables), DispatcherPriority.Render,
-            //                    new object[] {e});
-            RenderDrawables(e);
+            if (CheckAccess())
+                RenderDrawables(e);
+            else
+            {
+                // Scheduler invokes ResultsReadyToVisualize on background thread.
+                Dispatcher.BeginInvoke(new Action(() => RenderDrawables(e)));
+            }
         }
 
         /// <summary>
@@ -296,11 +296,6 @@ namespace Dynamo.Controls
         /// <param name="e"></param>
         private void VisualizationManagerRenderComplete(object sender, RenderCompletionEventArgs e)
         {
-            if (dynSettings.Controller == null)
-            {
-                return;
-            }
-
             Dispatcher.Invoke(new Action(delegate
             {
                 var vm = (IWatchViewModel) DataContext;
@@ -358,13 +353,9 @@ namespace Dynamo.Controls
             }
         }
 
-        protected void mi_Click(object sender, RoutedEventArgs e)
+        protected void OnZoomToFitClicked(object sender, RoutedEventArgs e)
         {
             watch_view.ZoomExtents();
-        }
-
-        private void MainContextMenu_ContextMenuOpening(object sender, ContextMenuEventArgs e)
-        {
         }
 
         void view_MouseButtonIgnore(object sender, MouseButtonEventArgs e)
@@ -431,7 +422,7 @@ namespace Dynamo.Controls
         /// the associated node. Visualizations for the background preview will return an empty id.
         /// </summary>
         /// <param name="e"></param>
-        private void RenderDrawables(VisualizationEventArgs e)
+        public void RenderDrawables(VisualizationEventArgs e)
         {
             //check the id, if the id is meant for another watch,
             //then ignore it
@@ -443,11 +434,6 @@ namespace Dynamo.Controls
             var sw = new Stopwatch();
             sw.Start();
 
-            // Replace this list of colors with one created from
-            // the colors in the render packages. Use a linear
-            // gradient of colors to test.
-            colorDictionary = GenerateColorMap(CreateLinearGradient(Colors.Yellow, Colors.Purple));
-            
             Points = null;
             Lines = null;
             Mesh = null;
@@ -464,10 +450,19 @@ namespace Dynamo.Controls
             var packages = e.Packages.Where(x => x.Selected == false)
                 .Where(rp=>rp.TriangleVertices.Count % 9 == 0)
                 .ToArray();
+
             var selPackages = e.Packages
                 .Where(x => x.Selected)
                 .Where(rp => rp.TriangleVertices.Count % 9 == 0)
                 .ToArray();
+
+            // Replace this list of colors with one created from
+            // the colors in the render packages.
+            if (colorDictionary != null)
+            {
+                colorDictionary.Clear();
+            }
+            colorDictionary = GenerateColorMap(packages);
 
             //pre-size the points collections
             var pointsCount = packages.Select(x => x.PointVertices.Count/3).Sum();
@@ -541,6 +536,7 @@ namespace Dynamo.Controls
             vertsSel.Freeze();
             normsSel.Freeze();
             trisSel.Freeze();
+            textCoords.Freeze();
 
             Dispatcher.Invoke(new SendGraphicsToViewDelegate(SendGraphicsToView), DispatcherPriority.Render,
                                new object[] {points, pointsSelected, lines, linesSelected, redLines, 
@@ -666,6 +662,7 @@ namespace Dynamo.Controls
             ICollection<Point3D> points, ICollection<Vector3D> norms,
             ICollection<int> tris, ICollection<Point> textCoords)
         {
+            var colorCount = 0;
             for (int i = 0; i < p.TriangleVertices.Count; i+=3)
             {
                 var new_point = new Point3D(p.TriangleVertices[i],
@@ -676,43 +673,31 @@ namespace Dynamo.Controls
                                             p.TriangleNormals[i + 1],
                                             p.TriangleNormals[i + 2]);
 
-                //find a matching point
-                //compare the angle between the normals
-                //to discern a 'break' angle for adjacent faces
-                //int foundIndex = -1;
-                //for (int j = 0; j < points.Count; j++)
-                //{
-                //    var testPt = points[j];
-                //    var testNorm = norms[j];
-                //    var ang = Vector3D.AngleBetween(normal, testNorm);
+                if (p.TriangleVertexColors.Count >= colorCount + 4 && !p.Selected)
+                {
+                    var r = p.TriangleVertexColors[colorCount];
+                    var g = p.TriangleVertexColors[colorCount + 1];
+                    var b = p.TriangleVertexColors[colorCount + 2];
+                    var a = p.TriangleVertexColors[colorCount + 3];
 
-                //    if (new_point.X == testPt.X &&
-                //        new_point.Y == testPt.Y &&
-                //        new_point.Z == testPt.Z &&
-                //        ang > 90.0000)
-                //    {
-                //        foundIndex = j;
-                //        break;
-                //    }
-                //}
+                    var c = System.Drawing.Color.FromArgb(a, r, g, b);
+                    if (colorDictionary.ContainsKey(c))
+                    {
+                        textCoords.Add(colorDictionary[c]);
+                    }
 
-                //if (foundIndex != -1)
-                //{
-                //    tris.Add(foundIndex);
-                //    continue;
-                //}
-                    
+                    colorCount += 4;
+                }
+                else
+                {
+                    // If there is no equivalent color, then
+                    // add the default.
+                    textCoords.Add(new Point());
+                }
+
                 tris.Add(points.Count);
                 points.Add(new_point);
                 norms.Add(normal);
-
-                // For testing, randomly select a color from the 
-                // color dictionary. Replace this with a lookup
-                // of the UV with a color Key.
-                var rand = new Random();
-                var values = colorDictionary.Values.ToList();
-                int size = colorDictionary.Count;
-                textCoords.Add(values[rand.Next(size)]);
             }
 
             if (tris.Count > 0)
@@ -734,71 +719,98 @@ namespace Dynamo.Controls
             return sb.ToString();
         }
 
-        private HitTestResultBehavior ResultCallback(HitTestResult result)
+        //private HitTestResultBehavior ResultCallback(HitTestResult result)
+        //{
+        //    // Did we hit 3D?
+        //    var rayResult = result as RayHitTestResult;
+        //    if (rayResult != null)
+        //    {
+        //        // Did we hit a MeshGeometry3D?
+        //        var rayMeshResult =
+        //            rayResult as RayMeshGeometry3DHitTestResult;
+
+        //        if (rayMeshResult != null)
+        //        {
+        //            // Yes we did!
+        //            var pt = rayMeshResult.PointHit;
+        //            ((IWatchViewModel)DataContext).SelectVisualizationInViewCommand.Execute(new double[] { pt.X, pt.Y, pt.Z });
+        //            return HitTestResultBehavior.Stop;
+        //        }
+        //    }
+
+        //    return HitTestResultBehavior.Continue;
+        //}
+
+        private Dictionary<System.Drawing.Color, Point> GenerateColorMap(IEnumerable<RenderPackage> packages)
         {
-            // Did we hit 3D?
-            var rayResult = result as RayHitTestResult;
-            if (rayResult != null)
-            {
-                // Did we hit a MeshGeometry3D?
-                var rayMeshResult =
-                    rayResult as RayMeshGeometry3DHitTestResult;
-
-                if (rayMeshResult != null)
-                {
-                    // Yes we did!
-                    var pt = rayMeshResult.PointHit;
-                    ((IWatchViewModel)DataContext).SelectVisualizationInViewCommand.Execute(new double[] { pt.X, pt.Y, pt.Z });
-                    return HitTestResultBehavior.Stop;
-                }
-            }
-
-            return HitTestResultBehavior.Continue;
-        }
-
-        private Dictionary<Color, Point> GenerateColorMap(IEnumerable<Color> colors)
-        {
-            var map = new Dictionary<Color, Point>();
-
             const int w = 512;
             const int h = 512;
-            const int block = 8;
+            const int blockSize = 1;
+
+            // Build a drawing color from a media color;
+            var tmpColor = Colors.WhiteSmoke;
+            var defaultColor = System.Drawing.Color.FromArgb(255, tmpColor.R, tmpColor.G, tmpColor.B);
+
+            // Create the color map and add the default color at the 0,0
+            var map = new Dictionary<System.Drawing.Color, Point> { { defaultColor, GetTextureCoordBlockCenter(0, 0, w, h, blockSize) } };
+
+            // Make an image with squares of each color
+            // Start at one module in because we've put the default
+            // color in the first cell.
             var bmp = new Bitmap(w, h);
             using (var gfx = Graphics.FromImage(bmp))
             {
-                // Make an image with 8x8 squares of each color
-                var x = 0;
+                var x = blockSize;
                 var y = 0;
-                foreach (var color in colors)
+
+                foreach (var rp in packages)
                 {
-                    if (map.ContainsKey(color))
+                    if (rp.TriangleVertexColors.Count%4 != 0)
                     {
-                        continue;
+                        throw new Exception(
+                            "Vertex colors does not have the required number of values.");
                     }
 
-                    using (
-                        var brush =
-                            new SolidBrush(
-                                System.Drawing.Color.FromArgb(color.A, color.R, color.G, color.B)))
+                    for (int i = 0; i < rp.TriangleVertexColors.Count; i += 4)
                     {
-                        gfx.FillRectangle(brush, x, y, block, block);
+                        var r = rp.TriangleVertexColors[i];
+                        var g = rp.TriangleVertexColors[i + 1];
+                        var b = rp.TriangleVertexColors[i + 2];
+                        var a = rp.TriangleVertexColors[i + 3];
 
-                        // Get a UV coordinate right in the
-                        // middle of the block.
-                        var u = (double)((x + block/2))/(double)w;
-                        var v = (double)((y + block/2))/(double)h;
-                        map.Add(color, new Point(u,v));
-                    }
+                        // Add the color to the map at a dummy point.
+                        var c = System.Drawing.Color.FromArgb(a, r, g, b);
+                        
+                        if (map.ContainsKey(c)) continue;
 
-                    x += 8;
-                    if (x >= 512)
-                    {
+                        using (
+                            var brush =
+                                new SolidBrush(
+                                    System.Drawing.Color.FromArgb(
+                                        c.A,
+                                        c.R,
+                                        c.G,
+                                        c.B)))
+                        {
+                            gfx.FillRectangle(brush, x, y, blockSize, blockSize);
+
+                            var uv = GetTextureCoordBlockCenter(x, y, w, h, blockSize);
+
+                            map.Add(c, uv);
+                        }
+
+                        x += blockSize;
+                        if (x < 512) continue;
+
                         x = 0;
-                        y += 8;
+                        y += blockSize;
                     }
                 }
             }
 
+            // Build a BitmapImage from a memory stream,
+            // and set the property value that is bound
+            // to the texture map.
             using (var memory = new MemoryStream())
             {
                 var bitmapImage = new BitmapImage();
@@ -813,6 +825,15 @@ namespace Dynamo.Controls
             }
 
             return map;
+        }
+
+        private static Point GetTextureCoordBlockCenter(int x, int y, int w, int h, int blockSize)
+        {
+            // Get a UV coordinate right in the
+            // middle of the block.
+            var u = (double)((x + blockSize/2))/(double)w;
+            var v = (double)((y + blockSize/2))/(double)h;
+            return new Point(u,v);
         }
 
         private static IEnumerable<Color> CreateLinearGradient(Color minColor, Color maxColor)
