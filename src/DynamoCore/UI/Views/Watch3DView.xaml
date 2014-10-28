@@ -116,14 +116,17 @@
                 <HelixToolkit:LinesVisual3D Thickness="1" Color="{StaticResource lineColor}" Points="{Binding Path=Lines, Mode=TwoWay}"></HelixToolkit:LinesVisual3D>
                 <HelixToolkit:PointsVisual3D Size="8" Color="Cyan" Points="{Binding Path=PointsSelected, Mode=TwoWay}"></HelixToolkit:PointsVisual3D>
                 <HelixToolkit:LinesVisual3D Thickness="3" Color="Cyan" Points="{Binding Path=LinesSelected, Mode=TwoWay}"></HelixToolkit:LinesVisual3D>
-                <ModelVisual3D>
+                <ModelVisual3D >
                     <ModelVisual3D.Content>
                         <GeometryModel3D Geometry="{Binding Mesh}">
                             <GeometryModel3D.Material>
                                 <MaterialGroup>
                                     <DiffuseMaterial>
                                         <DiffuseMaterial.Brush>
-                                            <SolidColorBrush Color="WhiteSmoke" Opacity="1"/>
+                                            <ImageBrush 
+                                                ViewportUnits="Absolute" 
+                                                ImageSource="{Binding ColorMap}"/>
+                                            <!--<SolidColorBrush Color="WhiteSmoke" Opacity="1"/>-->
                                         </DiffuseMaterial.Brush>
                                     </DiffuseMaterial>
                                     <SpecularMaterial SpecularPower="85">
@@ -137,7 +140,10 @@
                                 <MaterialGroup>
                                     <DiffuseMaterial>
                                         <DiffuseMaterial.Brush>
-                                            <SolidColorBrush Color="WhiteSmoke" Opacity="1"/>
+                                            <ImageBrush 
+                                                ViewportUnits="Absolute" 
+                                                ImageSource="{Binding ColorMap}"/>
+                                            <!--<SolidColorBrush Color="WhiteSmoke" Opacity="1"/>-->
                                         </DiffuseMaterial.Brush>
                                     </DiffuseMaterial>
                                     <SpecularMaterial SpecularPower="85">

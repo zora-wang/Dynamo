@@ -2,22 +2,48 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
 using System.Windows.Threading;
+
+using Autodesk.DesignScript.Geometry;
+
 using Dynamo.DSEngine;
 using Dynamo.ViewModels;
+
+using DynamoUtilities;
+
 using HelixToolkit.Wpf;
 using Color = System.Windows.Media.Color;
+using MenuItem = System.Windows.Controls.MenuItem;
+using PixelFormat = System.Drawing.Imaging.PixelFormat;
+using Point = System.Windows.Point;
+using UserControl = System.Windows.Controls.UserControl;
 
 namespace Dynamo.Controls
 {
+    public delegate void SendGraphicsToViewDelegate(
+        Point3DCollection points, Point3DCollection pointsSelected,
+        Point3DCollection lines, Point3DCollection linesSelected, Point3DCollection redLines,
+        Point3DCollection greenLines,
+        Point3DCollection blueLines, Point3DCollection verts, Vector3DCollection norms,
+        Int32Collection tris,
+        Point3DCollection vertsSel, Vector3DCollection normsSel, Int32Collection trisSel,
+        MeshGeometry3D mesh,
+        MeshGeometry3D meshSel, List<BillboardTextItem> text, PointCollection textCoords);
+
     /// <summary>
     /// Interaction logic for WatchControl.xaml
     /// </summary>
@@ -51,6 +77,9 @@ namespace Dynamo.Controls
         private MeshGeometry3D _meshSelected = new MeshGeometry3D();
         private List<Point3D> _grid = new List<Point3D>();
         private List<BillboardTextItem> _text = new List<BillboardTextItem>();
+        private BitmapImage colorMap;
+        private string colorMapPath;
+        private Dictionary<System.Drawing.Color,Point> colorDictionary;
 
         #endregion
 
@@ -174,6 +203,16 @@ namespace Dynamo.Controls
         /// during render.
         /// </summary>
         public int MeshCount { get; set; }
+
+        public BitmapImage ColorMap
+        {
+            get { return colorMap; }
+            set
+            {
+                colorMap = value;
+                NotifyPropertyChanged("ColorMap");
+            }
+        }
 
         #endregion
 
@@ -411,10 +450,19 @@ namespace Dynamo.Controls
             var packages = e.Packages.Where(x => x.Selected == false)
                 .Where(rp=>rp.TriangleVertices.Count % 9 == 0)
                 .ToArray();
+
             var selPackages = e.Packages
                 .Where(x => x.Selected)
                 .Where(rp => rp.TriangleVertices.Count % 9 == 0)
                 .ToArray();
+
+            // Replace this list of colors with one created from
+            // the colors in the render packages.
+            if (colorDictionary != null)
+            {
+                colorDictionary.Clear();
+            }
+            colorDictionary = GenerateColorMap(packages);
 
             //pre-size the points collections
             var pointsCount = packages.Select(x => x.PointVertices.Count/3).Sum();
@@ -450,19 +498,20 @@ namespace Dynamo.Controls
             var normsSel = new Vector3DCollection(meshVertSelCount);
             var tris = new Int32Collection(meshVertCount);
             var trisSel = new Int32Collection(meshVertSelCount);
-                
+            var textCoords = new PointCollection();
+
             foreach (var package in packages)
             {
                 ConvertPoints(package, points, text);
                 ConvertLines(package, lines, redLines, greenLines, blueLines, text);
-                ConvertMeshes(package, verts, norms, tris);
+                ConvertMeshes(package, verts, norms, tris, textCoords);
             }
 
             foreach (var package in selPackages)
             {
                 ConvertPoints(package, pointsSelected, text);
                 ConvertLines(package, linesSelected, redLines, greenLines, blueLines, text);
-                ConvertMeshes(package, vertsSel, normsSel, trisSel);
+                ConvertMeshes(package, vertsSel, normsSel, trisSel, textCoords);
             }
 
             sw.Stop();
@@ -487,22 +536,19 @@ namespace Dynamo.Controls
             vertsSel.Freeze();
             normsSel.Freeze();
             trisSel.Freeze();
+            textCoords.Freeze();
 
-            Dispatcher.Invoke(new Action<Point3DCollection, Point3DCollection,
-                Point3DCollection, Point3DCollection, Point3DCollection, Point3DCollection,
-                Point3DCollection, Point3DCollection, Vector3DCollection, Int32Collection, 
-                Point3DCollection, Vector3DCollection, Int32Collection, MeshGeometry3D,
-                MeshGeometry3D, List<BillboardTextItem>>(SendGraphicsToView), DispatcherPriority.Render,
+            Dispatcher.Invoke(new SendGraphicsToViewDelegate(SendGraphicsToView), DispatcherPriority.Render,
                                new object[] {points, pointsSelected, lines, linesSelected, redLines, 
                                    greenLines, blueLines, verts, norms, tris, vertsSel, normsSel, 
-                                   trisSel, mesh, meshSel, text});
+                                   trisSel, mesh, meshSel, text, textCoords});
         }
 
         private void SendGraphicsToView(Point3DCollection points, Point3DCollection pointsSelected,
             Point3DCollection lines, Point3DCollection linesSelected, Point3DCollection redLines, Point3DCollection greenLines,
             Point3DCollection blueLines, Point3DCollection verts, Vector3DCollection norms, Int32Collection tris,
             Point3DCollection vertsSel, Vector3DCollection normsSel, Int32Collection trisSel, MeshGeometry3D mesh,
-            MeshGeometry3D meshSel, List<BillboardTextItem> text)
+            MeshGeometry3D meshSel, List<BillboardTextItem> text, PointCollection textCoords)
         {
             Points = points;
             PointsSelected = pointsSelected;
@@ -511,12 +557,16 @@ namespace Dynamo.Controls
             XAxes = redLines;
             YAxes = greenLines;
             ZAxes = blueLines;
+
             mesh.Positions = verts;
             mesh.Normals = norms;
             mesh.TriangleIndices = tris;
+            mesh.TextureCoordinates = textCoords;
+
             meshSel.Positions = vertsSel;
             meshSel.Normals = normsSel;
             meshSel.TriangleIndices = trisSel;
+            
             Mesh = mesh;
             MeshSelected = meshSel;
             Text = text;
@@ -610,8 +660,9 @@ namespace Dynamo.Controls
 
         private void ConvertMeshes(RenderPackage p,
             ICollection<Point3D> points, ICollection<Vector3D> norms,
-            ICollection<int> tris)
+            ICollection<int> tris, ICollection<Point> textCoords)
         {
+            var colorCount = 0;
             for (int i = 0; i < p.TriangleVertices.Count; i+=3)
             {
                 var new_point = new Point3D(p.TriangleVertices[i],
@@ -621,7 +672,29 @@ namespace Dynamo.Controls
                 var normal = new Vector3D(p.TriangleNormals[i],
                                             p.TriangleNormals[i + 1],
                                             p.TriangleNormals[i + 2]);
-                    
+
+                if (p.TriangleVertexColors.Count >= colorCount + 4 && !p.Selected)
+                {
+                    var r = p.TriangleVertexColors[colorCount];
+                    var g = p.TriangleVertexColors[colorCount + 1];
+                    var b = p.TriangleVertexColors[colorCount + 2];
+                    var a = p.TriangleVertexColors[colorCount + 3];
+
+                    var c = System.Drawing.Color.FromArgb(a, r, g, b);
+                    if (colorDictionary.ContainsKey(c))
+                    {
+                        textCoords.Add(colorDictionary[c]);
+                    }
+
+                    colorCount += 4;
+                }
+                else
+                {
+                    // If there is no equivalent color, then
+                    // add the default.
+                    textCoords.Add(new Point());
+                }
+
                 tris.Add(points.Count);
                 points.Add(new_point);
                 norms.Add(normal);
@@ -644,6 +717,138 @@ namespace Dynamo.Controls
                 sb.AppendFormat("[{0}]", splits[i]);
             }
             return sb.ToString();
+        }
+
+        //private HitTestResultBehavior ResultCallback(HitTestResult result)
+        //{
+        //    // Did we hit 3D?
+        //    var rayResult = result as RayHitTestResult;
+        //    if (rayResult != null)
+        //    {
+        //        // Did we hit a MeshGeometry3D?
+        //        var rayMeshResult =
+        //            rayResult as RayMeshGeometry3DHitTestResult;
+
+        //        if (rayMeshResult != null)
+        //        {
+        //            // Yes we did!
+        //            var pt = rayMeshResult.PointHit;
+        //            ((IWatchViewModel)DataContext).SelectVisualizationInViewCommand.Execute(new double[] { pt.X, pt.Y, pt.Z });
+        //            return HitTestResultBehavior.Stop;
+        //        }
+        //    }
+
+        //    return HitTestResultBehavior.Continue;
+        //}
+
+        private Dictionary<System.Drawing.Color, Point> GenerateColorMap(IEnumerable<RenderPackage> packages)
+        {
+            const int w = 512;
+            const int h = 512;
+            const int blockSize = 1;
+
+            // Build a drawing color from a media color;
+            var tmpColor = Colors.WhiteSmoke;
+            var defaultColor = System.Drawing.Color.FromArgb(255, tmpColor.R, tmpColor.G, tmpColor.B);
+
+            // Create the color map and add the default color at the 0,0
+            var map = new Dictionary<System.Drawing.Color, Point> { { defaultColor, GetTextureCoordBlockCenter(0, 0, w, h, blockSize) } };
+
+            // Make an image with squares of each color
+            // Start at one module in because we've put the default
+            // color in the first cell.
+            var bmp = new Bitmap(w, h);
+            using (var gfx = Graphics.FromImage(bmp))
+            {
+                gfx.FillRectangle(new SolidBrush(System.Drawing.Color.FromArgb(255,255,255,255)), 0,0,w,h);
+                var x = blockSize;
+                var y = 0;
+
+                foreach (var rp in packages)
+                {
+                    if (rp.TriangleVertexColors.Count%4 != 0)
+                    {
+                        throw new Exception(
+                            "Vertex colors does not have the required number of values.");
+                    }
+
+                    for (int i = 0; i < rp.TriangleVertexColors.Count; i += 4)
+                    {
+                        var r = rp.TriangleVertexColors[i];
+                        var g = rp.TriangleVertexColors[i + 1];
+                        var b = rp.TriangleVertexColors[i + 2];
+                        var a = rp.TriangleVertexColors[i + 3];
+
+                        // Add the color to the map at a dummy point.
+                        var c = System.Drawing.Color.FromArgb(a, r, g, b);
+                        
+                        if (map.ContainsKey(c)) continue;
+
+                        using (
+                            var brush =
+                                new SolidBrush(
+                                    System.Drawing.Color.FromArgb(
+                                        c.A,
+                                        c.R,
+                                        c.G,
+                                        c.B)))
+                        {
+                            gfx.FillRectangle(brush, x, y, blockSize, blockSize);
+
+                            var uv = GetTextureCoordBlockCenter(x, y, w, h, blockSize);
+
+                            map.Add(c, uv);
+                        }
+
+                        x += blockSize;
+                        if (x < 512) continue;
+
+                        x = 0;
+                        y += blockSize;
+                    }
+                }
+            }
+
+            // Build a BitmapImage from a memory stream,
+            // and set the property value that is bound
+            // to the texture map.
+            using (var memory = new MemoryStream())
+            {
+                var bitmapImage = new BitmapImage();
+                bmp.Save(memory, ImageFormat.Png);
+                memory.Position = 0;
+                memory.Seek(0, SeekOrigin.Begin);
+                bitmapImage.BeginInit();
+                bitmapImage.StreamSource = memory;
+                bitmapImage.CacheOption = BitmapCacheOption.OnDemand;
+                bitmapImage.EndInit();
+                ColorMap = bitmapImage;
+            }
+
+            return map;
+        }
+
+        private static Point GetTextureCoordBlockCenter(int x, int y, int w, int h, int blockSize)
+        {
+            // Get a UV coordinate right in the
+            // middle of the block.
+            var u = (double)((x + blockSize/2))/(double)w;
+            var v = (double)((y + blockSize/2))/(double)h;
+            return new Point(u,v);
+        }
+
+        private static IEnumerable<Color> CreateLinearGradient(Color minColor, Color maxColor)
+        {
+            var colorList = new List<Color>();
+            const int size = 30;
+            for (int i = 0; i < size; i++)
+            {
+                var avgR = minColor.R + (int)((maxColor.R - minColor.R) * i / size);
+                var avgG = minColor.G + (int)((maxColor.G - minColor.G) * i / size);
+                var avgB = minColor.B + (int)((maxColor.B - minColor.B) * i / size);
+                colorList.Add(Color.FromArgb(255, (byte)avgR, (byte)avgG, (byte)avgB));
+            }
+            return colorList;
         }
 
         #endregion
