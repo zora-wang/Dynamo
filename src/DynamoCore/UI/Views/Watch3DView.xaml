@@ -124,7 +124,6 @@
                                     <DiffuseMaterial>
                                         <DiffuseMaterial.Brush>
                                             <ImageBrush 
-                                                ViewportUnits="Absolute" 
                                                 ImageSource="{Binding ColorMap}"/>
                                             <!--<SolidColorBrush Color="WhiteSmoke" Opacity="1"/>-->
                                         </DiffuseMaterial.Brush>
@@ -141,7 +140,6 @@
                                     <DiffuseMaterial>
                                         <DiffuseMaterial.Brush>
                                             <ImageBrush 
-                                                ViewportUnits="Absolute" 
                                                 ImageSource="{Binding ColorMap}"/>
                                             <!--<SolidColorBrush Color="WhiteSmoke" Opacity="1"/>-->
                                         </DiffuseMaterial.Brush>
