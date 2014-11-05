@@ -61,10 +61,11 @@ namespace Revit.Elements
         {
             get
             {
-                return InternalFamily.Symbols
-                    .Cast<Autodesk.Revit.DB.FamilySymbol>()
-                    .Select(x => FamilySymbol.FromExisting(x, true))
-                    .ToArray();
+                return null;
+                //return InternalFamily.Symbols
+                //    .Cast<Autodesk.Revit.DB.FamilySymbol>()
+                //    .Select(x => FamilySymbol.FromExisting(x, true))
+                //    .ToArray();
             }
         }
 

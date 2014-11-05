@@ -127,68 +127,68 @@ namespace Revit.Elements.Views
         /// <param name="element"></param>
         protected static void IsolateInView(Autodesk.Revit.DB.View3D view, Autodesk.Revit.DB.Element element)
         {
-            var fec = GetVisibleElementFilter();
+            //var fec = GetVisibleElementFilter();
 
-            view.CropBoxActive = true;
+            //view.CropBoxActive = true;
                 
-            var all = fec.ToElements();
-            var toHide =
-                fec.ToElements().Where(x => !x.IsHidden(view) && x.CanBeHidden(view) && x.Id != element.Id).Select(x => x.Id).ToList();
+            //var all = fec.ToElements();
+            //var toHide =
+            //    fec.ToElements().Where(x => !x.IsHidden(view) && x.CanBeHidden(view) && x.Id != element.Id).Select(x => x.Id).ToList();
 
-            if (toHide.Count > 0)
-                view.HideElements(toHide);
+            //if (toHide.Count > 0)
+            //    view.HideElements(toHide);
 
-            DocumentManager.Regenerate();
+            //DocumentManager.Regenerate();
 
-            if (view.IsPerspective)
-            {
-                var farClip = view.get_Parameter("Far Clip Active");
-                farClip.Set(0);
-            }
-            else
-            {
-                var pts = new List<XYZ>();
+            //if (view.IsPerspective)
+            //{
+            //    var farClip = view.get_Parameter("Far Clip Active");
+            //    farClip.Set(0);
+            //}
+            //else
+            //{
+            //    var pts = new List<XYZ>();
 
-                GetPointCloud(element, pts);
+            //    GetPointCloud(element, pts);
 
-                var bounding = view.CropBox;
-                var transInverse = bounding.Transform.Inverse;
-                var transPts = pts.Select(transInverse.OfPoint);
+            //    var bounding = view.CropBox;
+            //    var transInverse = bounding.Transform.Inverse;
+            //    var transPts = pts.Select(transInverse.OfPoint);
 
-                //ingore the Z coordindates and find
-                //the max X ,Y and Min X, Y in 3d view.
-                double dMaxX = 0, dMaxY = 0, dMinX = 0, dMinY = 0;
+            //    //ingore the Z coordindates and find
+            //    //the max X ,Y and Min X, Y in 3d view.
+            //    double dMaxX = 0, dMaxY = 0, dMinX = 0, dMinY = 0;
 
-                bool bFirstPt = true;
-                foreach (var pt1 in transPts)
-                {
-                    if (true == bFirstPt)
-                    {
-                        dMaxX = pt1.X;
-                        dMaxY = pt1.Y;
-                        dMinX = pt1.X;
-                        dMinY = pt1.Y;
-                        bFirstPt = false;
-                    }
-                    else
-                    {
-                        if (dMaxX < pt1.X)
-                            dMaxX = pt1.X;
-                        if (dMaxY < pt1.Y)
-                            dMaxY = pt1.Y;
-                        if (dMinX > pt1.X)
-                            dMinX = pt1.X;
-                        if (dMinY > pt1.Y)
-                            dMinY = pt1.Y;
-                    }
-                }
+            //    bool bFirstPt = true;
+            //    foreach (var pt1 in transPts)
+            //    {
+            //        if (true == bFirstPt)
+            //        {
+            //            dMaxX = pt1.X;
+            //            dMaxY = pt1.Y;
+            //            dMinX = pt1.X;
+            //            dMinY = pt1.Y;
+            //            bFirstPt = false;
+            //        }
+            //        else
+            //        {
+            //            if (dMaxX < pt1.X)
+            //                dMaxX = pt1.X;
+            //            if (dMaxY < pt1.Y)
+            //                dMaxY = pt1.Y;
+            //            if (dMinX > pt1.X)
+            //                dMinX = pt1.X;
+            //            if (dMinY > pt1.Y)
+            //                dMinY = pt1.Y;
+            //        }
+            //    }
 
-                bounding.Max = new XYZ(dMaxX, dMaxY, bounding.Max.Z);
-                bounding.Min = new XYZ(dMinX, dMinY, bounding.Min.Z);
-                view.CropBox = bounding;
-            }
+            //    bounding.Max = new XYZ(dMaxX, dMaxY, bounding.Max.Z);
+            //    bounding.Min = new XYZ(dMinX, dMinY, bounding.Min.Z);
+            //    view.CropBox = bounding;
+            //}
 
-            view.CropBoxVisible = false;
+            //view.CropBoxVisible = false;
 
         }
 

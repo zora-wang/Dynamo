@@ -52,19 +52,19 @@ namespace Revit.Elements.Views
         /// </summary>
         private DraftingView(string name)
         {
-            TransactionManager.Instance.EnsureInTransaction(Document);
+            //TransactionManager.Instance.EnsureInTransaction(Document);
 
-            var vd = Document.Create.NewViewDrafting();
+            //var vd = Document.Create.NewViewDrafting();
 
-            //rename the view
-            if (!vd.Name.Equals(name))
-                vd.Name = View3D.CreateUniqueViewName(name);
+            ////rename the view
+            //if (!vd.Name.Equals(name))
+            //    vd.Name = View3D.CreateUniqueViewName(name);
 
-            InternalSetDraftingView(vd);
+            //InternalSetDraftingView(vd);
 
-            TransactionManager.Instance.TransactionTaskDone();
+            //TransactionManager.Instance.TransactionTaskDone();
 
-            ElementBinder.CleanupAndSetElementForTrace(Document, this.InternalElement);
+            //ElementBinder.CleanupAndSetElementForTrace(Document, this.InternalElement);
         }
 
         #endregion

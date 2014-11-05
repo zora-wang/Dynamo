@@ -220,7 +220,7 @@ namespace Dynamo
                         return;
                     }
 
-                    var surf = data.Data as Surface;
+                    var surf = data.Data as Autodesk.DesignScript.Geometry.Surface;
                     if (surf != null)
                     {
                         geoms.AddRange(surf.ToRevitType());

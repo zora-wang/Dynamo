@@ -98,29 +98,30 @@ namespace Revit.Elements
         /// <returns></returns>
         public static FamilySymbol ByFamilyAndName(Family family, string name)
         {
-            if (family == null)
-            {
-                throw new ArgumentNullException("family");
-            }
+            return null;
+            //if (family == null)
+            //{
+            //    throw new ArgumentNullException("family");
+            //}
 
-            if (name == null)
-            {
-                throw new ArgumentNullException("name");
-            }
+            //if (name == null)
+            //{
+            //    throw new ArgumentNullException("name");
+            //}
 
-            // obtain the family symbol with the provided name
-            var symbol =
-                family.InternalFamily.Symbols.Cast<Autodesk.Revit.DB.FamilySymbol>().FirstOrDefault(x => x.Name == name);
+            //// obtain the family symbol with the provided name
+            //var symbol =
+            //    family.InternalFamily.Symbols.Cast<Autodesk.Revit.DB.FamilySymbol>().FirstOrDefault(x => x.Name == name);
 
-            if (symbol == null)
-            {
-               throw new Exception(String.Format("A FamilySymbol with the specified name, {0}, does not exist in the Family", name));
-            }
+            //if (symbol == null)
+            //{
+            //   throw new Exception(String.Format("A FamilySymbol with the specified name, {0}, does not exist in the Family", name));
+            //}
 
-            return new FamilySymbol(symbol)
-            {
-                IsRevitOwned = true
-            };
+            //return new FamilySymbol(symbol)
+            //{
+            //    IsRevitOwned = true
+            //};
         }
 
         /// <summary>
@@ -131,39 +132,40 @@ namespace Revit.Elements
         /// <returns></returns>
         public static FamilySymbol ByFamilyNameAndTypeName(string familyName, string typeName)
         {
-            if (familyName == null)
-            {
-                throw new ArgumentNullException("familyName");
-            }
+            return null;
+            //if (familyName == null)
+            //{
+            //    throw new ArgumentNullException("familyName");
+            //}
 
-            if (typeName == null)
-            {
-                throw new ArgumentNullException("typeName");
-            }
+            //if (typeName == null)
+            //{
+            //    throw new ArgumentNullException("typeName");
+            //}
 
-            //find the family
-            var collector = new FilteredElementCollector(DocumentManager.Instance.CurrentDBDocument);
-            collector.OfClass(typeof (Autodesk.Revit.DB.Family));
-            var family = (Autodesk.Revit.DB.Family)collector.ToElements().FirstOrDefault(x => x.Name == familyName);
+            ////find the family
+            //var collector = new FilteredElementCollector(DocumentManager.Instance.CurrentDBDocument);
+            //collector.OfClass(typeof (Autodesk.Revit.DB.Family));
+            //var family = (Autodesk.Revit.DB.Family)collector.ToElements().FirstOrDefault(x => x.Name == familyName);
 
-            if (family == null)
-            {
-                throw new Exception(string.Format("A family with the specified name, {0}, could not be found in the document.", familyName));
-            }
+            //if (family == null)
+            //{
+            //    throw new Exception(string.Format("A family with the specified name, {0}, could not be found in the document.", familyName));
+            //}
 
-            // obtain the family symbol with the provided name
-            var symbol =
-                family.Symbols.Cast<Autodesk.Revit.DB.FamilySymbol>().FirstOrDefault(x => x.Name == typeName);
+            //// obtain the family symbol with the provided name
+            //var symbol =
+            //    family.Symbols.Cast<Autodesk.Revit.DB.FamilySymbol>().FirstOrDefault(x => x.Name == typeName);
 
-            if (symbol == null)
-            {
-                throw new Exception(String.Format("A FamilySymbol with the specified name, {0}, does not exist in the Family", typeName));
-            }
+            //if (symbol == null)
+            //{
+            //    throw new Exception(String.Format("A FamilySymbol with the specified name, {0}, does not exist in the Family", typeName));
+            //}
 
-            return new FamilySymbol(symbol)
-            {
-                IsRevitOwned = true
-            };
+            //return new FamilySymbol(symbol)
+            //{
+            //    IsRevitOwned = true
+            //};
         }
 
         /// <summary>

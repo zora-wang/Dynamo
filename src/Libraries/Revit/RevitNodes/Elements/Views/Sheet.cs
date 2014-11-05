@@ -139,58 +139,58 @@ namespace Revit.Elements.Views
         /// <param name="views"></param>
         private void InternalAddViewsToSheetView(IEnumerable<Autodesk.Revit.DB.View> views)
         {
-            var sheet = InternalViewSheet;
+            //var sheet = InternalViewSheet;
 
-            TransactionManager.Instance.EnsureInTransaction(Document);
+            //TransactionManager.Instance.EnsureInTransaction(Document);
 
-            // (sic) from Dynamo Legacy
-            var width = sheet.Outline.Max.U - sheet.Outline.Min.U;
-            var height = sheet.Outline.Max.V - sheet.Outline.Min.V;
-            var packer = new CygonRectanglePacker(width, height);
-            int count = 0;
+            //// (sic) from Dynamo Legacy
+            //var width = sheet.Outline.Max.U - sheet.Outline.Min.U;
+            //var height = sheet.Outline.Max.V - sheet.Outline.Min.V;
+            //var packer = new CygonRectanglePacker(width, height);
+            //int count = 0;
 
-            foreach (var view in views)
-            {
-                var viewWidth = view.Outline.Max.U - view.Outline.Min.U;
-                var viewHeight = view.Outline.Max.V - view.Outline.Min.V;
+            //foreach (var view in views)
+            //{
+            //    var viewWidth = view.Outline.Max.U - view.Outline.Min.U;
+            //    var viewHeight = view.Outline.Max.V - view.Outline.Min.V;
 
-                Autodesk.Revit.DB.UV placement = null;
-                if (packer.TryPack(viewWidth, viewHeight, out placement))
-                {
-                    if (sheet.Views.Contains(view))
-                    {
-                        //move the view
-                        //find the corresponding viewport
-                        var enumerable =
-                            DocumentManager.Instance.ElementsOfType<Autodesk.Revit.DB.Viewport>()
-                                .Where(x => x.SheetId == sheet.Id && x.ViewId == view.Id).ToArray();
+            //    Autodesk.Revit.DB.UV placement = null;
+            //    if (packer.TryPack(viewWidth, viewHeight, out placement))
+            //    {
+            //        if (sheet.Views.Contains(view))
+            //        {
+            //            //move the view
+            //            //find the corresponding viewport
+            //            var enumerable =
+            //                DocumentManager.Instance.ElementsOfType<Autodesk.Revit.DB.Viewport>()
+            //                    .Where(x => x.SheetId == sheet.Id && x.ViewId == view.Id).ToArray();
 
-                        if (!enumerable.Any())
-                            continue;
+            //            if (!enumerable.Any())
+            //                continue;
 
-                        var viewport = enumerable.First();
-                        viewport.SetBoxCenter(new XYZ(placement.U + viewWidth / 2, placement.V + viewHeight / 2, 0));
-                    }
-                    else
-                    {
-                        //place the view on the sheet
-                        if (Viewport.CanAddViewToSheet(Document, sheet.Id, view.Id))
-                        {
-                            var viewport = Viewport.Create(Document, sheet.Id, view.Id,
-                                                           new XYZ(placement.U + viewWidth / 2, placement.V + viewHeight / 2, 0));
-                        }
-                    }
-                }
-                else
-                {
-                    throw new Exception( String.Format("View {0} could not be packed on the Sheet.  The sheet is {1} x {2} and the view to be added is {3} x {4}", 
-                        count, width, height, viewWidth, viewHeight));
-                }
+            //            var viewport = enumerable.First();
+            //            viewport.SetBoxCenter(new XYZ(placement.U + viewWidth / 2, placement.V + viewHeight / 2, 0));
+            //        }
+            //        else
+            //        {
+            //            //place the view on the sheet
+            //            if (Viewport.CanAddViewToSheet(Document, sheet.Id, view.Id))
+            //            {
+            //                var viewport = Viewport.Create(Document, sheet.Id, view.Id,
+            //                                               new XYZ(placement.U + viewWidth / 2, placement.V + viewHeight / 2, 0));
+            //            }
+            //        }
+            //    }
+            //    else
+            //    {
+            //        throw new Exception( String.Format("View {0} could not be packed on the Sheet.  The sheet is {1} x {2} and the view to be added is {3} x {4}", 
+            //            count, width, height, viewWidth, viewHeight));
+            //    }
 
-                count++;
-            }
+            //    count++;
+            //}
 
-            TransactionManager.Instance.TransactionTaskDone();
+            //TransactionManager.Instance.TransactionTaskDone();
         }
 
         /// <summary>
@@ -278,11 +278,12 @@ namespace Revit.Elements.Views
         {
             get
             {
-                return
-                    InternalViewSheet.Views.Cast<Autodesk.Revit.DB.View>()
-                        .ToList()
-                        .Select(x => (View) ElementWrapper.ToDSType(x, true))
-                        .ToArray();
+                return null;
+                //return
+                //    InternalViewSheet.Views.Cast<Autodesk.Revit.DB.View>()
+                //        .ToList()
+                //        .Select(x => (View) ElementWrapper.ToDSType(x, true))
+                //        .ToArray();
             }
         }
 

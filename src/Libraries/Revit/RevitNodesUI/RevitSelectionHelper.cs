@@ -40,60 +40,62 @@ namespace Revit.Interactivity
         private static IEnumerable<Reference> RequestReferenceSelection(
             string message, ILogger logger, SelectionObjectType selectionType)
         {
-            var doc = DocumentManager.Instance.CurrentUIDocument;
+            return null;
+            //var doc = DocumentManager.Instance.CurrentUIDocument;
 
-            Reference reference = null;
+            //Reference reference = null;
 
-            var choices = doc.Selection;
-            choices.Elements.Clear();
+            //var choices = doc.Selection;
+            //choices.Elements.Clear();
 
-            logger.Log(message);
+            //logger.Log(message);
 
-            switch (selectionType)
-            {
-                case SelectionObjectType.Face:
-                    reference = doc.Selection.PickObject(ObjectType.Face, message);
-                    break;
-                case SelectionObjectType.Edge:
-                    reference = doc.Selection.PickObject(ObjectType.Edge, message);
-                    break;
-                case SelectionObjectType.PointOnFace:
-                    reference = doc.Selection.PickObject(ObjectType.PointOnElement, message);
-                    break;
-            }
+            //switch (selectionType)
+            //{
+            //    case SelectionObjectType.Face:
+            //        reference = doc.Selection.PickObject(ObjectType.Face, message);
+            //        break;
+            //    case SelectionObjectType.Edge:
+            //        reference = doc.Selection.PickObject(ObjectType.Edge, message);
+            //        break;
+            //    case SelectionObjectType.PointOnFace:
+            //        reference = doc.Selection.PickObject(ObjectType.PointOnElement, message);
+            //        break;
+            //}
 
-            return reference == null ? null : new List<Reference> { reference };
+            //return reference == null ? null : new List<Reference> { reference };
         }
 
         private static IEnumerable<Reference> RequestMultipleReferencesSelection(
             string message, ILogger logger, SelectionObjectType selectionType)
         {
-            var doc = DocumentManager.Instance.CurrentUIDocument;
+            return null;
+            //var doc = DocumentManager.Instance.CurrentUIDocument;
 
-            IList<Reference> references = null;
+            //IList<Reference> references = null;
 
-            var choices = doc.Selection;
-            choices.Elements.Clear();
+            //var choices = doc.Selection;
+            //choices.Elements.Clear();
 
-            logger.Log(message);
+            //logger.Log(message);
 
-            switch (selectionType)
-            {
-                case SelectionObjectType.Face:
-                    references = doc.Selection.PickObjects(ObjectType.Face, message);
-                    break;
-                case SelectionObjectType.Edge:
-                    references = doc.Selection.PickObjects(ObjectType.Edge, message);
-                    break;
-                case SelectionObjectType.PointOnFace:
-                    references = doc.Selection.PickObjects(ObjectType.PointOnElement, message);
-                    break;
-            }
+            //switch (selectionType)
+            //{
+            //    case SelectionObjectType.Face:
+            //        references = doc.Selection.PickObjects(ObjectType.Face, message);
+            //        break;
+            //    case SelectionObjectType.Edge:
+            //        references = doc.Selection.PickObjects(ObjectType.Edge, message);
+            //        break;
+            //    case SelectionObjectType.PointOnFace:
+            //        references = doc.Selection.PickObjects(ObjectType.PointOnElement, message);
+            //        break;
+            //}
 
-            if (references == null || !references.Any())
-                return null;
+            //if (references == null || !references.Any())
+            //    return null;
 
-            return references;
+            //return references;
         }
 
         #endregion
@@ -170,43 +172,45 @@ namespace Revit.Interactivity
 
         private static IEnumerable<T> RequestElementSelection(string selectionMessage, ILogger logger)
         {
-            var doc = DocumentManager.Instance.CurrentUIDocument;
+            return null;
+            //var doc = DocumentManager.Instance.CurrentUIDocument;
 
-            Element e = null;
+            //Element e = null;
 
-            var choices = doc.Selection;
-            choices.Elements.Clear();
+            //var choices = doc.Selection;
+            //choices.Elements.Clear();
 
-            logger.Log(selectionMessage);
+            //logger.Log(selectionMessage);
 
-            var elementRef = doc.Selection.PickObject(
-                ObjectType.Element,
-                new ElementSelectionFilter<T>(),
-                selectionMessage);
+            //var elementRef = doc.Selection.PickObject(
+            //    ObjectType.Element,
+            //    new ElementSelectionFilter<T>(),
+            //    selectionMessage);
 
-            if (elementRef != null)
-            {
-                e = DocumentManager.Instance.CurrentDBDocument.GetElement(elementRef);
-            }
+            //if (elementRef != null)
+            //{
+            //    e = DocumentManager.Instance.CurrentDBDocument.GetElement(elementRef);
+            //}
 
-            return new[] { e }.Cast<T>();
+            //return new[] { e }.Cast<T>();
         }
 
         private static IEnumerable<T> RequestMultipleElementsSelection(
             string selectionMessage, ILogger logger)
         {
-            var doc = DocumentManager.Instance.CurrentUIDocument;
+            return null;
+            //var doc = DocumentManager.Instance.CurrentUIDocument;
 
-            var choices = doc.Selection;
-            choices.Elements.Clear();
+            //var choices = doc.Selection;
+            //choices.Elements.Clear();
 
-            logger.Log(selectionMessage);
+            //logger.Log(selectionMessage);
 
-            var elements = doc.Selection.PickElementsByRectangle(
-                new ElementSelectionFilter<T>(),
-                selectionMessage);
+            //var elements = doc.Selection.PickElementsByRectangle(
+            //    new ElementSelectionFilter<T>(),
+            //    selectionMessage);
 
-            return elements.Cast<T>();
+            //return elements.Cast<T>();
         }
 
         #endregion

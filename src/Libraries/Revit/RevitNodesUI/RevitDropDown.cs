@@ -61,27 +61,27 @@ namespace DSRevitNodesUI
         
         protected override void PopulateItems()
         {
-            Items.Clear();
+            //Items.Clear();
 
-            var fec = new FilteredElementCollector(DocumentManager.Instance.CurrentDBDocument);
+            //var fec = new FilteredElementCollector(DocumentManager.Instance.CurrentDBDocument);
 
-            fec.OfClass(typeof(Family));
-            if (fec.ToElements().Count == 0)
-            {
-                Items.Add(new DynamoDropDownItem(noFamilyTypes, null));
-                SelectedIndex = 0;
-                return;
-            }
+            //fec.OfClass(typeof(Family));
+            //if (fec.ToElements().Count == 0)
+            //{
+            //    Items.Add(new DynamoDropDownItem(noFamilyTypes, null));
+            //    SelectedIndex = 0;
+            //    return;
+            //}
 
-            foreach (Family family in fec.ToElements())
-            {
-                foreach (FamilySymbol fs in family.Symbols)
-                {
-                    Items.Add(new DynamoDropDownItem(string.Format("{0}:{1}", family.Name, fs.Name), fs));
-                }
-            }
+            //foreach (Family family in fec.ToElements())
+            //{
+            //    foreach (FamilySymbol fs in family.Symbols)
+            //    {
+            //        Items.Add(new DynamoDropDownItem(string.Format("{0}:{1}", family.Name, fs.Name), fs));
+            //    }
+            //}
 
-            Items = Items.OrderBy(x => x.Name).ToObservableCollection();
+            //Items = Items.OrderBy(x => x.Name).ToObservableCollection();
         }
 
         public override IEnumerable<AssociativeNode> BuildOutputAst(List<AssociativeNode> inputAstNodes)

@@ -340,7 +340,7 @@ namespace Revit.Elements
         }
 
         [IsVisibleInDynamoLibrary(false)]
-        public static AdaptiveComponent ByParametersOnFace(double[][] uvs, Surface surface, FamilySymbol familySymbol)
+        public static AdaptiveComponent ByParametersOnFace(double[][] uvs, Autodesk.DesignScript.Geometry.Surface surface, FamilySymbol familySymbol)
         {
             if (uvs == null)
             {
@@ -434,7 +434,7 @@ namespace Revit.Elements
         /// <param name="surface">The surface on which to place the AdaptiveComponent</param>
         /// <param name="familySymbol"></param>
         /// <returns></returns>
-        public static AdaptiveComponent ByParametersOnFace( Autodesk.DesignScript.Geometry.UV[] uvs, Surface surface, FamilySymbol familySymbol)
+        public static AdaptiveComponent ByParametersOnFace(Autodesk.DesignScript.Geometry.UV[] uvs, Autodesk.DesignScript.Geometry.Surface surface, FamilySymbol familySymbol)
         {
             if (uvs == null)
             {

@@ -485,7 +485,7 @@ namespace Revit.Elements
         /// <summary>
         /// The Faces in this Element
         /// </summary>
-        public Surface[] Faces
+        public Autodesk.DesignScript.Geometry.Surface[] Faces
         {
             get
             {
