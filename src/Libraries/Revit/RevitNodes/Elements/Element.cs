@@ -407,7 +407,7 @@ namespace Revit.Elements
         /// <param name="geometryElement">The Geometry collection</param>
         /// <param name="useSymbolGeometry">When encountering a GeometryInstance, use GetSymbolGeometry() which obtains usable Reference objects</param>
         /// <returns></returns>
-        private static IEnumerable<GeometryObject> CollectConcreteGeometry(GeometryElement geometryElement, bool useSymbolGeometry = false)
+        protected static IEnumerable<GeometryObject> CollectConcreteGeometry(GeometryElement geometryElement, bool useSymbolGeometry = false)
         {
             var instanceGeometryObjects = new List<GeometryObject>();
 
@@ -485,7 +485,7 @@ namespace Revit.Elements
         /// <summary>
         /// The Faces in this Element
         /// </summary>
-        public Surface[] Faces
+        public Autodesk.DesignScript.Geometry.Surface[] Faces
         {
             get
             {

@@ -19,7 +19,7 @@ namespace Revit.GeometryConversion
     [SupressImportIntoVM]
     public static class RevitToProtoFace
     {
-        public static IEnumerable<Surface> ToProtoType(this Autodesk.Revit.DB.Face revitFace,
+        public static IEnumerable<Autodesk.DesignScript.Geometry.Surface> ToProtoType(this Autodesk.Revit.DB.Face revitFace,
           bool performHostUnitConversion = true, Reference referenceOverride = null)
         {
             if (revitFace == null) throw new ArgumentNullException("revitFace");
@@ -27,7 +27,7 @@ namespace Revit.GeometryConversion
             var revitEdgeLoops = EdgeLoopPartition.GetAllEdgeLoopsFromRevitFace(revitFace);
             var partitionedRevitEdgeLoops = EdgeLoopPartition.ByEdgeLoopsAndFace(revitFace, revitEdgeLoops);
 
-            var listSurface = new List<Surface>();
+            var listSurface = new List<Autodesk.DesignScript.Geometry.Surface>();
 
             foreach (var edgeloopPartition in partitionedRevitEdgeLoops)
             {
@@ -36,11 +36,11 @@ namespace Revit.GeometryConversion
 
                 // convert the underrlying surface
                 var dyFace = (dynamic)revitFace;
-                Surface untrimmedSrf = SurfaceExtractor.ExtractSurface(dyFace, edgeLoops);
+                Autodesk.DesignScript.Geometry.Surface untrimmedSrf = SurfaceExtractor.ExtractSurface(dyFace, edgeLoops);
                 if (untrimmedSrf == null) throw new Exception("Failed to extract surface");
 
                 // trim the surface
-                Surface converted = untrimmedSrf.TrimWithEdgeLoops(edgeLoops);
+                Autodesk.DesignScript.Geometry.Surface converted = untrimmedSrf.TrimWithEdgeLoops(edgeLoops);
 
                 // perform unit conversion if necessary
                 converted = performHostUnitConversion ? converted.InDynamoUnits() : converted;

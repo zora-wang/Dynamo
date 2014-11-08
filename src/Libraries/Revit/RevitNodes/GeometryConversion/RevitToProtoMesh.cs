@@ -24,10 +24,10 @@ namespace Revit.GeometryConversion
 
         }
 
-        public static Autodesk.DesignScript.Geometry.Mesh[] ToProtoType(this Autodesk.Revit.DB.MeshArray meshArray,
-            bool performHostUnitConversion = true)
-        {
-            return meshArray.Cast<Autodesk.Revit.DB.Mesh>().Select(x => x.ToProtoType(performHostUnitConversion)).ToArray();
-        }
+        //public static Autodesk.DesignScript.Geometry.Mesh[] ToProtoType(this Autodesk.Revit.DB.MeshArray meshArray,
+        //    bool performHostUnitConversion = true)
+        //{
+        //    return meshArray.Cast<Autodesk.Revit.DB.Mesh>().Select(x => x.ToProtoType(performHostUnitConversion)).ToArray();
+        //}
     }
 }

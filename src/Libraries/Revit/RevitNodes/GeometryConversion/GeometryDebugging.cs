@@ -20,12 +20,12 @@ namespace Revit.GeometryConversion
             return ele.InternalGeometry().OfType<Autodesk.Revit.DB.Solid>().ToArray();
         }
 
-        public static IEnumerable<Surface> GetTrimmedSurfacesFromSolid(Autodesk.Revit.DB.Solid geom)
+        public static IEnumerable<Autodesk.DesignScript.Geometry.Surface> GetTrimmedSurfacesFromSolid(Autodesk.Revit.DB.Solid geom)
         {
             return geom.Faces.Cast<Autodesk.Revit.DB.Face>().SelectMany(x => x.ToProtoType(false));
         }
 
-        public static IEnumerable<Surface> GetTrimmedSurfacesFromFace(Autodesk.Revit.DB.Face geom)
+        public static IEnumerable<Autodesk.DesignScript.Geometry.Surface> GetTrimmedSurfacesFromFace(Autodesk.Revit.DB.Face geom)
         {
             return geom.ToProtoType(false);
         }
@@ -41,11 +41,11 @@ namespace Revit.GeometryConversion
                 .Select(x => x.Cast<Autodesk.Revit.DB.Edge>());
         }
 
-        public static Surface GetUntrimmedSurfaceFromRevitFace(Face geom,
+        public static Autodesk.DesignScript.Geometry.Surface GetUntrimmedSurfaceFromRevitFace(Face geom,
             IEnumerable<PolyCurve> edgeLoops)
         {
             var dyFace = (dynamic)geom;
-            return (Surface)SurfaceExtractor.ExtractSurface(dyFace, edgeLoops);
+            return (Autodesk.DesignScript.Geometry.Surface)SurfaceExtractor.ExtractSurface(dyFace, edgeLoops);
         }
 
         public static List<PolyCurve> GetEdgeLoopsFromRevitFaceAsPolyCurves(Autodesk.Revit.DB.Face face)

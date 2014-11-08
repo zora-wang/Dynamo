@@ -185,7 +185,7 @@ namespace Revit.AnalysisDisplay
         /// <param name="unitType">An optional Unit type to provide conversions in the analysis results.</param>
         /// <returns>A FaceAnalysisDisplay object.</returns>
         public static FaceAnalysisDisplay ByViewFacePointsAndValues(
-            View view, Surface surface,
+            View view, Autodesk.DesignScript.Geometry.Surface surface,
             Autodesk.DesignScript.Geometry.UV[] sampleLocations, double[] samples, string name = "", string description = "", Type unitType = null)
         {
             if (view == null)
