@@ -41,19 +41,19 @@ namespace Revit.Elements
             var oldDirectShape =
                 ElementBinder.GetElementFromTrace<Autodesk.Revit.DB.DirectShape>(Document);
 
+            //Phase 2- There was no existing element, create one
+            TransactionManager.Instance.EnsureInTransaction(Document);
+
             //There was an element, rebind to that, and adjust its position
             if (oldDirectShape != null)
             {
-                if (oldDirectShape.Category == category)
+                if (oldDirectShape.Category.Name == category.Name)
                 {
                     InternalSetDirectShape(oldDirectShape);
                     InternalSetGeometry(geometry);
                     return;
                 }
             }
-
-            //Phase 2- There was no existing element, create one
-            TransactionManager.Instance.EnsureInTransaction(Document);
 
             // There is no API to reset the category of a direct 
             // shape, so we have to delete the old one.
