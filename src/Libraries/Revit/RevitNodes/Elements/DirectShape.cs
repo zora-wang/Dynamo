@@ -59,7 +59,7 @@ namespace Revit.Elements
         public static DirectShape ByImportInstance(ImportInstance importInstance, Category category)
         {
             if (importInstance == null)
-                throw new ArgumentNullException("geometry");
+                throw new ArgumentNullException("importInstance");
 
             return new DirectShape(importInstance, category);
         }
