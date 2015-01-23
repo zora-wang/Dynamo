@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Dynamo.Core.Threading;
 using Dynamo.DSEngine;
 using Dynamo.Models;
-
+using Dynamo.Properties;
 using ProtoCore.AST.AssociativeAST;
 
 using VMDataBridge;
@@ -12,7 +12,7 @@ namespace Dynamo.Nodes
 {
     [NodeName("Watch")]
     [NodeCategory(BuiltinNodeCategories.CORE_VIEW)]
-    [NodeDescription("Visualize the output of node. ")]
+    [NodeDescription("WatchNodeDescription",typeof(Resources))]
     [NodeSearchTags("print", "output", "display")]
     [IsDesignScriptCompatible]
     public class Watch : NodeModel

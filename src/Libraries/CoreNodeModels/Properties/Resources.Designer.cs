@@ -286,6 +286,15 @@ namespace DSCoreNodesUI.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to A slider that produces numeric values..
+        /// </summary>
+        internal static string DoubleSliderNodeDescription {
+            get {
+                return ResourceManager.GetString("DoubleSliderNodeDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The selected {0}.
         /// </summary>
         internal static string DropDownPortDataResultToolTip {
@@ -489,6 +498,15 @@ namespace DSCoreNodesUI.Properties {
         internal static string IntegerSliderDescription {
             get {
                 return ResourceManager.GetString("IntegerSliderDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A slider that produces integer values..
+        /// </summary>
+        internal static string IntegerSliderNodeDescription {
+            get {
+                return ResourceManager.GetString("IntegerSliderNodeDescription", resourceCulture);
             }
         }
         
@@ -937,6 +955,15 @@ namespace DSCoreNodesUI.Properties {
         internal static string WatchImageSearchTags {
             get {
                 return ResourceManager.GetString("WatchImageSearchTags", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Visualize the output of node..
+        /// </summary>
+        internal static string WatchNodeDescription {
+            get {
+                return ResourceManager.GetString("WatchNodeDescription", resourceCulture);
             }
         }
         

@@ -132,7 +132,7 @@
     <value>Creates a string.</value>
     <comment>Description for string node</comment>
   </data>
-  <data name="FunctionNodeDescription" xml:space="preserve">
+  <data name="DSVarArgFunctionNodeDescription" xml:space="preserve">
     <value>DesignScript Builtin Functions</value>
     <comment>Description for function node</comment>
   </data>
@@ -522,9 +522,6 @@ value: bool = false</value>
   </data>
   <data name="FunctionCustomNodeDescription" xml:space="preserve">
     <value>Instance of a Custom Node</value>
-  </data>
-  <data name="FunctionOutput" xml:space="preserve">
-    <value>A function output, use with custom nodes</value>
   </data>
   <data name="SymobolNodeDescription" xml:space="preserve">
     <value>A function parameter, use with custom nodes</value>

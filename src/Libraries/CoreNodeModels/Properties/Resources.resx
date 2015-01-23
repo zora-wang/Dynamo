@@ -463,4 +463,13 @@
   <data name="WebRequestPortDataUrlToolTip" xml:space="preserve">
     <value>The url for the web request.</value>
   </data>
+  <data name="DoubleSliderNodeDescription" xml:space="preserve">
+    <value>A slider that produces numeric values.</value>
+  </data>
+  <data name="IntegerSliderNodeDescription" xml:space="preserve">
+    <value>A slider that produces integer values.</value>
+  </data>
+  <data name="WatchNodeDescription" xml:space="preserve">
+    <value>Visualize the output of node.</value>
+  </data>
 </root>

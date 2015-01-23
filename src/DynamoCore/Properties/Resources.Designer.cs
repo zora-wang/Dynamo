@@ -324,6 +324,15 @@ namespace Dynamo.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to DesignScript Builtin Functions.
+        /// </summary>
+        public static string DSVarArgFunctionNodeDescription {
+            get {
+                return ResourceManager.GetString("DSVarArgFunctionNodeDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to A duplicate of the package called {0} was found at {1}.  Ignoring it..
         /// </summary>
         public static string DulicatedPackage {
@@ -484,24 +493,6 @@ namespace Dynamo.Properties {
         public static string FunctionCustomNodeDescription {
             get {
                 return ResourceManager.GetString("FunctionCustomNodeDescription", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to DesignScript Builtin Functions.
-        /// </summary>
-        public static string FunctionNodeDescription {
-            get {
-                return ResourceManager.GetString("FunctionNodeDescription", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to A function output, use with custom nodes.
-        /// </summary>
-        public static string FunctionOutput {
-            get {
-                return ResourceManager.GetString("FunctionOutput", resourceCulture);
             }
         }
         
