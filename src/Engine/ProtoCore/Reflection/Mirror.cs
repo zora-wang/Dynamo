@@ -420,7 +420,7 @@ namespace ProtoCore
                 // if not used in the language: http://adsk-oss.myjetbrains.com/youtrack/issue/MAGN-6752
                 return core.ClassTable.ClassNodes.
                     Where(x => !CoreUtils.StartsWithSingleUnderscore(x.name)
-                    && x.name != DSDefinitions.Keyword.PointerReserved).
+                    ).
                     Select(x => new ClassMirror(core, x));
             }
 
