@@ -528,6 +528,29 @@ namespace DynamoCoreUITests
         }
 
         [Test, RequiresSTA]
+        public void unitTest1()
+        {
+
+            RunCommandsFromFile("unitTest1.xml", true, (commandTag) =>
+            {
+                var workspace = ViewModel.Model.CurrentWorkspace;
+                var cus = GetNode("90d61326-ea91-4c9d-b7e8-9fb5b6399df7") as Function;
+                if (commandTag == "Run1")
+                {
+                    // check for number of Nodes and Connectors
+                    Assert.AreEqual(2, workspace.Nodes.Count);
+                    Assert.AreEqual(2, workspace.Connectors.Count());
+                    AssertPreviewValue("90d61326-ea91-4c9d-b7e8-9fb5b6399df7", 2);
+                }
+                else if (commandTag == "Run2")
+                {
+                    AssertPreviewValue("90d61326-ea91-4c9d-b7e8-9fb5b6399df7", 1);
+                }
+            });
+        }
+
+
+        [Test, RequiresSTA]
         public void Defect_MAGN_6821_withoutInput()
         {
                
