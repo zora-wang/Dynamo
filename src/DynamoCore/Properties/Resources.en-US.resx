@@ -611,4 +611,7 @@ value : bool = false</value>
     <value>Custom nodes</value>
     <comment>Used for uncategorised custom nodes.</comment>
   </data>
+  <data name="NoDescriptionProvided" xml:space="preserve">
+    <value>No description provided zora</value>
+  </data>
 </root>
